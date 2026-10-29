@@ -3,14 +3,15 @@ const assert=require('node:assert/strict');
 const Module=require('node:module');
 const path=require('node:path');
 
-function setup(trusted=true,corpusPath='') {
+function setup(trusted=true,corpusPath='',cloud=false) {
   const root=path.resolve(__dirname,'../../..');
   const uri={fsPath:path.join(root,'folder with spaces/x.py'),scheme:'file',toString(){return 'file://'+this.fsPath;},with(){return this;}};
   const document={uri,languageId:'python',isDirty:false,isClosed:false,version:1,getText:()=> 'def f():\n    return model.predict(records)\n',lineAt:()=>({text:'    return model.predict(records)'})};
   const commands=new Map(), listeners={}, processes=[], sets=[], statuses=[];
   const disposable={dispose(){}};
-  const workspace={isTrusted:trusted,getWorkspaceFolder:()=>({uri:{fsPath:root}}),getConfiguration:()=>({get:(key,fallback)=>key==='executable'?'${workspaceFolder}/.venv/bin/aiact':key==='corpusPath'?corpusPath:fallback}),
+  const workspace={isTrusted:trusted,getWorkspaceFolder:()=>({uri:{fsPath:root}}),getConfiguration:()=>({get:(key,fallback)=>key==='executable'?'${workspaceFolder}/.venv/bin/aiact':key==='corpusPath'?corpusPath:key==='provider'?(cloud?'gemini':'ollama'):fallback}),
     registerTextDocumentContentProvider:()=>disposable,openTextDocument:async()=>document,
+    onDidChangeConfiguration:fn=>{listeners.config=fn;return disposable;},
     onDidChangeTextDocument:fn=>{listeners.change=fn;return disposable;},onDidSaveTextDocument:fn=>{listeners.save=fn;return disposable;}};
   const vscode={workspace,StatusBarAlignment:{Right:1},ProgressLocation:{Notification:1},DiagnosticSeverity:{Information:1,Warning:2},
     EventEmitter:class{event=()=>disposable;fire(){}dispose(){}},Uri:{parse:()=>({})},
@@ -29,7 +30,7 @@ function setup(trusted=true,corpusPath='') {
     return original.call(this,name,...args);
   };
   const modulePath=require.resolve('../dist/extension.js');delete require.cache[modulePath];
-  try{require(modulePath).activate({subscriptions:[]});}finally{Module._load=original;}
+  try{require(modulePath).activate({subscriptions:[],secrets:{get:async()=> 'test-only-secret'},workspaceState:{get:()=>true}});}finally{Module._load=original;}
   return {root,document,commands,listeners,processes,sets,statuses};
 }
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
@@ -58,4 +59,18 @@ test('workspace corpus path is resolved consistently for scan arguments',async()
  const pending=s.commands.get('aiact.review')();await tick();
  const p=s.processes[0];assert.equal(p.args[p.args.indexOf('--corpus')+1],path.join(s.root,'legal cache/corpus.json'));
  s.document.version++;p.callback(null,'stale');await pending;
+});
+
+test('Gemini scan uses secure env and provider model, never key arguments',async()=>{
+ const s=setup(true,'',true);const pending=s.commands.get('aiact.review')();await tick();
+ const p=s.processes[0];assert.equal(p.args[p.args.indexOf('--provider')+1],'gemini');
+ assert.equal(p.args[p.args.indexOf('--model')+1],'gemini-3.1-flash-lite');
+ assert.equal(p.options.env.GEMINI_API_KEY,'test-only-secret');assert.ok(!p.args.join(' ').includes('test-only-secret'));
+ s.document.version++;p.callback(null,'stale');await pending;
+});
+test('inference settings changing during a scan discard its results',async()=>{
+ const s=setup();const pending=s.commands.get('aiact.review')();await tick();
+ s.listeners.config({affectsConfiguration:()=>true});
+ s.processes[0].callback(null,'must not parse stale configuration');await pending;
+ assert.equal(s.sets.length,0);assert.ok(s.statuses.at(-1).includes('Needs review'));
 });

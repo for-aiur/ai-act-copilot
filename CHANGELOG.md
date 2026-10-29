@@ -5,6 +5,15 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine and extension 0.2.0 (Gemini preview).
+
+- Added opt-in Gemini with a configurable model, shared two-pass pipeline and
+  independently validated citations. Ollama remains available without fallback.
+- Added masked API-key entry, VS Code secure storage, workspace cloud consent,
+  provider health checks and explicit cloud labels. CLI uses GEMINI_API_KEY.
+- Added optional provider provenance to results and provider-aware health schema.
+
+
 - Selected the installed smaller qwen2.5:1.5b model for this repository workspace
   and documented the existing VS Code / CLI model configuration.
 

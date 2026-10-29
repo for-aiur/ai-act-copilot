@@ -3,6 +3,7 @@ import {execFile, ChildProcess} from 'node:child_process';
 import {existsSync} from 'node:fs';
 import * as path from 'node:path';
 import {HealthResult, localHost, parseHealth} from './health-core';
+import {inferenceSettings, localEnvironment, geminiEnvironment, GEMINI_KEY, GEMINI_CONSENT} from './inference';
 
 export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
   private readonly changes = new vscode.EventEmitter<void>();
@@ -18,7 +19,9 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
   private disposed = false;
   private processes = new Set<ChildProcess>();
 
-  constructor(context: vscode.ExtensionContext) {
+  private credentialVersion = 0;
+
+  constructor(private readonly context: vscode.ExtensionContext) {
     this.view = vscode.window.createTreeView('aiact.health', {treeDataProvider: this});
     const introduction = (fragment = '') => {
       // VSIX packaging normalizes README.md to readme.md on case-sensitive hosts.
@@ -26,6 +29,15 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
       return vscode.commands.executeCommand('markdown.showPreviewToSide', vscode.Uri.joinPath(context.extensionUri, filename).with({fragment}));
     };
     context.subscriptions.push(this.changes, this.view,
+      vscode.commands.registerCommand('aiact.configureGemini', () => this.configureGemini().catch(() => vscode.window.showErrorMessage('Could not configure Gemini. Check VS Code secure storage and workspace settings.'))),
+      vscode.commands.registerCommand('aiact.removeGeminiKey', async () => {
+        if (!vscode.workspace.isTrusted) { return; }
+        try {
+        await context.secrets.delete(GEMINI_KEY);
+        await context.workspaceState.update(GEMINI_CONSENT, false);
+        this.credentialVersion++; this.currentKey = ''; await this.refresh();
+        } catch { vscode.window.showErrorMessage('Could not remove the saved Gemini key. Check VS Code secure storage.'); }
+      }),
       vscode.commands.registerCommand('aiact.showIntroduction', () => introduction()),
       vscode.commands.registerCommand('aiact.showRoadmap', () => introduction('planned-next-steps')),
       vscode.commands.registerCommand('aiact.showHealth', () => this.show()),
@@ -46,7 +58,7 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
     introduction.command = {command: 'aiact.showIntroduction', title: 'What is AI Act Copilot?'};
     items.push(introduction);
     for (const check of this.health?.checks || []) {
-      const item = new vscode.TreeItem(({engine: 'CLI', ollama: 'Ollama', model: 'Model', corpus: 'Legal corpus'})[check.id]);
+      const item = new vscode.TreeItem(({engine: 'CLI', ollama: 'Ollama', gemini: 'Gemini API', model: 'Model', corpus: 'Legal corpus'})[check.id]);
       item.description = `${check.status === 'ready' ? 'Available' : check.status === 'unknown' ? 'Not checked' : 'Unavailable'} · ${check.detail}`;
       item.tooltip = check.detail;
       item.iconPath = new vscode.ThemeIcon(check.status === 'ready' ? 'pass' : check.status === 'unknown' ? 'question' : 'warning');
@@ -56,13 +68,39 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
       const item = new vscode.TreeItem(label); item.iconPath = new vscode.ThemeIcon(icon);
       item.command = {command, title: label}; return item;
     };
-    items.push(action(this.starting ? 'Starting local service…' : 'Start local service', 'aiact.startLocalService', 'play'));
+    const selected = this.health?.provider || this.optionsProvider();
+    if (selected === 'gemini') {
+      items.push(action('Configure Gemini / API key', 'aiact.configureGemini', 'key'));
+      items.push(action('Remove saved Gemini key', 'aiact.removeGeminiKey', 'trash'));
+    } else {
+      items.push(action(this.starting ? 'Starting local service…' : 'Start local service', 'aiact.startLocalService', 'play'));
+      items.push(action('Use Gemini / API key', 'aiact.configureGemini', 'key'));
+    }
     items.push(action('Refresh health', 'aiact.refreshHealth', 'refresh'));
     items.push(action('Review current Python file', 'aiact.review', 'search'));
     items.push(action('Show last review report', 'aiact.showReport', 'preview'));
     items.push(action('Future plans', 'aiact.showRoadmap', 'telescope'));
-    this.view.message = 'Evros Labs · Understand where AI in your Python code needs a closer look. Open the introduction for an example and first steps.\n\n' + (this.starting ? 'Starting local Ollama in the VS Code terminal…' : this.message);
+    this.view.message = (selected === 'gemini' ? 'Gemini cloud review: selected source, context and retrieved legal passages are sent to Google using your API quota.\n\n' : 'Ollama local review: inference stays on this device.\n\n') + (this.starting ? 'Starting local Ollama in the VS Code terminal…' : this.message);
     return items;
+  }
+  private optionsProvider(): string {
+    try { return this.options().provider; } catch { return 'ollama'; }
+  }
+  private async configureGemini(resource?: vscode.Uri): Promise<void> {
+    if (!vscode.workspace.isTrusted) { vscode.window.showWarningMessage('Trust the workspace before configuring Gemini.'); return; }
+    const options = this.options(resource);
+    const key = await vscode.window.showInputBox({title: 'Gemini API key', password: true, ignoreFocusOut: true,
+      prompt: 'Stored securely in VS Code. Gemini reviews send selected code/context to Google and use your API quota.',
+      validateInput: value => !value.trim() || value.trim().length > 4096 || /\s/.test(value.trim()) ? 'Enter an API key without whitespace.' : undefined});
+    if (key === undefined) { return; }
+    if (!key.trim() || /\s/.test(key.trim()) || key.trim().length > 4096) { return; }
+    const approve = await vscode.window.showWarningMessage('Use Gemini for this workspace? Selected code/context and legal passages will be sent to Google.', 'Use Gemini');
+    if (approve !== 'Use Gemini') { return; }
+    await this.context.secrets.store(GEMINI_KEY, key.trim());
+    await this.context.workspaceState.update(GEMINI_CONSENT, true);
+    this.credentialVersion++; this.currentKey = '';
+    await options.config.update('provider', 'gemini', vscode.ConfigurationTarget.Workspace);
+    await this.refresh(resource);
   }
   async show(): Promise<void> {
     await vscode.commands.executeCommand('workbench.view.extension.aiact');
@@ -74,12 +112,12 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
     if (!folder) { throw new Error('Open a project folder first.'); }
     const config = vscode.workspace.getConfiguration('aiact', selected || folder.uri);
     const resolve = (value: string) => value.replace('${workspaceFolder}', folder.uri.fsPath);
-    const model = config.get<string>('model', 'qwen2.5:3b');
+    const {provider, model} = inferenceSettings(config);
     const endpoint = config.get<string>('endpoint', 'http://127.0.0.1:11434');
-    const args = ['doctor', '--json', '--model', model, '--endpoint', endpoint];
+    const args = ['doctor', '--json', '--model', model, '--endpoint', endpoint, '--provider', provider];
     const corpus = config.get<string>('corpusPath', '');
     if (corpus) { args.push('--corpus', resolve(corpus)); }
-    return {folder, executable: resolve(config.get<string>('executable', 'aiact')), args, endpoint, config, resolve};
+    return {provider, folder, executable: resolve(config.get<string>('executable', 'aiact')), args, endpoint, config, resolve};
   }
   async refresh(resource?: vscode.Uri): Promise<HealthResult | undefined> {
     if (resource) { this.resource = resource; }
@@ -89,18 +127,24 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
     let options: ReturnType<HealthPanel['options']>;
     try { options = this.options(resource); }
     catch (error) { this.message = (error as Error).message; this.changes.fire(); return; }
-    const key = JSON.stringify([options.folder.uri.fsPath, options.executable, options.args]);
+    const key = JSON.stringify([options.folder.uri.fsPath, options.executable, options.args, this.credentialVersion]);
     this.currentKey = key;
     if (this.pending?.key === key) { return this.pending.promise; }
-    this.message = 'Checking CLI, local Ollama, model and corpus…'; this.changes.fire();
+    let env: NodeJS.ProcessEnv;
+    try { env = options.provider === 'gemini' ? await geminiEnvironment(this.context) : localEnvironment(); }
+    catch { this.health = undefined; this.message = 'Could not read the API key from VS Code secure storage.'; this.changes.fire(); return; }
+    if (this.disposed || !vscode.workspace.isTrusted || key !== this.currentKey) { return; }
+    if (this.pending?.key === key) { return this.pending.promise; }
+    this.message = 'Checking engine, selected provider, model and corpus…'; this.changes.fire();
     const promise = new Promise<HealthResult | undefined>(resolve => {
-      const child = execFile(options.executable, options.args, {cwd: options.folder.uri.fsPath, shell: false, timeout: 12_000, maxBuffer: 256_000, windowsHide: true}, (_error, stdout) => {
+      const child = execFile(options.executable, options.args, {cwd: options.folder.uri.fsPath, shell: false, timeout: 12_000, maxBuffer: 256_000, windowsHide: true, env}, (_error, stdout) => {
         this.processes.delete(child);
         if (this.disposed || key !== this.currentKey) { resolve(undefined); return; }
         try {
           if (!stdout.trim()) { throw new Error('CLI unavailable. Check aiact.executable and the engine installation.'); }
           this.health = parseHealth(stdout);
-          this.message = `${this.health.status === 'ready' ? 'Ready to review' : 'Local setup needs attention'} · Checked ${new Date().toLocaleTimeString()}`;
+          if ((this.health.provider || 'ollama') !== options.provider) { throw new Error('Engine provider does not match settings. Update the engine.'); }
+          this.message = `${this.health.status === 'ready' ? 'Ready to review' : 'Provider setup needs attention'} · Checked ${new Date().toLocaleTimeString()}`;
           this.view.description = options.folder.name;
           resolve(this.health);
         } catch (error) {
@@ -123,11 +167,24 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
   }
 
   async ensureReady(resource: vscode.Uri, automatic: boolean): Promise<boolean> {
+    if (!vscode.workspace.isTrusted || this.disposed) { return false; }
+    let selected: string;
+    try { selected = this.options(resource).provider; } catch { await this.refresh(resource); return false; }
+    if (selected === 'gemini' && !this.context.workspaceState.get<boolean>(GEMINI_CONSENT, false)) {
+      if (automatic) { return false; }
+      const approve = await vscode.window.showWarningMessage('Gemini sends selected code, explicit context and retrieved legal passages to Google and uses your API quota. Allow for this workspace?', 'Use Gemini');
+      if (approve !== 'Use Gemini') { return false; }
+      await this.context.workspaceState.update(GEMINI_CONSENT, true);
+    }
     const health = await this.refresh(resource);
     if (health?.status === 'ready') { return true; }
     if (automatic) { return false; }
     const stopped = health?.checks.find(c => c.id === 'ollama')?.status === 'unavailable' && !!health.endpoint;
-    const choice = await vscode.window.showWarningMessage('Local setup is unavailable. Check CLI, Ollama, model and corpus in AI Act Copilot.', ...(stopped ? ['Start local service', 'Open health'] : ['Open health']));
+    const choice = await vscode.window.showWarningMessage('Provider setup is unavailable. Check the AI Act Copilot sidebar.', ...(selected === 'gemini' ? ['Configure Gemini', 'Open health'] : stopped ? ['Start local service', 'Open health'] : ['Open health']));
+    if (choice === 'Configure Gemini') {
+      try { await this.configureGemini(resource); return this.health?.status === 'ready'; }
+      catch { vscode.window.showErrorMessage('Could not configure Gemini. Check VS Code secure storage and workspace settings.'); return false; }
+    }
     if (choice === 'Start local service') { return this.start(resource); }
     if (choice === 'Open health') { await this.show(); }
     return false;
@@ -143,6 +200,7 @@ export class HealthPanel implements vscode.TreeDataProvider<vscode.TreeItem> {
   private async startService(resource?: vscode.Uri): Promise<boolean> {
     if (!vscode.workspace.isTrusted || this.disposed) { throw new Error('Trust the workspace before starting a local tool.'); }
     const options = this.options(resource);
+    if (options.provider !== 'ollama') { throw new Error('Gemini is a cloud API; it does not require starting Ollama.'); }
     const host = localHost(options.endpoint);
     const before = await this.refresh(resource);
     if (!before) { throw new Error('Fix the CLI configuration before starting Ollama.'); }

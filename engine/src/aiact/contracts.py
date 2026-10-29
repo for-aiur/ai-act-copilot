@@ -62,6 +62,7 @@ class Coverage(Contract):
 
 
 class Metadata(Contract):
+    provider: Literal["ollama", "gemini"] | None = None
     model_id: str | None = None
     prompt_version: str = "poc-4"
     corpus_version: str | None = None

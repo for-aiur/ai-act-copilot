@@ -51,3 +51,11 @@ test('malformed or misleading completed payload is rejected', () => {
   const value=complete(); value.coverage.truncated=true;
   assert.throws(()=>parseResult(JSON.stringify(value),root,target,input));
 });
+
+test('Gemini provenance is validated and cloud data sharing appears in the report',()=>{
+ const value=complete();value.metadata.provider='gemini';value.metadata.model_id='gemini-3.1-flash-lite';
+ parseResult(JSON.stringify(value),root,target,input);
+ const text=report(value,line=>'file:///x.py#L'+line);
+ assert.ok(text.includes('Gemini cloud review'));assert.ok(text.includes('Provider: gemini'));
+ value.metadata.provider='unknown';assert.throws(()=>parseResult(JSON.stringify(value),root,target,input));
+});

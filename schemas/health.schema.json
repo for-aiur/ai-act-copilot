@@ -7,6 +7,7 @@
           "enum": [
             "engine",
             "ollama",
+            "gemini",
             "model",
             "corpus"
           ],
@@ -85,12 +86,21 @@
       "type": "string"
     },
     "engine_version": {
-      "default": "0.1.0",
+      "default": "0.2.0",
       "title": "Engine Version",
       "type": "string"
     },
     "python_version": {
       "title": "Python Version",
+      "type": "string"
+    },
+    "provider": {
+      "default": "ollama",
+      "enum": [
+        "ollama",
+        "gemini"
+      ],
+      "title": "Provider",
       "type": "string"
     },
     "endpoint": {

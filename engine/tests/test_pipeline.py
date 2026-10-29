@@ -153,3 +153,14 @@ def test_missing_question_bank_is_an_operational_error(tmp_path, monkeypatch):
     result = scan(ROOT / "examples/recruitment/ranker.py", Stub())
     assert result.status == "failed" and not result.findings
     assert result.errors[0].code == "question_bank_invalid"
+
+
+def test_gemini_shares_pipeline_without_ollama(monkeypatch):
+    from aiact.gemini import Gemini
+    from aiact.providers import Ollama
+    provider = Gemini(api_key="test-only-key")
+    monkeypatch.setattr(provider, "generate_json", Stub().generate_json)
+    monkeypatch.setattr(Ollama, "ensure_local_model", lambda _: pytest.fail("Gemini must not require Ollama"))
+    result = scan(ROOT / "examples/recruitment/ranker.py", provider)
+    assert result.status == "complete" and result.metadata.provider == "gemini"
+    assert result.findings[0].citations[0].section_id == "annex-iii-4-a"

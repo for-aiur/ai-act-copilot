@@ -31,6 +31,7 @@ export function parseResult(text: string, root: string, target: string, sourceTe
   for (const key of ['model_id', 'corpus_version', 'corpus_checksum', 'input_fingerprint']) {
     if (value.metadata[key] !== null && typeof value.metadata[key] !== 'string') { throw new Error('Malformed provenance.'); }
   }
+  if (value.metadata.provider != null && !['ollama','gemini'].includes(value.metadata.provider)) { throw new Error('Unsupported inference provider.'); }
   if (typeof value.metadata.prompt_version !== 'string' || !Number.isInteger(value.metadata.elapsed_ms) || value.metadata.elapsed_ms < 0) { throw new Error('Malformed provenance.'); }
   if (value.status === 'complete' && (value.errors.length || value.coverage.truncated || value.coverage.skipped_files.length)) { throw new Error('Inconsistent complete result.'); }
   if (value.status === 'failed' && !value.errors.length) { throw new Error('Failed result omitted its operational error.'); }
@@ -60,7 +61,8 @@ export function parseResult(text: string, root: string, target: string, sourceTe
 
 export function report(result: ScanResult, sourceLink: (line: number) => string): string {
   const sections = ['# AI Act Copilot', `**Review ${result.status}** · ${result.findings.length} finding(s) · ${result.coverage.scanned_files.length} Python file(s)`,
-    'Engineering review only. Zero findings does not certify compliance.', '## Coverage',
+    'Engineering review only. Zero findings does not certify compliance.',
+    ...(result.metadata.provider === 'gemini' ? ['**Gemini cloud review:** selected code/context and legal passages were sent to Google using your API quota.'] : []), '## Coverage',
     `Scanned: ${result.coverage.scanned_files.map(escapeText).join(', ') || 'none'}`,
     ...result.coverage.skipped_files.map(s => `- Skipped ${escapeText(s.path)}: ${escapeText(s.reason)}`),
     ...result.errors.map(e => `- **${escapeText(e.code)}:** ${escapeText(e.message)}`)];
@@ -75,7 +77,7 @@ export function report(result: ScanResult, sourceLink: (line: number) => string)
   }
   if (!result.findings.length && result.status === 'complete') { sections.push('No supported concern identified in this reviewed scope.'); }
   sections.push('## Scope limits', ...result.coverage.limitations.map(limit => `- ${escapeText(limit)}`),
-    '## Provenance', `Model: ${escapeText(result.metadata.model_id || 'unavailable')}`,
+    '## Provenance', `Provider: ${escapeText(result.metadata.provider || 'not recorded')}`, `Model: ${escapeText(result.metadata.model_id || 'unavailable')}`,
     `Corpus: ${escapeText(result.metadata.corpus_version || 'unavailable')}`,
     `Corpus SHA-256: ${escapeText(result.metadata.corpus_checksum || 'unavailable')}`,
     `Prompt: ${escapeText(result.metadata.prompt_version)} · elapsed ${result.metadata.elapsed_ms} ms`,

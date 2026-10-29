@@ -30,7 +30,7 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
     start = time.monotonic()
     deadline = start + budgets.total_seconds
     context = collect(path, explicit_context, budgets)
-    metadata = Metadata(model_id=provider.model, input_fingerprint=context.fingerprint or None)
+    metadata = Metadata(provider=getattr(provider, "name", None), model_id=provider.model, input_fingerprint=context.fingerprint or None)
     errors = list(context.errors)
     findings = []
     reviewed = False

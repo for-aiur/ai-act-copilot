@@ -48,16 +48,17 @@ with the law.
 
 1. **Open your project.** Open the repository root in VS Code, trust the workspace
    and save the Python file you want to review.
-2. **Check local setup.** Click the AI Act Copilot robot icon in the left sidebar.
-   The Local setup panel shows the review engine, local AI service, model and
-   legal-source cache. If Ollama is stopped, click **Start local service** and
-   keep its terminal open. Models and packages must already be installed.
+2. **Choose a provider.** Click the AI Act Copilot robot icon in the left sidebar.
+   The Provider setup panel shows engine, provider, model and corpus health. For
+   Gemini, run **AI Act Copilot: Configure Gemini**, enter your API key in the
+   masked field and approve cloud review. For local Ollama, install a model and
+   click **Start local service** if stopped; keep its terminal open.
 3. **Review and inspect.** Click **Review current Python file**. Read the report,
    inspect the marked code in Problems or hover, and open the official source.
    Use **Answer context question and review** to add facts for this session.
 
 You can also find these actions in the Command Palette under **AI Act Copilot**.
-The status-bar item opens the Local setup panel. **What is this tool?** reopens
+The status-bar item opens the Provider setup panel. **What is this tool?** reopens
 this introduction; **Future plans** jumps to the last section below.
 
 ## How to read the result
@@ -66,13 +67,13 @@ this introduction; **Future plans** jumps to the last section below.
 - **Potential concern:** something may warrant a closer engineering review.
 - **Complete:** the review finished within the reported scope.
 - **Partial:** some input or coverage was skipped or limited; read the coverage.
-- **Unavailable / failed:** the review could not finish. Check local setup.
+- **Unavailable / failed:** the review could not finish. Check provider setup.
 
 Review priority tells you what to inspect first. It is not a legal risk class.
 
 ## What works today
 
-This local prototype reviews bounded Python input with an installed Ollama model
+This prototype reviews bounded Python input with Ollama or opt-in Gemini
 and a small reviewed subset of official legal text. Its examples cover
 recruitment, biometric identification, a chatbot, ordinary non-AI code and a model
 whose purpose is unknown.
@@ -83,15 +84,30 @@ missing-context review, explanations use reviewed domain wording and questions
 come from reviewed options; the model also selects evidence, priority and a next
 action. It is not unrestricted legal reasoning.
 
-Reviews keep source analysis on this machine. Opening official links requires a
+Ollama keeps inference on this machine. Gemini sends selected source, explicit
+context and retrieved legal passages to Google using your API quota. The key is
+saved with VS Code SecretStorage, not in settings; **Remove saved Gemini API key**
+deletes that saved key and clears workspace consent. Opening official links requires a
 user action; refreshing legal sources and downloading models are separate,
 explicit setup operations. Explicit answers are held in extension memory for
 the session. The prototype cannot infer a full deployment, determine every actor
 role, or cover every provision from one file.
 
-## Local setup and optional settings
+## Gemini setup
 
-Install the Python engine and a local Ollama model before reviewing. Configure
+Run **AI Act Copilot: Configure Gemini**. It asks for your key in a masked field,
+explains the data sent to Google, saves the key securely and selects Gemini for
+this workspace. Ollama is not required. Set `aiact.geminiModel` to change the
+API model; `aiact.model` is only for Ollama. **Refresh provider health** checks API
+key/model access without sending code or generating a review. Quota errors stay
+visible; there is no automatic provider fallback.
+
+CLI setup, pricing and data-sharing details: [Gemini guide](https://github.com/for-aiur/ai-act-copilot/blob/main/docs/GEMINI.md).
+
+## Provider setup and optional settings
+
+Install the Python engine before reviewing. Gemini needs an API key; Ollama needs
+a local service and downloaded model. Configure
 `aiact.executable` with the CLI path, for example
 `${workspaceFolder}/engine/.venv/bin/aiact`, and select an installed `aiact.model` tag.
 Ollama is the local program that runs that model.
@@ -116,7 +132,7 @@ from its progress notification.
 
 There are two ways to change these settings. You do not need to edit the engine.
 
-**Settings screen:** press **Cmd+,** on macOS or **Ctrl+,** on Windows/Linux,
+**Settings screen:** press **Cmd+,** on macOS or **Ctrl+,** on Linux,
 then search for `@ext:evros-labs.ai-act-copilot`. Choose **Workspace** to change
 only this project, or **User** to use a setting across projects. Find **Review On
 Save** to enable automatic review, or **Ollama Executable** to choose a binary.
@@ -138,6 +154,8 @@ Paths containing spaces need no extra quotes inside the JSON string.
 
 | Setting | What it controls | When to change it |
 | --- | --- | --- |
+| `aiact.provider` | `ollama` (default) or `gemini` | Choose local or cloud inference |
+| `aiact.geminiModel` | Gemini model ID, default `gemini-3.1-flash-lite` | Choose another API model your key can access |
 | `aiact.executable` | The Python review CLI, which reads code and produces the report | When the engine is installed elsewhere |
 | `aiact.ollamaExecutable` | The program that runs the local model; used by **Start local service** | Only when Ollama is outside PATH or you want a specific installation |
 | `aiact.model` | The exact installed model tag | When you explicitly install and test another local model |
@@ -165,8 +183,9 @@ paths. For a custom cache, an example is
 
 To enable on-save, change the value to `"aiact.reviewOnSave": true`. It waits
 800 ms after the last save, keeps one scan active and discards results if the
-reviewed content changes. It never starts Ollama or prompts automatically. If
-setup is unavailable, open Local setup and start/check the service manually.
+reviewed content changes. It never starts Ollama or prompts automatically. Gemini on-save also requires
+previous cloud consent for this workspace. If
+setup is unavailable, open Provider setup and start/check the service manually.
 
 After changing settings, click **Refresh health**. Startup settings affect the
 next service start; a healthy existing service is reused. If you need to restart
@@ -181,8 +200,7 @@ for the difference between User and Workspace settings.
 
 Build with Node 22+ and npm: `npm ci`, `npm test`, `npm run package`. The VSIX is
 for local installation; nothing is published to the Marketplace. The extension
-calls the engine with argument arrays and contains no legal reasoning or cloud
-inference. It uses native editor surfaces, escapes generated text and does not
+calls the engine with argument arrays and contains no legal reasoning. Provider adapters run in the Python engine. It uses native editor surfaces, escapes generated text and does not
 enable arbitrary Markdown command links.
 
 ## Planned next steps

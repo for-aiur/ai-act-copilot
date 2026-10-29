@@ -71,3 +71,22 @@ def test_doctor_json_usage_error_is_one_document(capsys):
     assert main(["doctor", "--json", "--unknown-flag"]) == 2
     result = HealthResult.model_validate_json(capsys.readouterr().out)
     assert result.errors[0].code == "configuration"
+
+
+def test_gemini_health_checks_key_and_model_without_ollama(monkeypatch):
+    class Cloud:
+        def __init__(self, model): self.model = model
+        def check_model(self): pass
+    monkeypatch.setattr(doctor, "Gemini", Cloud)
+    monkeypatch.setattr(doctor, "Ollama", lambda *a: pytest.fail("Ollama contacted for Gemini"))
+    result = inspect_setup("gemini-3.1-flash-lite", "http://127.0.0.1:11434", provider_name="gemini")
+    assert result.status == "ready" and result.provider == "gemini"
+    assert {c.id for c in result.checks} == {"engine", "corpus", "gemini", "model"}
+
+
+def test_gemini_missing_key_keeps_corpus_visible(monkeypatch, capsys):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert main(["doctor", "--provider", "gemini", "--json"]) == 1
+    result = HealthResult.model_validate_json(capsys.readouterr().out)
+    assert result.provider == "gemini" and result.errors[0].code == "credentials_missing"
+    assert next(c for c in result.checks if c.id == "corpus").status == "ready"

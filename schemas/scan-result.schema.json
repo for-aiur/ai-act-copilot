@@ -186,6 +186,22 @@
     "Metadata": {
       "additionalProperties": false,
       "properties": {
+        "provider": {
+          "anyOf": [
+            {
+              "enum": [
+                "ollama",
+                "gemini"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
         "model_id": {
           "anyOf": [
             {

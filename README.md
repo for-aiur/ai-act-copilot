@@ -33,7 +33,7 @@ flowchart LR
 “Corpus” just means **the legal text file the tool can search**. Our
 [`corpus.json`](engine/src/aiact/data/corpus.json) contains those six passages,
 their source links and verification details. It ships with the Python engine.
-During a scan, the file is read into memory. No legal website or API is called.
+During a scan, the file is read into memory. No legal website is called; inference uses the selected provider.
 
 ## What happens when you scan code?
 
@@ -49,7 +49,8 @@ flowchart TD
     F --> G[JSON: finding, evidence and context question]
 ```
 
-Both model calls use **Ollama**, the program running the model on your machine.
+Both calls use your selected provider: **Ollama** runs the model locally;
+**Gemini** sends the selected code/context and retrieved passages to Google.
 For example, the first call may identify that code ranks job applicants. The
 engine then uses keyword matching to select the saved recruitment passage.
 The second call gets the code evidence, extracted facts and that passage to
@@ -81,17 +82,32 @@ articles or update changed legal wording. That needs a reviewed corpus revision.
 
 ## Run a review
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and
-[Ollama](https://ollama.com/download), and start Ollama. From the repository root:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Choose one provider; `uv run` prepares Python and dependencies automatically.
+No environment activation is needed.
+
+**Gemini (cloud):** create an [API key](https://aistudio.google.com/apikey), put it
+in your shell's `GEMINI_API_KEY` environment variable, then run:
+
+```sh
+uv run --project engine --python 3.12 aiact scan examples/recruitment/ranker.py --provider gemini --json
+```
+
+The default is `gemini-3.1-flash-lite`. Override with `--model` or, in VS Code,
+`aiact.geminiModel`. Selected source, explicit context and retrieved legal text go
+to Google using your API quota. Ollama is not needed. See [Gemini setup](docs/GEMINI.md).
+
+**Ollama (local):**
+
+Install [Ollama](https://ollama.com/download) and start it. From the repository root:
 
 ```sh
 ollama pull qwen2.5:1.5b
 uv run --project engine --python 3.12 aiact scan examples/recruitment/ranker.py --model qwen2.5:1.5b --json
 ```
 
-Download the model once. `uv run` prepares Python, installs the engine and its
-dependencies in `engine/.venv`, then runs the scan. No environment activation
-is needed. For a setup check, run `uv run --project engine aiact doctor --model qwen2.5:1.5b`.
+Download the model once. The engine environment lives in `engine/.venv`.
+For a local setup check, run `uv run --project engine aiact doctor --model qwen2.5:1.5b`.
 
 `scan --json` returns `complete`, `partial` or `failed` status, findings,
 coverage, errors and model/corpus provenance. Exit code 0 means the review
@@ -107,7 +123,7 @@ Published changes are listed in the [changelog](CHANGELOG.md).
 ## Choose a model
 
 This repository's workspace selects `qwen2.5:1.5b` for a smaller local model.
-In VS Code Settings, search `aiact.model` and choose Workspace, or edit:
+For Ollama, in VS Code Settings, search `aiact.model` and choose Workspace, or edit:
 
 ```json
 {
@@ -121,18 +137,24 @@ setting does not download a model. Review results identify the model used.
 
 ## Install the VS Code extension
 
-First complete the CLI setup above. Then:
+Prepare the engine once with `uv run --project engine aiact --version`. Then:
 
-1. Download `ai-act-copilot-0.1.6.vsix` from the
-   [POC release](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.4).
-2. In VS Code, open **Extensions → … → Install from VSIX**, select the file and
-   run **Developer: Reload Window** if VS Code is already open.
-3. Open this repository root, trust it, open a Python file and run
-   **AI Act Copilot: Review current Python file** from the Command Palette.
+1. For the Gemini preview, build from this checkout with
+   `npm --prefix extensions/vscode ci` and `npm --prefix extensions/vscode run package`.
+   The [published POC](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.4)
+   is an older Ollama-only snapshot.
+2. In VS Code, open **Extensions → … → Install from VSIX**, select
+   `extensions/vscode/ai-act-copilot-0.2.0.vsix`, then **Developer: Reload Window**.
+3. Open the repository root and trust it. For Gemini, run
+   **AI Act Copilot: Configure Gemini**, enter your key in the masked field and
+   approve cloud review for this workspace. The key goes into VS Code's secure
+   storage, never settings JSON.
+4. Open a Python file and run **AI Act Copilot: Review current Python file**.
 
 The checked-in workspace settings point to `engine/.venv/bin/aiact`, created by
-uv. The robot icon opens Local setup. If installed Ollama is stopped, use
-**Start local service**. The extension uses the same CLI and JSON results.
+uv. The robot icon opens Provider setup with engine, provider, model and corpus
+health. For local Ollama, choose `aiact.provider: ollama` and use **Start local
+service** if needed. Both providers use the same review pipeline and report.
 
 ## CI
 

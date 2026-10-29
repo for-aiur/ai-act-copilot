@@ -107,3 +107,13 @@ Directories and function boundaries are enough for modularity. A general plugin 
 - This assessment is not legal advice and is not a legal corpus. An implementation task adding legal content must verify the current official text separately.
 
 This change adds only a plan and agent instructions. No implementation tests, live-model benchmark, offline-operation test, or VSIX build has been run.
+
+## Authorized Gemini follow-up (2026-10-29)
+
+After observing slow local reviews, the user requested an optional Gemini API
+provider using their own key. This explicitly extends the original local-only
+POC scope. Ollama stays available and is still the default; cloud inference is
+selected explicitly, with workspace consent and secure key entry in VS Code.
+Corpus retrieval, question options and evidence validation stay shared/local.
+See [Gemini setup](GEMINI.md) and [observed verification](VERIFICATION.md).
+Live Gemini quality and latency require a user key and remain to be measured.

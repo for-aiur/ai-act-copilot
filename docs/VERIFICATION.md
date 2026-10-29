@@ -243,3 +243,40 @@ wording, notably the initial recruitment and biometric results. This is a known
 quality limitation of the smaller model, not a problem solved by changing the
 configuration. Saved local results are gitignored. Published POC tags retain
 the original tested 3B configuration; this workspace change is unreleased.
+
+## Optional Gemini provider (0.2.0 preview, 2026-10-29)
+
+User-authorized cloud option added through the existing Provider protocol. The
+same extraction, retrieval, question-bank and evidence-validation pipeline is
+used. Defaults remain local Ollama; Gemini explicitly selects the fixed Google
+API with a user-supplied key. No fallback. New optional result provider metadata
+and provider-aware health schema were exported and tested with both adapters.
+
+Observed checks:
+
+- `engine/.venv/bin/python -m pytest engine/tests -q`: **76 passed**. The macOS
+  helper tests require running outside the outer agent sandbox because they
+  themselves invoke sandbox-exec; the initial restricted run failed those three
+  helper tests only, then the unrestricted full suite passed.
+- `npm --prefix extensions/vscode test`: **29 passed**, including secure-key
+  environment handoff, cloud consent, trust, provider health, stale settings,
+  response/report provenance and cancelled/failed key storage paths.
+- HTTP-mocked Gemini checks cover schema-constrained requests, bounded malformed
+  responses, HTTP/auth/quota/timeout errors, no redirect, no key/body leakage,
+  and model metadata health without generation. They do not call Google.
+- `aiact doctor --provider gemini --json` with no key: exit 1, one structured
+  unavailable result; engine/corpus remain ready and credentials_missing is
+  explicit. No Ollama start/fallback or cloud request occurs.
+- `npm --prefix extensions/vscode run package` and `uv build --project engine
+  --wheel --offline --out-dir dist/gemini-preview`: passed. ZIP inspection found
+  the Gemini adapter, packaged corpus/question bank, and compiled VS Code
+  credential helper/configure command in version 0.2.0.
+
+Live Gemini inference, actual API-key access, latency and semantic quality are
+**not yet verified**. A user key must be entered through Configure Gemini or the
+CLI environment. No key has been requested in chat. Native UI interaction with
+that real key remains a manual check; mocked editor tests are not UI evidence.
+
+- Final wheel installed in an isolated uv environment outside the checkout with
+  explicit Python 3.12; Gemini import and corpus/question-bank loading passed.
+  VS Code CLI confirmed `evros-labs.ai-act-copilot@0.2.0` installed.

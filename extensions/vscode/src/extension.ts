@@ -3,6 +3,7 @@ import {execFile, ChildProcess} from 'node:child_process';
 import {ScanResult} from './contracts';
 import {escapeText, fingerprint, isFresh, parseResult, report} from './core';
 import {HealthPanel} from './health';
+import {inferenceSettings, localEnvironment, geminiEnvironment, GEMINI_CONSENT} from './inference';
 
 export function activate(context: vscode.ExtensionContext): void {
   const health = new HealthPanel(context);
@@ -19,11 +20,12 @@ export function activate(context: vscode.ExtensionContext): void {
   let queued: vscode.TextDocument | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
+  let configurationVersion = 0;
   const explicitContext = new Map<string, string>();
 
   function state(label: string, icon = 'shield'): void {
     status.text = `$(${icon}) AI Act: ${label}`;
-    status.tooltip = 'Local engineering review, not certification. Click to open local health and review actions.';
+    status.tooltip = 'Engineering review, not certification. Click to open provider setup and review actions.';
     status.show();
   }
   function updateReport(text: string): void { reportText = text; changes.fire(reportUri); }
@@ -43,20 +45,28 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!vscode.workspace.isTrusted) { state('Unavailable', 'lock'); if (!automatic) { vscode.window.showWarningMessage('Trust this workspace before running the local review executable.'); } return; }
     if (document.languageId !== 'python' || document.uri.scheme !== 'file') { if (!automatic) { vscode.window.showInformationMessage('Open a saved Python file to review.'); } return; }
     if (document.isDirty) { if (!automatic) { vscode.window.showInformationMessage('Save the Python file before reviewing it.'); } return; }
-    if (active) { if (automatic) { queued = document; } else { vscode.window.showInformationMessage('A local review is already running.'); } return; }
+    if (active) { if (automatic) { queued = document; } else { vscode.window.showInformationMessage('A review is already running.'); } return; }
     const folder = vscode.workspace.getWorkspaceFolder(document.uri);
     if (!folder) { vscode.window.showInformationMessage('Open the project folder in VS Code before reviewing.'); return; }
+    const healthConfigVersion = configurationVersion;
     if (!await health.ensureReady(document.uri, automatic)) {
       state('Unavailable', 'warning');
-      updateReport('# AI Act Copilot\n\n**Local setup unavailable.** Open the AI Act Copilot sidebar or run **AI Act Copilot: Show local health** to check and start the local service.\n');
+      updateReport('# AI Act Copilot\n\n**Provider setup unavailable.** Open the AI Act Copilot sidebar to configure the selected provider.\n');
       return;
     }
     // Another request or an edit can arrive while the health check is pending.
     if (active) { if (automatic) { queued = document; } return; }
-    if (document.isClosed || document.isDirty) { state('Needs review', 'edit'); return; }
+    if (healthConfigVersion !== configurationVersion || document.isClosed || document.isDirty) { state('Needs review', 'edit'); return; }
     const config = vscode.workspace.getConfiguration('aiact', document.uri);
     const executable = config.get<string>('executable', 'aiact').replace('${workspaceFolder}', folder.uri.fsPath);
-    const args = ['scan', document.uri.fsPath, '--json', '--model', config.get<string>('model', 'qwen2.5:3b'),
+    const {provider, model} = inferenceSettings(config);
+    const configVersion = configurationVersion;
+    let env: NodeJS.ProcessEnv;
+    try { env = provider === 'gemini' ? await geminiEnvironment(context) : localEnvironment(); }
+    catch { state('Unavailable', 'warning'); if (!automatic) { vscode.window.showErrorMessage('Could not read the Gemini API key from secure storage.'); } return; }
+    if (active || !vscode.workspace.isTrusted || configVersion !== configurationVersion || document.isClosed || document.isDirty ||
+        (provider === 'gemini' && !context.workspaceState.get<boolean>(GEMINI_CONSENT, false))) { return; }
+    const args = ['scan', document.uri.fsPath, '--json', '--model', model, '--provider', provider,
       '--endpoint', config.get<string>('endpoint', 'http://127.0.0.1:11434')];
     const corpus = config.get<string>('corpusPath', '');
     if (corpus) { args.push('--corpus', corpus.replace('${workspaceFolder}', folder.uri.fsPath)); }
@@ -69,25 +79,27 @@ export function activate(context: vscode.ExtensionContext): void {
     diagnostics.delete(document.uri);
     last = undefined;
     activeUri = document.uri.toString();
-    state('Reviewing locally…', 'sync~spin');
-    updateReport('# AI Act Copilot\n\n**Reviewing locally…** Two bounded model passes; source stays on this device.\n');
-    await vscode.window.withProgress({location: vscode.ProgressLocation.Notification, title: 'AI Act Copilot: reviewing locally', cancellable: true}, async (_progress, token) => {
+    const label = provider === 'gemini' ? 'Reviewing with Gemini…' : 'Reviewing locally…';
+    state(label, 'sync~spin');
+    updateReport(`# AI Act Copilot\n\n**${label}** ${provider === 'gemini' ? 'Selected source/context and legal passages are sent to Google using your API quota.' : 'Inference stays on this device.'}\n`);
+    await vscode.window.withProgress({location: vscode.ProgressLocation.Notification, title: `AI Act Copilot: ${provider === 'gemini' ? 'Gemini cloud review' : 'local review'}`, cancellable: true}, async (_progress, token) => {
       await new Promise<void>(resolve => {
         let cancelled = false;
         const cancellation = token.onCancellationRequested(() => { cancelled = true; active?.kill(); });
-        active = execFile(executable, args, {cwd: folder.uri.fsPath, timeout: 130_000, maxBuffer: 2_000_000, shell: false, windowsHide: true}, (error, stdout) => {
+        active = execFile(executable, args, {cwd: folder.uri.fsPath, timeout: 130_000, maxBuffer: 2_000_000, shell: false, windowsHide: true, env}, (error, stdout) => {
           cancellation.dispose();
           active = undefined;
           activeUri = undefined;
           try {
             if (disposed) { return; }
             if (cancelled) { state('Unavailable', 'circle-slash'); updateReport('# AI Act Copilot\n\n**Review cancelled.** Rerun when ready.\n'); return; }
-            if (document.isClosed || !isFresh(version, hash, document.version, document.getText())) {
+            if (configVersion !== configurationVersion || document.isClosed || !isFresh(version, hash, document.version, document.getText())) {
               diagnostics.delete(document.uri); state('Needs review', 'edit');
-              updateReport('# AI Act Copilot\n\n**Source changed during review.** Stale results were discarded. Rerun for current content.\n'); return;
+              updateReport('# AI Act Copilot\n\n**Source or inference settings changed during review.** Stale results were discarded. Rerun for current content.\n'); return;
             }
             if (!stdout.trim()) { throw new Error(error ? 'Engine unavailable. Check the aiact.executable setting and run aiact doctor in the terminal.' : 'Engine returned no result.'); }
             const result = parseResult(stdout, folder.uri.fsPath, document.uri.fsPath, source);
+            if ((result.metadata.provider || 'ollama') !== provider) { throw new Error('Engine provider does not match settings. Update the engine.'); }
             last = {result, document, root: folder.uri.fsPath};
             const items = result.findings.map(f => {
               const range = new vscode.Range(f.evidence.start_line - 1, 0, f.evidence.end_line - 1, document.lineAt(f.evidence.end_line - 1).text.length);
@@ -97,7 +109,7 @@ export function activate(context: vscode.ExtensionContext): void {
               return item;
             });
             diagnostics.set(document.uri, items);
-            const unavailable = result.errors.some(e => ['model_unavailable', 'corpus_unavailable'].includes(e.code));
+            const unavailable = result.errors.some(e => ['model_unavailable', 'corpus_unavailable', 'credentials_missing', 'authentication', 'provider_unavailable', 'rate_limit'].includes(e.code));
             if (unavailable) { void health.refresh(document.uri); }
             state(unavailable ? 'Unavailable' : `${result.status[0].toUpperCase()}${result.status.slice(1)} · ${items.length}`, result.status === 'complete' ? 'shield' : 'warning');
             updateReport(report(result, line => document.uri.with({fragment: `L${line}`}).toString()));
@@ -152,6 +164,9 @@ export function activate(context: vscode.ExtensionContext): void {
       if (finding.context_question) { markdown.appendText(`\n\nQuestion: ${finding.context_question}`); }
       return new vscode.Hover(markdown);
     }}),
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration('aiact')) { configurationVersion++; if (last) { invalidate(last.document); } }
+    }),
     vscode.workspace.onDidChangeTextDocument(event => { if (event.contentChanges.length) { invalidate(event.document); if (activeUri === event.document.uri.toString()) { state('Reviewing changed source…', 'sync~spin'); } } }),
     vscode.workspace.onDidSaveTextDocument(document => {
       if (!vscode.workspace.getConfiguration('aiact', document.uri).get<boolean>('reviewOnSave', false)) { return; }

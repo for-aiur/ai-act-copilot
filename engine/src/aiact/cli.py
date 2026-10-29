@@ -9,7 +9,7 @@ from .context import Budgets
 from .contracts import ScanError, ScanResult
 from .corpus import default_cache, update_corpus
 from .pipeline import scan
-from .providers import Ollama, ReviewFailure
+from .providers import create_provider, default_model, ReviewFailure
 from .doctor import HealthResult, inspect_setup
 
 
@@ -23,10 +23,10 @@ class Parser(argparse.ArgumentParser):
 
 
 def parser():
-    result = Parser(prog="aiact", description="Local AI Act engineering review; not certification")
+    result = Parser(prog="aiact", description="AI Act engineering review; choose local Ollama or opt-in Gemini")
     result.add_argument("--version", action="version", version=__version__)
     sub = result.add_subparsers(dest="command", required=True)
-    review = sub.add_parser("scan", help="Review explicitly selected Python input locally")
+    review = sub.add_parser("scan", help="Review explicitly selected Python input")
     review.add_argument("path", type=Path)
     review.add_argument("--json", action="store_true")
     review.add_argument("--context", default="", help="Explicit purpose/deployment facts; no automatic README ingestion")
@@ -38,7 +38,8 @@ def parser():
     doctor.add_argument("--json", action="store_true", help="Structured, read-only health checks for editor integrations")
     update = sub.add_parser("update", help="Explicitly verify official subset and atomically refresh local cache")
     for command in [review, doctor]:
-        command.add_argument("--model", default=os.environ.get("AIACT_MODEL", "qwen2.5:3b"))
+        command.add_argument("--provider", choices=["ollama", "gemini"], default=os.environ.get("AIACT_PROVIDER", "ollama"), help="Gemini sends selected code/context to Google; requires GEMINI_API_KEY")
+        command.add_argument("--model", default=os.environ.get("AIACT_MODEL"), help="Model ID; defaults depend on the selected provider")
         command.add_argument("--endpoint", default=os.environ.get("AIACT_OLLAMA_URL", "http://127.0.0.1:11434"))
     for command in [review, doctor, update]:
         command.add_argument("--corpus", type=Path, default=os.environ.get("AIACT_CORPUS"), help="Explicit cache path; defaults to verified user cache or bundled subset")
@@ -86,15 +87,16 @@ def main(argv=None):
             print(f"Verified {len(data['sections'])} reviewed official passages; saved {args.corpus or default_cache()}.")
             print("Refresh verifies the reviewed subset; changed/new law requires manual corpus review.")
             return 0
+        model = args.model or default_model(args.provider)
         if args.command == "doctor":
-            health = inspect_setup(args.model, args.endpoint, args.corpus)
+            health = inspect_setup(model, args.endpoint, args.corpus, args.provider)
             if args.json:
                 print(health.model_dump_json())
             else:
                 for check in health.checks:
                     print(f"{check.id}: {check.status} · {check.detail}")
             return 2 if any(e.code == "configuration" for e in health.errors) else 0 if health.status == "ready" else 1
-        provider = Ollama(args.model, args.endpoint)
+        provider = create_provider(args.provider, model, args.endpoint)
         budgets = Budgets(files=args.max_files, source_bytes=args.max_source_bytes,
                           request_seconds=min(args.timeout, 60), total_seconds=args.deadline)
         result = scan(args.path, provider, args.corpus, args.context, budgets)

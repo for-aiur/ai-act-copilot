@@ -9,5 +9,5 @@ export interface ScanResult {
   schema_version: '1.0'; status: 'complete' | 'partial' | 'failed'; findings: Finding[];
   errors: {code: string; message: string; path: string | null}[];
   coverage: {scanned_files: string[]; skipped_files: {path: string; reason: string}[]; truncated: boolean; supported_languages: string[]; corpus_scope: string[]; limitations: string[]};
-  metadata: {model_id: string | null; prompt_version: string; corpus_version: string | null; corpus_checksum: string | null; input_fingerprint: string | null; elapsed_ms: number};
+  metadata: {provider?: 'ollama' | 'gemini' | null; model_id: string | null; prompt_version: string; corpus_version: string | null; corpus_checksum: string | null; input_fingerprint: string | null; elapsed_ms: number};
 }

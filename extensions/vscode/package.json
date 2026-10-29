@@ -2,7 +2,7 @@
   "name": "ai-act-copilot",
   "displayName": "AI Act Copilot",
   "description": "Review AI use in Python code with source evidence, official EU passages and practical context questions.",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "publisher": "evros-labs",
   "engines": {
     "vscode": "^1.85.0"
@@ -56,12 +56,12 @@
       },
       {
         "command": "aiact.showHealth",
-        "title": "AI Act Copilot: Show local health",
+        "title": "AI Act Copilot: Show provider health",
         "icon": "$(shield)"
       },
       {
         "command": "aiact.refreshHealth",
-        "title": "AI Act Copilot: Refresh local health",
+        "title": "AI Act Copilot: Refresh provider health",
         "icon": "$(refresh)"
       },
       {
@@ -78,6 +78,14 @@
         "command": "aiact.showRoadmap",
         "title": "AI Act Copilot: Future plans",
         "icon": "$(telescope)"
+      },
+      {
+        "command": "aiact.configureGemini",
+        "title": "AI Act Copilot: Configure Gemini"
+      },
+      {
+        "command": "aiact.removeGeminiKey",
+        "title": "AI Act Copilot: Remove saved Gemini API key"
       }
     ],
     "configuration": {
@@ -107,13 +115,27 @@
         "aiact.reviewOnSave": {
           "type": "boolean",
           "default": false,
-          "description": "Opt in to local reviews after save (800 ms debounce; one active scan)."
+          "description": "Opt in to reviews after save (800 ms debounce; one active scan). Gemini requires prior workspace cloud consent."
         },
         "aiact.ollamaExecutable": {
           "type": "string",
           "default": "ollama",
           "scope": "machine-overridable",
           "description": "Ollama binary for the Start local service action. The project helper or bundled local binary is used when present. No downloads."
+        },
+        "aiact.provider": {
+          "type": "string",
+          "enum": [
+            "ollama",
+            "gemini"
+          ],
+          "default": "ollama",
+          "description": "Inference provider. Gemini sends selected code/context and retrieved legal passages to Google and uses your API quota. Cloud reviews require approval for this workspace."
+        },
+        "aiact.geminiModel": {
+          "type": "string",
+          "default": "gemini-3.1-flash-lite",
+          "description": "Gemini model ID. Uses the securely saved API key; configure it with AI Act Copilot: Configure Gemini."
         }
       }
     },
@@ -156,7 +178,7 @@
       "aiact": [
         {
           "id": "aiact.health",
-          "name": "Local setup"
+          "name": "Provider setup"
         }
       ]
     }
