@@ -31,6 +31,7 @@ In **Repository > Settings > Secrets and variables > Actions**:
 | Secret | `AIACT_APP_PRIVATE_KEY` | Entire PEM including BEGIN/END lines |
 | Secret | `GEMINI_API_KEY` | Existing Gemini key |
 | Variable | `AIACT_PR_REVIEW_ENABLED` | `true` |
+| Variable | `AIACT_PR_REVIEW_MODE` | `manual` for demos, `automatic` for PR/push scans |
 
 Merge the reviewed YIL-18 implementation into the default branch. Its workflow
 and role configuration run from that trusted branch. Tokens are scoped to this
@@ -40,15 +41,20 @@ rotation requires a rescan to replace old snapshot signatures.
 New comments use the App name/avatar. Earlier `github-actions[bot]` comments are
 left untouched and do not satisfy this App's gate.
 
+For manual demos, use **Actions > AI Act PR review > Run workflow**, select
+`main` and enter the PR number. `/aiact rescan` in the PR conversation also works.
+The master enable variable must stay true in either mode.
+
 ## Test before enforcing
 
 Use an internal PR changing a Python example:
 
 1. Confirm App-authored findings and an initially failing acknowledgement check.
 2. Post an inline context reply. Expect a receipt, with the gate still blocked.
-3. Copy each finding's acknowledge/false-positive command with a reason. Only all
-   decided findings should pass. Edit/delete a decision or post `reopen` to block
-   it again. Push a new commit and verify old tokens no longer work.
+3. Reply `/aiact ack` under each finding, or `/aiact fp <reason>` where it does
+   not apply. Only all decided findings should pass. Edit/delete a decision or
+   post `/aiact reopen` to block it again. Push a new commit and verify replies
+   under old threads cannot acknowledge the new review.
 
 This uses real Gemini quota. Local tests use labeled test-only transports and do
 not prove live App registration works.

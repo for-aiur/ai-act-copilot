@@ -397,3 +397,27 @@ policy. Some commands never received verified event receipts, correctly keeping
 the check failed. YIL-20 adds `queue: max` to retain up to 100 pending runs while
 processing sequentially; engine code and dependencies are unchanged. Complete
 rapid-reply/reopen acceptance and repository required-check setup remain pending.
+
+## YIL-22: simple replies and manual demo mode
+
+Engine 0.4.2 keeps acknowledgement as awareness with an open follow-up concern.
+`/aiact ack` needs no reason; `/aiact fp <reason>` does. Short replies bind to the
+signed snapshot's current thread ID; a changed revision or finding gets a new
+thread, while an identical review reuses the existing one. Legacy explicit
+commands remain accepted.
+
+- `engine/.venv/bin/python -m pytest engine/tests -q`: **167 passed in 17.12s**,
+  including 36 gate tests. Added coverage for reason-free ack, FP reasons, roles,
+  stale/current thread binding, stable-thread reuse, changed finding threads,
+  file-level review comments, manual/automatic mode, authorized dispatch and
+  invalid PR inputs. Model/GitHub transports are test doubles.
+- Workflow YAML parsed successfully with the manual PR-number form, default-
+  branch dispatch guard and bounded sequential reply queue. `git diff --check`
+  passed. Engine lock resolved the same 21 packages with version metadata only.
+- New modes and short replies are not live-verified until this implementation
+  reaches trusted main. The operator must set `AIACT_PR_REVIEW_MODE=manual` for
+  a manual-only demo; the master enable variable stays true.
+- The existing App flow was verified live in YIL-19/YIL-20, including four burst
+  receipts, check success, stale-token rejection and reopen failure. The private
+  repository plan does not enforce its saved ruleset; no hard merge-blocking
+  claim is made.

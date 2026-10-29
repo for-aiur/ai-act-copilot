@@ -13,6 +13,7 @@ CHECK_NAME = 'AI Act Copilot / acknowledgements'
 SNAPSHOT = re.compile(r'<!-- aiact-snapshot:([A-Za-z0-9_-]+)\.([a-f0-9]{64}) -->')
 PROOF = re.compile(r'<!-- aiact-decision:([A-Za-z0-9_-]+)\.([a-f0-9]{64}) -->')
 COMMAND = re.compile(r'/aiact (acknowledge|ack|false-positive|fp|reopen) ([a-f0-9]{20}) ([a-f0-9]{16}) ([\s\S]{1,2000})')
+SHORT_COMMAND = re.compile(r'/aiact (acknowledge|ack|false-positive|fp|reopen)(?: ([\s\S]{1,2000}))?')
 
 
 def owned(comment, client):
@@ -62,6 +63,9 @@ def load_snapshot(comment, key, repo, number, head, base, policy):
                     not isinstance(finding['roles'], list)):
                 return None
             ids.add(finding['id'])
+            if 'thread_id' in finding and (type(finding['thread_id']) is not int or finding['thread_id'] <= 0
+                                          or finding.get('thread_kind') not in {'issue', 'review'}):
+                return None
         return data
     except (ValueError, TypeError, KeyError):
         return None
@@ -124,15 +128,29 @@ def replay(config, snapshot, comments, client, repo, number, proofs):
             continue  # This is a scan request, not a finding decision.
         match = COMMAND.fullmatch(body)
         parent = roots.get(comment.get('in_reply_to_id')) if kind == 'review' else None
-        if not match:
+        short = SHORT_COMMAND.fullmatch(body) if not match else None
+        if short:
+            finding = next((f for f in findings.values() if kind == 'review' and f.get('thread_kind') == 'review'
+                            and f.get('thread_id') == comment.get('in_reply_to_id') and parent and parent[1] == f['id']), None)
+            if not finding:
+                outcomes[(kind, comment['id'])] = 'Reply directly in the CURRENT finding thread with `/aiact ack` or `/aiact fp <reason>`. An older thread or a PR conversation comment cannot identify the current finding.'
+                continue
+            action, reason = short.groups()
+            finding_id, token = finding['id'], finding['token']
+        elif match:
+            action, finding_id, token, reason = match.groups()
+            finding = findings.get(finding_id)
+        else:
             if body.startswith('/aiact '):
-                outcomes[(kind, comment['id'])] = 'Command not accepted. Copy a current command from the finding and include its ID, review token and a reason.'
+                outcomes[(kind, comment['id'])] = 'Command not accepted. Reply in the current finding thread with `/aiact ack` or `/aiact fp <reason>`.'
             elif parent and parent[1] in findings:
                 outcomes[(kind, comment['id'])] = 'Context received as an unverified human statement. It was not sent to the model and does not acknowledge the finding. Use the command shown in the finding to record a decision.'
             continue
-        action, finding_id, token, reason = match.groups()
-        finding = findings.get(finding_id)
-        if not reason.strip() or not finding or token != finding['token'] or (parent and parent[1] != finding_id):
+        reason = (reason or '').strip()
+        if action in {'fp', 'false-positive'} and not reason:
+            outcomes[(kind, comment['id'])] = 'False-positive needs a brief reason: `/aiact fp <why this concern does not apply>`.'
+            continue
+        if not finding or token != finding['token'] or (parent and parent[1] != finding_id):
             outcomes[(kind, comment['id'])] = 'Decision not accepted: stale or mismatched finding/token. Copy the command from the current finding.'
             continue
         proof = proofs.get((kind, comment['id']))
@@ -155,6 +173,8 @@ def replay(config, snapshot, comments, client, repo, number, proofs):
         action = {'ack': 'acknowledge', 'fp': 'false-positive'}.get(action, action)
         states[finding_id] = action
         outcomes[(kind, comment['id'])] = f'Recorded **{action}** for `{finding_id}` from {safe_text(actor)}. This records a human decision, not a compliance determination.'
+        if action == 'acknowledge':
+            outcomes[(kind, comment['id'])] += ' The concern remains open for follow-up; acknowledgement does not mean resolved.'
     pending = [fid for fid in findings if states.get(fid) not in {'acknowledge', 'false-positive'}]
     return pending, outcomes
 
@@ -197,5 +217,5 @@ def finish(client, config, repo, number, pr, check_id, snapshot, comments, event
         client.finish_gate(repo, check_id, 'failure', 'PR changed while processing. A new review is required.')
         return
     summary = ('Awaiting acknowledgement or false-positive decision: '+', '.join('`'+fid+'`' for fid in pending)
-               if pending else 'All current findings have an authorized acknowledgement or false-positive decision. Engineering review only, not a compliance certificate.')
+               if pending else 'All current findings have an authorized acknowledgement or false-positive decision. Acknowledged concerns remain open for follow-up. Engineering review only, not a compliance certificate.')
     client.finish_gate(repo, check_id, 'failure' if pending else 'success', summary)

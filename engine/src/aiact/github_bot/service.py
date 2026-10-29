@@ -284,12 +284,16 @@ class Service:
                 ev = json.loads(record['payload'])['evidence']; line = ev['end_line']
                 diff = (patches or {}).get(ev['path'], [])
                 inline = line in (diff if isinstance(diff, list) else right_lines(diff))
-                kind = 'review' if inline else 'issue'
+                threaded = self.config.acknowledgement_gate
+                kind = 'review' if inline or threaded else 'issue'
                 try:
-                    comment = client.create_comment(repo, number, body, expected_head if inline else None,
-                                                    ev['path'] if inline else None, line if inline else None)
+                    comment = client.create_comment(repo, number, body, expected_head if inline or threaded else None,
+                                                    ev['path'] if inline or threaded else None, line if inline else None)
                 except BotError as exc:
                     if not inline or str(exc) != 'github_http_422': raise
-                    kind = 'issue'; comment = client.create_comment(repo, number, body)
+                    if threaded:
+                        comment = client.create_comment(repo, number, body, expected_head, ev['path'])
+                    else:
+                        kind = 'issue'; comment = client.create_comment(repo, number, body)
             self.store.published(record['id'], comment['id'], kind, body)
             self.store.archive_comment(repo, number, kind, comment, 'published')
