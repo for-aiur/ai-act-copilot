@@ -176,12 +176,15 @@ GitHub Actions reviews changed Python files using our GitHub App identity and
 posts code evidence, official sources and questions to the PR. No server or
 persistent database is required. [App and workflow setup](docs/PR-ACTIONS.md).
 
-Each finding includes commands to **acknowledge** or mark it **false positive**
-with a reason. The bot replies and updates an App-owned merge check. Configure
+Reply `/aiact ack` under a finding to mark it seen and keep it open for follow-up,
+or `/aiact fp <reason>` if it does not apply. The bot replies and updates an
+App-owned merge check. Configure
 that check as required to prevent merging until every current finding has an
 authorized decision. A new commit invalidates earlier decisions.
 
 Replies are acknowledged with deterministic receipts, not sent to the model.
 Gemini receives selected code and legal passages only during scans. Roles/model
-live in `bot/actions.toml`; `/aiact rescan` requests another scan. Fork PRs are
+live in `bot/actions.toml`. Set repository variable `AIACT_PR_REVIEW_MODE=manual`
+for demos, then use **Actions > AI Act PR review > Run workflow** with a PR
+number, or post `/aiact rescan`. The default mode is `automatic`. Fork PRs are
 disabled. Dashboard and durable history remain deferred.

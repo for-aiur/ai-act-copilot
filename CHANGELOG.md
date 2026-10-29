@@ -5,6 +5,19 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine 0.4.2: simple finding replies and manual demos (YIL-22).
+
+- Reply `/aiact ack` without a reason to record awareness and keep a concern
+  open for follow-up. False positives still require a reason; `/aiact reopen`
+  returns a concern to pending acknowledgement.
+- Resolve finding/revision from signed thread metadata. Changed revisions or
+  findings get a new thread; unchanged reviews reuse their thread. Evidence
+  outside diff lines uses a file-level review thread. Long commands still work.
+- Add independent manual/automatic mode and an Actions Run workflow form with a
+  PR-number input. Manual mode preserves explicit rescans and decision handling;
+  the existing master switch still disables the entire bot.
+
+
 Engine 0.4.1: App identity and acknowledgement gate (YIL-18).
 
 - Queue PR reply events sequentially instead of replacing pending replies when

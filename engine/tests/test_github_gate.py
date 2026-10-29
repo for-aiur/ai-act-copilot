@@ -34,10 +34,10 @@ def gated(system, tmp_path):
         return comment
     github.create_gate, github.finish_gate, github.reply = create_gate, finish_gate, reply
     counter = 0
-    def run(event='pull_request_target', data=None, scanner=None):
+    def run(event='pull_request_target', data=None, scanner=None, mode='automatic'):
         nonlocal counter
         counter += 1
-        return run_event(config, event, data or payload(), github, tmp_path/str(counter), scanner or service.scanner, KEY)
+        return run_event(config, event, data or payload(), github, tmp_path/str(counter), scanner or service.scanner, KEY, mode)
     def snapshot():
         policy = digest([service.policy, True])
         return gate.load_snapshot(gate.snapshot_comment(github.remote, github, github.head), KEY,
@@ -64,7 +64,7 @@ def test_pending_then_acknowledged_on_exact_head_without_new_inference(gated):
     run()
     assert github.checks[-1]['conclusion'] == 'failure'
     assert github.checks[-1]['head'] == github.head
-    assert '/aiact acknowledge' in next(c['body'] for k, c in github.remote if gate.MARKER.search(c['body']))
+    assert '/aiact ack' in next(c['body'] for k, c in github.remote if gate.MARKER.search(c['body']))
     event = user(command(snapshot()))
     run('issue_comment', event)
     assert github.checks[-1]['conclusion'] == 'success'
@@ -201,7 +201,7 @@ def test_head_changed_during_scan_never_gets_success(gated):
 def test_empty_reason_and_cross_thread_command_cannot_acknowledge(gated):
     config, github, contexts, run, snapshot, user = gated
     run()
-    run('issue_comment', user(command(snapshot(), reason=' ')))
+    run('issue_comment', user(command(snapshot(), 'false-positive', reason=' ')))
     assert github.checks[-1]['conclusion'] == 'failure'
     # A bot-owned root for another finding must not be used for this decision.
     github.remote.append(('review', {'id': 901, 'body': '<!-- aiact-finding:'+'e'*20+' -->',
@@ -317,3 +317,135 @@ def test_every_finding_needs_its_own_decision(gated):
     second = state['findings'][1]
     run('issue_comment', user(f"/aiact fp {second['id']} {second['token']} Synthetic fixture only.", comment_id=901))
     assert github.checks[-1]['conclusion'] == 'success'
+
+
+def test_ack_needs_no_reason_and_keeps_concern_open_for_follow_up(gated):
+    config, github, contexts, run, snapshot, user = gated
+    run()
+    finding = snapshot()['findings'][0]
+    run('pull_request_review_comment', user('/aiact ack', kind='review', parent=finding['thread_id']))
+    assert github.checks[-1]['conclusion'] == 'success'
+    assert 'remains open for follow-up' in github.replies[-1]
+    assert len(contexts) == 1
+    run('pull_request_review_comment', user('/aiact reopen', kind='review', parent=finding['thread_id'], comment_id=901))
+    assert github.checks[-1]['conclusion'] == 'failure'
+
+
+def test_short_fp_requires_reason_and_authorized_role(gated):
+    config, github, contexts, run, snapshot, user = gated
+    run()
+    root = snapshot()['findings'][0]['thread_id']
+    run('pull_request_review_comment', user('/aiact fp', kind='review', parent=root))
+    assert github.checks[-1]['conclusion'] == 'failure'
+    assert 'needs a brief reason' in github.replies[-1]
+    run('pull_request_review_comment', user('/aiact fp Test fixture only.', actor='dev', kind='review', parent=root, comment_id=901))
+    assert github.checks[-1]['conclusion'] == 'failure'
+    run('pull_request_review_comment', user('/aiact fp Test fixture only.', kind='review', parent=root, comment_id=902))
+    assert github.checks[-1]['conclusion'] == 'success'
+
+
+def test_short_command_needs_current_thread_not_top_level_comment(gated):
+    config, github, contexts, run, snapshot, user = gated
+    run()
+    run('issue_comment', user('/aiact ack'))
+    assert github.checks[-1]['conclusion'] == 'failure'
+    assert 'CURRENT finding thread' in github.replies[-1]
+
+
+def test_new_revision_gets_new_thread_and_old_short_reply_cannot_approve_it(gated):
+    config, github, contexts, run, snapshot, user = gated
+    run()
+    root = snapshot()['findings'][0]['thread_id']
+    original = next(c['body'] for _, c in github.remote if c['id'] == root)
+    github.head = 'c'*40
+    run()
+    current = snapshot()['findings'][0]['thread_id']
+    assert current != root
+    assert next(c['body'] for _, c in github.remote if c['id'] == root) == original
+    run('pull_request_review_comment', user('/aiact ack', kind='review', parent=root))
+    assert github.checks[-1]['conclusion'] == 'failure'
+    assert 'CURRENT finding thread' in github.replies[-1]
+    run('pull_request_review_comment', user('/aiact ack', kind='review', parent=current, comment_id=901))
+    assert github.checks[-1]['conclusion'] == 'success'
+
+
+def test_same_review_reuses_thread_but_changed_finding_gets_new_thread(gated):
+    from aiact.pipeline import scan
+    from test_github_bot import StubModel
+    config, github, contexts, run, snapshot, user = gated
+    run()
+    root = snapshot()['findings'][0]['thread_id']
+    count = len(github.remote)
+    run()
+    assert snapshot()['findings'][0]['thread_id'] == root
+    assert len(github.remote) == count
+    def changed(root, context):
+        result = scan(root, StubModel(), explicit_context=context)
+        result.findings[0].title = 'Changed concern requiring fresh review'
+        return result
+    run(scanner=changed)
+    assert snapshot()['findings'][0]['thread_id'] != root
+    run('pull_request_review_comment', user('/aiact ack', kind='review', parent=root))
+    assert github.checks[-1]['conclusion'] == 'failure'
+
+
+def test_file_level_thread_when_evidence_is_outside_diff(gated):
+    config, github, contexts, run, snapshot, user = gated
+    original_files = github.files
+    def files(*args):
+        rows = original_files(*args)
+        rows[0]['patch'] = '@@ -100,1 +100,1 @@\n+unrelated = True'
+        return rows
+    github.files = files
+    run()
+    finding = snapshot()['findings'][0]
+    assert finding['thread_kind'] == 'review'
+    root = next(c for _, c in github.remote if c['id'] == finding['thread_id'])
+    assert root['line'] is None and root['path'] == 'src/ranker.py'
+    run('pull_request_review_comment', user('/aiact ack', kind='review', parent=root['id']))
+    assert github.checks[-1]['conclusion'] == 'success'
+
+
+def test_manual_mode_skips_auto_but_dispatch_and_replies_still_work(gated):
+    config, github, contexts, run, snapshot, user = gated
+    run(mode='manual')
+    assert not github.checks and not contexts
+    event = {**payload(), 'inputs': {'pull_request': '7'}, 'sender': {'login': 'dev', 'type': 'User'}}
+    run('workflow_dispatch', event, mode='manual')
+    assert len(contexts) == 1
+    root = snapshot()['findings'][0]['thread_id']
+    run('pull_request_review_comment', user('/aiact ack', kind='review', parent=root), mode='manual')
+    assert github.checks[-1]['conclusion'] == 'success'
+
+
+def test_manual_mode_preserves_authorized_rescan_command(gated):
+    config, github, contexts, run, snapshot, user = gated
+    run('issue_comment', user('/aiact rescan', actor='dev'), mode='manual')
+    assert len(contexts) == 1 and snapshot()['status'] == 'complete'
+
+
+@pytest.mark.parametrize('number', ['0', '-1', '7;echo secret', '../7', '', '1.5'])
+def test_dispatch_rejects_invalid_pr_number_without_scanning(gated, number):
+    config, github, contexts, run, snapshot, user = gated
+    event = {**payload(), 'inputs': {'pull_request': number}, 'sender': {'login': 'dev', 'type': 'User'}}
+    with pytest.raises(BotError, match='positive_pr_number'):
+        run('workflow_dispatch', event, mode='manual')
+    assert not contexts and not github.checks
+
+
+def test_dispatch_rejects_unauthorized_actor_and_invalid_mode(gated):
+    config, github, contexts, run, snapshot, user = gated
+    event = {**payload(), 'inputs': {'pull_request': '7'}, 'sender': {'login': 'outsider', 'type': 'User'}}
+    with pytest.raises(BotError, match='not_authorized'):
+        run('workflow_dispatch', event)
+    with pytest.raises(BotError, match='invalid_review_mode'):
+        run(mode='typo')
+    assert not contexts
+
+
+def test_file_review_api_does_not_require_line(monkeypatch):
+    client = GitHub('test-only', 'evros-test[bot]')
+    calls = []
+    monkeypatch.setattr(client, 'request', lambda method, path, body=None: calls.append((method, path, body)))
+    client.create_comment(REPO, 7, 'review', 'a'*40, 'src/ranker.py')
+    assert calls[-1][2] == {'body': 'review', 'commit_id': 'a'*40, 'path': 'src/ranker.py', 'subject_type': 'file'}
