@@ -85,13 +85,13 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and
 [Ollama](https://ollama.com/download), and start Ollama. From the repository root:
 
 ```sh
-ollama pull qwen2.5:3b
-uv run --project engine --python 3.12 aiact scan examples/recruitment/ranker.py --json
+ollama pull qwen2.5:1.5b
+uv run --project engine --python 3.12 aiact scan examples/recruitment/ranker.py --model qwen2.5:1.5b --json
 ```
 
 Download the model once. `uv run` prepares Python, installs the engine and its
 dependencies in `engine/.venv`, then runs the scan. No environment activation
-is needed. For a setup check, run `uv run --project engine aiact doctor`.
+is needed. For a setup check, run `uv run --project engine aiact doctor --model qwen2.5:1.5b`.
 
 `scan --json` returns `complete`, `partial` or `failed` status, findings,
 coverage, errors and model/corpus provenance. Exit code 0 means the review
@@ -103,6 +103,21 @@ biometric, classification and transparency passages. See the
 [extension guide](extensions/vscode/README.md) and
 [release notes](docs/releases/v0.1.6-poc.4.md) for usage and limitations.
 Published changes are listed in the [changelog](CHANGELOG.md).
+
+## Choose a model
+
+This repository's workspace selects `qwen2.5:1.5b` for a smaller local model.
+In VS Code Settings, search `aiact.model` and choose Workspace, or edit:
+
+```json
+{
+  "aiact.model": "qwen2.5:1.5b"
+}
+```
+
+The model must already be installed in Ollama. CLI users select it with
+`--model qwen2.5:1.5b` or the `AIACT_MODEL` environment variable. Changing the
+setting does not download a model. Review results identify the model used.
 
 ## Install the VS Code extension
 

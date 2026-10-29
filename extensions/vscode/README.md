@@ -127,7 +127,7 @@ Palette. This edits `.vscode/settings.json` in the project. Start with:
 ```json
 {
   "aiact.executable": "${workspaceFolder}/engine/.venv/bin/aiact",
-  "aiact.model": "qwen2.5:3b",
+  "aiact.model": "qwen2.5:1.5b",
   "aiact.endpoint": "http://127.0.0.1:11434",
   "aiact.reviewOnSave": false
 }

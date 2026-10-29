@@ -5,6 +5,9 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- Selected the installed smaller qwen2.5:1.5b model for this repository workspace
+  and documented the existing VS Code / CLI model configuration.
+
 - Moved the ten existing question options into a packaged JSON bank with stable
   IDs, topic/missing-fact tags and legal-source references.
 - Added bank validation and explicit errors for missing/invalid data, while

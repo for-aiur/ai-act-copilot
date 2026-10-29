@@ -212,3 +212,34 @@ domain/general question groups successfully. CI wheel checks now load the bank.
 No new live-model inference was run for this data extraction. asks_about remains
 editorial metadata, not automatic answer detection. Existing published POC tags
 are unchanged. See docs/QUESTIONS.md for editing and distribution.
+
+## Smaller model workspace selection (unreleased)
+
+After a user-observed 60,184 ms timeout on qwen2.5:3b, the user requested a
+smaller model and clear configuration. The model had not changed during the
+question-bank extraction. A read-only check found the 3B model CPU-only with
+zero VRAM use and approximately 2.42 GB loaded. One measured warm 3B retry
+completed: extraction 9.47 s, review 20.46 s, total 30,008 ms. This did not
+reproduce the earlier timeout; its exact cause is not established.
+
+Selected already-installed qwen2.5:1.5b (986,061,892 bytes on disk) in this
+repository's aiact.model workspace setting. Existing VS Code Settings/JSON and
+CLI --model or AIACT_MODEL control selection; CLI/library/extension global
+defaults remain 3B. README CLI examples explicitly select 1.5B. No download,
+provider change, timeout extension or automatic fallback was introduced.
+
+Observed live checks under loopback-only networking with the question bank:
+
+- Initial recruitment scan: complete, one grounded question, 25,792 ms.
+- Five-case evaluator: 5/5 mechanical fixture expectations passed, all complete
+  without operational errors. Recruitment 22,036 ms; biometrics 59,674 ms;
+  chatbot 52,170 ms; negative arithmetic 16,275 ms with no findings; ambiguous
+  model use 43,870 ms with a context question.
+
+These runs do not establish general reasoning quality or guarantee sub-60-second
+reviews. Reviewed titles/questions and citations were appropriate to the demo
+cases, but free-form suggested next actions included cut-off and awkward legal
+wording, notably the initial recruitment and biometric results. This is a known
+quality limitation of the smaller model, not a problem solved by changing the
+configuration. Saved local results are gitignored. Published POC tags retain
+the original tested 3B configuration; this workspace change is unreleased.
