@@ -273,7 +273,7 @@ def test_rendering_neutralises_model_mentions_and_markdown_injection(system):
     item['evidence']['quote']='```\n@outside\n```';row['payload']=json.dumps(item)
     body=render_finding(row,config)
     assert '@outside [run]' not in body and '\\[run\\]' in body and '&lt;script&gt;' in body
-    assert '````python' in body and body.count('````')==2
+    assert '```' not in body and '[Code](' in body
     assert '@dpo' in body
 
 
@@ -302,7 +302,7 @@ def test_missing_model_credentials_produce_failed_pr_summary_not_silent_job_erro
     service=Service(config,store,lambda *_:github)
     service.process('no-key','pull_request',payload())
     assert not store.findings(REPO,7)
-    assert any('credentials' in comment['body'] and 'review failed' in comment['body'] for _,comment in github.remote)
+    assert any('needs configuration' in comment['body'] and '/aiact rescan' in comment['body'] for _,comment in github.remote)
 
 
 def test_recovering_a_running_job_preserves_attempt_bounds(system):

@@ -14,11 +14,20 @@ variables > Actions > Variables**:
 - `automatic`: PR creation/push starts a scan; manual rescans also work. This is
   the default when the variable is absent.
 
+Manual mode means the workflow form or rescan command. The installed App has not
+appeared in the native Reviewers picker in our live test. Use automatic mode for
+PR creation and push triggers.
+
 Keep `AIACT_PR_REVIEW_ENABLED=true`. Setting it false disables scans and reply
 processing in both modes. Writers can use Run workflow; repository writers,
 maintainers/admins and configured role holders can request a comment rescan.
 
 ## Respond to a finding
+
+Each comment shows the analysis, one question, code and official-source links,
+then short reply instructions. A failed review gives a plain explanation and a
+retry command; it cannot pass the acknowledgement check. Invalid citations get
+one repair attempt within the existing scan deadline, then fail if still invalid.
 
 Reply directly under the current finding, with no IDs or tokens:
 

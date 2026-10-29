@@ -130,33 +130,54 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
             "Discuss model parameters through their documented purpose, trade-offs and evaluation, not inherently ethical parameter values. "
             "Do not mention GDPR, other laws or applicability dates. Do not ask already answered facts; use explicit context when choosing remaining questions. "
             "Use priority high/medium/low, a short concrete title, an explanation under 3 sentences (maximum 300 characters), and a practical next action. "
+            "Describe the actual operation and the specific unanswered technical question. Avoid generic disclaimers, file counts and process commentary. "
             "Do not return more than two citations per finding.\nUNTRUSTED_DATA_JSON:\n"
         )
-        draft = request(review_prompt + json.dumps(review_data), DraftReview, review_schema)
-        if first.ai_use == "none" and draft.findings:
-            raise ReviewFailure("review_unsupported", "Review raised an AI Act concern despite extraction identifying no AI use.")
-        if needs_question and not draft.findings:
-            raise ReviewFailure("invalid_response", "Review omitted a required context question for unresolved AI use.")
-        if len(draft.findings) > 4 or any(len(f.citations) > 2 for f in draft.findings):
-            raise ReviewFailure("invalid_response", "Review exceeded the finding/citation budget.")
-        seen_topics = set()
-        for finding in draft.findings:
-            matches = [q for q in options if q.question == finding.context_question]
-            if not matches:
-                raise ReviewFailure("invalid_response", "Review did not select a supported context question.")
-            question = matches[0]
-            cited = {c.section_id for c in finding.citations}
-            if question.legal_source is not None and question.legal_source not in cited:
-                raise ReviewFailure("citation_invalid", "Question topic does not match its cited legal passage.")
-            if question.asks_about in seen_topics:
-                raise ReviewFailure("invalid_response", "Review repeated the same missing-context topic.")
-            seen_topics.add(question.asks_about)
-        quote_choices = {p["id"]: p["supporting_quotes"] for p in passages}
-        if any(c.section_id not in quote_choices or c.quote not in quote_choices[c.section_id] for f in draft.findings for c in f.citations):
-            raise ReviewFailure("citation_invalid", "Review did not select a supported domain passage and exact quotation.")
-        findings = validate_review(draft, evidence, {s.path: s.text for s in context.sources}, passages)
+        def grounded_review(draft):
+            if first.ai_use == "none" and draft.findings:
+                raise ReviewFailure("review_unsupported", "Review raised an AI Act concern despite extraction identifying no AI use.")
+            if needs_question and not draft.findings:
+                raise ReviewFailure("invalid_response", "Review omitted a required context question for unresolved AI use.")
+            if len(draft.findings) > 4 or any(len(f.citations) > 2 for f in draft.findings):
+                raise ReviewFailure("invalid_response", "Review exceeded the finding/citation budget.")
+            seen_topics = set()
+            for finding in draft.findings:
+                matches = [q for q in options if q.question == finding.context_question]
+                if not matches:
+                    raise ReviewFailure("invalid_response", "Review did not select a supported context question.")
+                question = matches[0]
+                cited = {c.section_id for c in finding.citations}
+                if question.legal_source is not None and question.legal_source not in cited:
+                    raise ReviewFailure("citation_invalid", "Question topic does not match its cited legal passage.")
+                if question.asks_about in seen_topics:
+                    raise ReviewFailure("invalid_response", "Review repeated the same missing-context topic.")
+                seen_topics.add(question.asks_about)
+            quote_choices = {p["id"]: p["supporting_quotes"] for p in passages}
+            if any(c.section_id not in quote_choices or c.quote not in quote_choices[c.section_id] for f in draft.findings for c in f.citations):
+                raise ReviewFailure("citation_invalid", "Review did not select a supported domain passage and exact quotation.")
+            return validate_review(draft, evidence, {s.path: s.text for s in context.sources}, passages)
+
+        review_request = review_prompt + json.dumps(review_data)
+        while True:
+            draft = request(review_request, DraftReview, review_schema)
+            try:
+                validated_findings = grounded_review(draft)
+                break
+            except ReviewFailure as exc:
+                if exc.code != "citation_invalid" or repair_used:
+                    raise
+                repair_used = True
+                # Share the single repair/deadline with schema validation. Do not
+                # echo untrusted model output or silently substitute citations.
+                review_request += (
+                    "\nPrevious review failed independent citation validation. Regenerate the review once. "
+                    "Each context_question must cite its own legal_source. For each citation, select "
+                    "section_id and an exact quote_option FROM THAT SAME passage. Never mix a quote "
+                    "from one passage with another section. Retain only supported findings."
+                )
         if time.monotonic() > deadline:
             raise ReviewFailure("timeout", "Total scan deadline reached before validated completion.")
+        findings = validated_findings
         reviewed = True
     except ReviewFailure as exc:
         errors.append(ScanError(code=exc.code, message=str(exc)))

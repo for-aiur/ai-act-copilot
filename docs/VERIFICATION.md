@@ -421,3 +421,23 @@ commands remain accepted.
   receipts, check success, stale-token rejection and reopen failure. The private
   repository plan does not enforce its saved ruleset; no hard merge-blocking
   claim is made.
+
+
+## YIL-23: concise PR comments and citation repair
+
+Engine 0.4.3, prompt poc-7. PR comments retain concrete analysis, one question,
+code/legal links and short reply instructions. Signed state stays hidden.
+Acknowledgement receipts keep concerns open for follow-up.
+
+- `engine/.venv/bin/python -m pytest engine/tests -q`: **174 passed in 18.88s**.
+  Tests cover one shared schema/citation repair budget, persistent invalid
+  citations, deadline expiry without late findings, concise comments, human
+  failure messages and unchanged acknowledgement enforcement. Model/GitHub
+  transports are test doubles.
+- `uv lock --project engine --offline` resolved the same 21 packages; only engine
+  version metadata changed. `git diff --check` passed.
+- PR #5's historical `citation_invalid` response was not retained, so its exact
+  cause is unknown. Live Gemini acceptance of the repair is pending.
+- Requesting the installed App as a reviewer returned no connector error, but the
+  user confirmed it still does not appear in the Reviewers sidebar. Automatic
+  mode is the fallback; the repository variable must be changed from manual.

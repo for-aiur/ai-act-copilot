@@ -13,23 +13,17 @@ from . import gate
 
 
 class ActionsService(Service):
+    @property
+    def emit_run_summary(self):
+        return not self.config.acknowledgement_gate
+
     def render(self, record):
-        body = render_finding(record, self.config).split('Dismissal/resolution decisions require')[0]
+        mode = 'short' if self.config.acknowledgement_gate else 'stateless'
+        body = render_finding(record, self.config, mode)
         if self.config.acknowledgement_gate:
-            body = body.replace(f" · ID: `{record['id']}`", '')
             token = gate.token_for(self.snapshot, {'id': record['id'], 'payload': json.loads(record['payload'])})
-            return body + (f'<!-- aiact-review:{token} -->\n\n'
-                '**Reply in this finding thread:**\n\n'
-                '- `/aiact ack`: seen; keep open for follow-up\n'
-                '- `/aiact fp <reason>`\n'
-                '- `/aiact reopen`\n\n'
-                'The bot identifies the finding and revision from this thread. An assigned role holder or maintainer/admin must decide; '
-                'when no users are assigned for these roles, repository writers may decide. '
-                'Plain replies receive a receipt but do not unblock merging or go to the model. '
-                'Acknowledgement is a human review decision, not a compliance certificate.')
-        return body + ('Stateless PR review: reply in this thread with context or evidence. '
-                       'Replies are not automatically consumed. Use `/aiact rescan` in a PR '
-                       'conversation comment to rerun. Decisions and automatic closure are deferred.')
+            body += f'\n\n<!-- aiact-review:{token} -->'
+        return body
 
     def backfill(self, repo, number, client):
         if not self.config.acknowledgement_gate:
@@ -148,12 +142,13 @@ def run_gated_event(config, event, payload, client, directory, scanner, signing_
                     raise BotError('review_not_current')
                 saved = json.loads(runs[-1]['result'])
                 snapshot['status'] = saved['scan_result']['status']
+                snapshot['error_codes'] = [e['code'] for e in saved['scan_result']['errors']]
                 snapshot['findings'] = []
                 for record in saved['records']:
                     published = store.finding(record['id'])
                     snapshot['findings'].append(dict(id=record['id'], roles=record['roles'],
                         token=gate.token_for(snapshot, record), thread_id=published['github_id'],
-                        thread_kind=published['github_kind']))
+                        thread_kind=published['github_kind'], title=record['payload']['title']))
             else:
                 snapshot['status'] = 'complete'
             if not same_revision(client.pull(repo, number), head, base):

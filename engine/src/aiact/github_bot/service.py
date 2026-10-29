@@ -64,35 +64,67 @@ def same_revision(pr, head, base):
     return pr.get('state') == 'open' and pr['head']['sha'] == head and (base is None or pr['base']['sha'] == base)
 
 
-def render_finding(record, config):
+def review_status(status, error_codes=(), has_findings=True):
+    if status == 'running':
+        return '🤖 Reviewing the changes…'
+    if status == 'complete':
+        return ('🤖 Review ready. Questions are attached to the code.' if has_findings
+                else '🤖 Nothing to flag in this review.')
+    if status == 'partial':
+        return '🤖 Review incomplete. Some changes could not be reviewed. Narrow the change and retry.'
+    messages = {
+        'citation_invalid': "I couldn't verify the legal references, so I couldn't finish the review.",
+        'evidence_invalid': "I couldn't match the response to the reviewed code.",
+        'invalid_response': 'The model returned an incomplete or invalid response.',
+        'review_unsupported': 'The response made claims the supplied evidence does not support.',
+        'timeout': 'The review timed out. Try a smaller change.',
+        'provider_unavailable': 'The review service is temporarily unavailable.',
+        'model_unavailable': 'The configured model is unavailable. Check the model setup.',
+        'configuration': 'The review service needs configuration. Ask a maintainer to check its settings.',
+        'credentials_missing': 'The review service needs configuration. Ask a maintainer to add its API credentials.',
+        'authentication': 'The review service could not authenticate. Ask a maintainer to check its API credentials.',
+        'rate_limited': 'The model quota is temporarily exhausted. Retry later.',
+        'corpus_unavailable': 'The legal source cache is unavailable. Ask a maintainer to check the setup.',
+    }
+    message = next((messages[code] for code in error_codes if code in messages), "I couldn't finish this review.")
+    return '🤖 '+message+' Retry with `/aiact rescan`.'
+
+
+def render_finding(record, config, reply_mode='legacy'):
     finding = json.loads(record['payload'])
-    evidence = finding['evidence']; head = record['head']; repo = record['repo']
-    url = f'https://github.com/{repo}/blob/{head}/{quote(evidence["path"], safe="/")}#L{evidence["start_line"]}-L{evidence["end_line"]}'
-    roles = json.loads(record['roles'])
-    requested = []
-    for role in roles:
-        users = config.roles.get(role, [])
-        prefix = '@' if record['status'] in {'open', 'needs_context', 'disputed'} else ''
-        requested.append(safe_text(role)+': '+(', '.join(prefix+login for login in users) if users else 'unassigned'))
-    snippet = evidence['quote'][:4000]
-    fence = '`'*max(3, max([len(x) for x in re.findall(r'`+', snippet)] or [0])+1)
-    lines = [f'<!-- aiact-finding:{record["id"]} -->', '### AI Act Copilot · Evros Labs',
-             '**'+safe_text(finding['title'])+'**',
-             f'Review priority: **{record["priority"]}** · State: **{record["status"]}** · ID: `{record["id"]}`',
-             safe_text(finding['explanation']), f'[Code evidence: {safe_text(evidence["path"])}:{evidence["start_line"]}]({url})',
-             fence+'python', snippet, fence]
-    if len(evidence['quote']) > 4000: lines.append('Code excerpt truncated; open the pinned source link for the full range.')
+    evidence = finding['evidence']
+    code_url = f'https://github.com/{record["repo"]}/blob/{record["head"]}/{quote(evidence["path"], safe="")}#L{evidence["start_line"]}-L{evidence["end_line"]}'
+    lines = [f'<!-- aiact-finding:{record["id"]} -->',
+             '### 🤖 '+safe_text(finding['title']), safe_text(finding['explanation'])]
+    if finding.get('context_question'):
+        lines.append('**Question:** '+safe_text(finding['context_question']))
+    else:
+        lines.append('**Next step:** '+safe_text(finding['suggested_next_action']))
+    links, seen = [f'[Code]({code_url})'], set()
     for citation in finding['citations']:
-        lines.extend([f'[{safe_text(citation["section_id"])}]({citation["url"]})', '> '+safe_text(citation['quote'])])
-    if finding.get('context_question'): lines.extend(['**Question:** '+safe_text(finding['context_question'])])
-    lines.extend(['**Next:** '+safe_text(finding['suggested_next_action']), ('**Input requested:** ' if record['status'] in {'open', 'needs_context', 'disputed'} else '**Review roles (no input pending):** ')+('; '.join(requested) or 'repository reviewer'),
-                  'Dismissal/resolution decisions require an assigned role holder or repository maintainer/admin.',
-                  f'Reply with `/aiact evidence {record["id"]} <evidence or explanation>`, `objection`, `false-positive`, `resolve`, or `reopen` followed by this ID and a reason.',
-                  'Decisions are recorded with actor and date. Resolved means a human decision or absence from a subsequent complete scan, not certified compliance.'])
+        if citation['url'] in seen:
+            continue
+        seen.add(citation['url'])
+        article = re.match(r'article-(\d+[a-z]?)', citation['section_id'])
+        annex = re.match(r'annex-([ivx]+)', citation['section_id'])
+        label = ('Article '+article[1] if article else 'Annex '+annex[1].upper() if annex else citation['section_id'])
+        links.append(f'[{safe_text(label)}]({citation["url"]})')
+    lines.append(' · '.join(links))
+    users = sorted({login for role in json.loads(record['roles']) for login in config.roles.get(role, [])})
+    if users and record['status'] in {'open', 'needs_context', 'disputed'}:
+        lines.append('**Input requested:** '+', '.join('@'+login for login in users))
+    if reply_mode == 'short':
+        lines.append('Reply here with context or evidence. `/aiact ack` = seen, keep open; `/aiact fp <reason>` = does not apply.')
+    elif reply_mode == 'stateless':
+        lines.append('Reply here with context or evidence. Use `/aiact rescan` in the PR conversation to review again.')
+    else:
+        lines.append(f'Reply with context, or `/aiact evidence {record["id"]} <evidence>`. Use `false-positive`, `resolve` or `reopen` with this ID and a reason to record a decision.')
     return '\n\n'.join(lines)
 
 
 class Service:
+    emit_run_summary = True
+
     def __init__(self, config, store, client_factory, scanner=None):
         self.config, self.store, self.client_factory = config, store, client_factory
         self.scanner = scanner or self._scan
@@ -255,16 +287,9 @@ class Service:
                              set(result.coverage.scanned_files) if result.status == 'complete' else set(), cache_key[:24])
         self.publish(repo, number, client, head, patches, base)
         marker = '<!-- aiact-run:'+cache_key[:24]+' -->'
-        if not any(marker in (comment.get('body') or '') and comment.get('user', {}).get('login') == client.bot_login for _, comment in comments):
+        if self.emit_run_summary and not any(marker in (comment.get('body') or '') and comment.get('user', {}).get('login') == client.bot_login for _, comment in comments):
             if not same_revision(client.pull(repo, number), head, base): return
-            body = '\n\n'.join([marker, '### AI Act Copilot · review '+result.status,
-                f'Commit: `{head}` · {len(result.coverage.scanned_files)} changed Python file(s) · {len(result.findings)} finding(s).',
-                'Engineering review only. Zero findings is not a compliance certificate.',
-                'Provider: '+safe_text(self.config.provider)+' / '+safe_text(self.config.model)+'. Gemini sends changed source and accepted reviewer statements to Google.',
-                'Errors: '+(', '.join(safe_text(e.code) for e in result.errors) or 'none'),
-                'Excluded (removed/non-Python): '+(', '.join(safe_text(path) for path in excluded) or 'none'),
-                'Skipped: '+('; '.join(safe_text(s.path)+': '+safe_text(s.reason) for s in result.coverage.skipped_files) or 'none'),
-                'Reply `/aiact rescan` to request another bounded scan. Role assignments are configured by the service operator.'])
+            body = marker+'\n\n'+review_status(result.status, [e.code for e in result.errors], bool(result.findings))
             comment = client.create_comment(repo, number, body)
             self.store.archive_comment(repo, number, 'issue', comment, 'published')
 

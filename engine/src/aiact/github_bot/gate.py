@@ -6,7 +6,7 @@ import json
 import re
 
 from .github import BotError
-from .service import MARKER, same_revision, safe_text
+from .service import MARKER, same_revision, safe_text, review_status
 from .store import digest, encoded
 
 CHECK_NAME = 'AI Act Copilot / acknowledgements'
@@ -32,10 +32,7 @@ def snapshot_body(snapshot, key):
     raw = base64.urlsafe_b64encode(encoded(snapshot).encode()).decode().rstrip('=')
     signature = hmac.new(key, raw.encode(), hashlib.sha256).hexdigest()
     return '\n\n'.join([state_marker(snapshot['head']), f'<!-- aiact-snapshot:{raw}.{signature} -->',
-        '### AI Act Copilot · acknowledgement gate',
-        f"Review: **{snapshot['status']}** · commit `{snapshot['head']}` · {len(snapshot['findings'])} finding(s).",
-        'Every current finding needs an authorized acknowledgement or false-positive decision with a reason. '
-        'Acknowledgement records human review, not legal compliance. The App-owned required check reports merge readiness.'])
+        review_status(snapshot['status'], snapshot.get('error_codes', []), bool(snapshot['findings']))])
 
 
 def snapshot_comment(comments, client, head):
@@ -133,7 +130,7 @@ def replay(config, snapshot, comments, client, repo, number, proofs):
             finding = next((f for f in findings.values() if kind == 'review' and f.get('thread_kind') == 'review'
                             and f.get('thread_id') == comment.get('in_reply_to_id') and parent and parent[1] == f['id']), None)
             if not finding:
-                outcomes[(kind, comment['id'])] = 'Reply directly in the CURRENT finding thread with `/aiact ack` or `/aiact fp <reason>`. An older thread or a PR conversation comment cannot identify the current finding.'
+                outcomes[(kind, comment['id'])] = '🤖 Reply directly in the CURRENT finding thread with `/aiact ack` or `/aiact fp <reason>`.'
                 continue
             action, reason = short.groups()
             finding_id, token = finding['id'], finding['token']
@@ -142,20 +139,20 @@ def replay(config, snapshot, comments, client, repo, number, proofs):
             finding = findings.get(finding_id)
         else:
             if body.startswith('/aiact '):
-                outcomes[(kind, comment['id'])] = 'Command not accepted. Reply in the current finding thread with `/aiact ack` or `/aiact fp <reason>`.'
+                outcomes[(kind, comment['id'])] = '🤖 Use `/aiact ack` or `/aiact fp <reason>` under the finding.'
             elif parent and parent[1] in findings:
-                outcomes[(kind, comment['id'])] = 'Context received as an unverified human statement. It was not sent to the model and does not acknowledge the finding. Use the command shown in the finding to record a decision.'
+                outcomes[(kind, comment['id'])] = '🤖 Context noted. The concern stays open; this does not acknowledge or re-analyse it.'
             continue
         reason = (reason or '').strip()
         if action in {'fp', 'false-positive'} and not reason:
-            outcomes[(kind, comment['id'])] = 'False-positive needs a brief reason: `/aiact fp <why this concern does not apply>`.'
+            outcomes[(kind, comment['id'])] = '🤖 FP needs a brief reason: `/aiact fp <why this does not apply>`.'
             continue
         if not finding or token != finding['token'] or (parent and parent[1] != finding_id):
-            outcomes[(kind, comment['id'])] = 'Decision not accepted: stale or mismatched finding/token. Copy the command from the current finding.'
+            outcomes[(kind, comment['id'])] = '🤖 Decision not accepted: this is an older or mismatched review. Reply under the latest finding.'
             continue
         proof = proofs.get((kind, comment['id']))
         if not proof or proof['hash'] != command_hash(comment):
-            outcomes[(kind, comment['id'])] = 'No verified command event matches this comment. Post a new decision command.'
+            outcomes[(kind, comment['id'])] = "🤖 I couldn't verify this reply. Please post the command again under the current finding."
             continue
         # An editor may differ from the original author. Trust the signed event
         # actor, never attribute an edited command to the original commenter.
@@ -168,13 +165,15 @@ def replay(config, snapshot, comments, client, repo, number, proofs):
                     raise
                 permissions[actor] = 'none'
         if not can_decide(config, finding, actor, permissions[actor]):
-            outcomes[(kind, comment['id'])] = 'Decision not accepted: an assigned role holder or repository maintainer/admin is required. When this finding has no assigned users, repository writers may decide.'
+            outcomes[(kind, comment['id'])] = '🤖 Decision not accepted: ask an assigned reviewer or repository maintainer to record it.'
             continue
         action = {'ack': 'acknowledge', 'fp': 'false-positive'}.get(action, action)
         states[finding_id] = action
-        outcomes[(kind, comment['id'])] = f'Recorded **{action}** for `{finding_id}` from {safe_text(actor)}. This records a human decision, not a compliance determination.'
-        if action == 'acknowledge':
-            outcomes[(kind, comment['id'])] += ' The concern remains open for follow-up; acknowledgement does not mean resolved.'
+        outcomes[(kind, comment['id'])] = {
+            'acknowledge': '🤖 Noted. The concern remains open for follow-up.',
+            'false-positive': '🤖 Recorded your false-positive decision and reason.',
+            'reopen': '🤖 Reopened. Acknowledgement is required again.',
+        }[action]
     pending = [fid for fid in findings if states.get(fid) not in {'acknowledge', 'false-positive'}]
     return pending, outcomes
 
@@ -207,7 +206,9 @@ def finish(client, config, repo, number, pr, check_id, snapshot, comments, event
         client.finish_gate(repo, check_id, 'failure', 'PR changed while processing. A new review is required.')
         return
     if not snapshot or snapshot['status'] != 'complete':
-        client.finish_gate(repo, check_id, 'failure', 'No verified complete review for the current head, base and policy. An authorized reviewer must post `/aiact rescan`.')
+        summary = (review_status(snapshot['status'], snapshot.get('error_codes', [])) if snapshot else
+                   'No verified complete review for the current revision. Start a new review with `/aiact rescan`.')
+        client.finish_gate(repo, check_id, 'failure', summary)
         return
     proofs, current = provenance(comments, client, key, event, payload)
     pending, outcomes = replay(config, snapshot, comments, client, repo, number, proofs)
@@ -216,6 +217,14 @@ def finish(client, config, repo, number, pr, check_id, snapshot, comments, event
     if not same_revision(client.pull(repo, number), pr['head']['sha'], pr['base']['sha']):
         client.finish_gate(repo, check_id, 'failure', 'PR changed while processing. A new review is required.')
         return
-    summary = ('Awaiting acknowledgement or false-positive decision: '+', '.join('`'+fid+'`' for fid in pending)
-               if pending else 'All current findings have an authorized acknowledgement or false-positive decision. Acknowledged concerns remain open for follow-up. Engineering review only, not a compliance certificate.')
+    if pending:
+        links = []
+        for item in snapshot['findings']:
+            if item['id'] not in pending:
+                continue
+            anchor = ('discussion_r' if item.get('thread_kind') == 'review' else 'issuecomment-')+str(item.get('thread_id', ''))
+            links.append(f'- [{safe_text(item.get("title", "Review question"))}](https://github.com/{repo}/pull/{number}#{anchor})')
+        summary = 'These concerns still need a response:\n\n'+'\n'.join(links)
+    else:
+        summary = 'All concerns have been seen or marked not applicable. Acknowledged concerns stay open for follow-up.'
     client.finish_gate(repo, check_id, 'failure' if pending else 'success', summary)
