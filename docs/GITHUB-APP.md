@@ -12,7 +12,7 @@ inactive; no hosting, callback server or database is needed.
 2. Repository permissions: **Contents: Read**, **Pull requests: Read and write**,
    **Issues: Read**, **Checks: Read and write**. No account/administration
    permissions. Select **Only on this account**.
-3. Create it, upload `extensions/vscode/media/copilot-wig.png` as the avatar and
+3. Create it, upload `extensions/vscode/media/copilot-wig-avatar.png` as the avatar and
    record the numeric **App ID**, not the Client ID.
 4. Generate a private key in the App's key settings. Keep the downloaded PEM
    private. Do not paste it into a PR, chat, issue or repository file.

@@ -7,6 +7,8 @@ independent; Git tags identify the complete repository snapshot.
 
 Engine 0.4.1: App identity and acknowledgement gate (YIL-18).
 
+- Added a 512 px PNG App avatar below GitHub's 1 MB upload limit.
+
 - Use repository-scoped, short-lived GitHub App tokens in Actions. App credentials
   replace webhook/server setup; no retained database is needed.
 - Add a signed current-review snapshot, revision-bound acknowledge/false-positive/
