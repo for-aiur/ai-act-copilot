@@ -5,6 +5,15 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine 0.4.3: concise PR comments and bounded citation repair (YIL-23).
+
+- Show concrete analysis, one question, code/legal links and simple reply commands.
+  Keep signed state hidden; remove repetitive summaries and technical boilerplate.
+- Explain review failures in plain language and keep acknowledgement receipts brief.
+- Retry invalid citation selections once, sharing the existing schema-repair budget
+  and deadline. Exact quotations, question sources and code evidence stay validated.
+- Prompt version is poc-7. Live Gemini acceptance remains pending.
+
 Engine 0.4.2: simple finding replies and manual demos (YIL-22).
 
 - Reply `/aiact ack` without a reason to record awareness and keep a concern

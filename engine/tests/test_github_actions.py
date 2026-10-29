@@ -11,7 +11,7 @@ def test_separate_jobs_update_existing_comments_without_retained_database(system
     run_event(config, 'pull_request_target', payload(), github, tmp_path/'first', service.scanner)
     count = len(github.remote)
     assert count == 2
-    assert 'Stateless PR review' in github.remote[0][1]['body']
+    assert 'Reply here with context or evidence' in github.remote[0][1]['body']
     assert 'Decisions are recorded' not in github.remote[0][1]['body']
     run_event(config, 'pull_request_target', payload(), github, tmp_path/'second', service.scanner)
     assert len(github.remote) == count

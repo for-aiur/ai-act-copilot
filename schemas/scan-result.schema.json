@@ -215,7 +215,7 @@
           "title": "Model Id"
         },
         "prompt_version": {
-          "default": "poc-6",
+          "default": "poc-7",
           "title": "Prompt Version",
           "type": "string"
         },

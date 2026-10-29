@@ -61,6 +61,94 @@ def test_invented_citations_rejected(field, value):
     assert not result.findings
 
 
+def test_one_citation_repair_can_recover_without_echoing_invalid_model_text():
+    import copy
+    class Recover(Stub):
+        def generate_json(self, prompt, schema, timeout):
+            result = super().generate_json(prompt, schema, timeout)
+            if self.calls == 2:
+                result = copy.deepcopy(result)
+                result['findings'][0]['citations'][0]['quote'] = 'FORGED_MODEL_TEXT_never_echo_this_invalid_quote'
+            if self.calls == 3:
+                assert 'independent citation validation' in prompt
+                assert 'FORGED_MODEL_TEXT' not in prompt
+            return result
+    provider = Recover()
+    result = scan(ROOT/'examples/recruitment/ranker.py', provider)
+    assert result.status == 'complete' and provider.calls == 3
+    assert len(result.findings) == 1 and not result.errors
+    assert result.findings[0].citations[0].quote == review_payload()['findings'][0]['citations'][0]['quote']
+
+
+def test_persistently_bad_citation_still_fails_after_one_repair():
+    invalid = review_payload()
+    invalid['findings'][0]['citations'][0]['quote'] = 'An invented quote that cannot be published.'
+    provider = Stub(invalid)
+    result = scan(ROOT/'examples/recruitment/ranker.py', provider)
+    assert provider.calls == 3
+    assert result.status == 'failed' and result.errors[0].code == 'citation_invalid'
+    assert not result.findings
+
+
+def test_schema_and_citation_share_one_repair_budget():
+    class UsedSchemaRepair(Stub):
+        def generate_json(self, prompt, schema, timeout):
+            self.calls += 1
+            if self.calls == 1:
+                return {'broken': 'schema'}
+            if self.calls == 2:
+                return {'ai_use': 'evidenced', 'purpose': 'Recruitment shortlisting', 'facts': [], 'unknowns': ['Human oversight']}
+            result = review_payload()
+            result['findings'][0]['citations'][0]['quote'] = 'Invented quote after schema repair was already used.'
+            return result
+    provider = UsedSchemaRepair()
+    result = scan(ROOT/'examples/recruitment/ranker.py', provider)
+    assert provider.calls == 3
+    assert result.status == 'failed' and result.errors[0].code == 'citation_invalid'
+    assert not result.findings
+
+
+def test_grounding_repair_does_not_allow_an_extra_schema_repair():
+    class BadRepair(Stub):
+        def generate_json(self, prompt, schema, timeout):
+            result = super().generate_json(prompt, schema, timeout)
+            if self.calls == 2:
+                result['findings'][0]['citations'][0]['quote'] = 'Invented quote requesting the single repair.'
+            if self.calls == 3:
+                return {'broken': 'schema'}
+            return result
+    provider = BadRepair()
+    result = scan(ROOT/'examples/recruitment/ranker.py', provider)
+    assert provider.calls == 3 and result.status == 'failed'
+    assert result.errors[0].code == 'invalid_response' and not result.findings
+
+
+def test_citation_repair_respects_remaining_deadline_and_publishes_no_late_findings(monkeypatch):
+    import aiact.pipeline
+    clock = [0.0]
+    monkeypatch.setattr(aiact.pipeline.time, 'monotonic', lambda: clock[0])
+    class SlowRepair(Stub):
+        def __init__(self):
+            super().__init__()
+            self.timeouts = []
+        def generate_json(self, prompt, schema, timeout):
+            self.timeouts.append(timeout)
+            result = super().generate_json(prompt, schema, timeout)
+            if self.calls == 1:
+                clock[0] += 20
+            elif self.calls == 2:
+                result['findings'][0]['citations'][0]['quote'] = 'Invented quote triggering a bounded repair.'
+                clock[0] += 95
+            else:
+                clock[0] += 10
+            return result
+    provider = SlowRepair()
+    result = scan(ROOT/'examples/recruitment/ranker.py', provider)
+    assert provider.calls == 3 and provider.timeouts[-1] == 5
+    assert result.status == 'failed' and result.errors[0].code == 'timeout'
+    assert not result.findings
+
+
 def test_wrong_range_or_source_rejected():
     with pytest.raises(ReviewFailure, match="range"):
         validate_evidence(Evidence(path="x.py", start_line=2, end_line=5, quote="x=1"), {"x.py": "x=1"})

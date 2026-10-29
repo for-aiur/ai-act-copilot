@@ -69,7 +69,7 @@ def test_pending_then_acknowledged_on_exact_head_without_new_inference(gated):
     run('issue_comment', event)
     assert github.checks[-1]['conclusion'] == 'success'
     assert len(contexts) == 1
-    assert 'Recorded **acknowledge**' in github.replies[-1]
+    assert 'Noted.' in github.replies[-1]
     run('issue_comment', event)
     assert len(github.replies) == 1
 
@@ -92,7 +92,7 @@ def test_inline_context_gets_receipt_but_never_acknowledges(gated):
     root = next(c['id'] for k, c in github.remote if k == 'review' and gate.MARKER.search(c['body']))
     event = user('A recruiter reviews every rejection.', kind='review', parent=root)
     run('pull_request_review_comment', event)
-    assert 'unverified human statement' in github.replies[-1]
+    assert 'Context noted' in github.replies[-1]
     assert github.checks[-1]['conclusion'] == 'failure'
     assert len(contexts) == 1
     event = user(command(snapshot()), kind='review', parent=root, comment_id=901)
@@ -127,7 +127,7 @@ def test_new_revision_invalidates_old_decisions_and_stale_tokens(gated):
     assert github.checks[-1]['head'] == 'c'*40
     assert github.checks[-1]['conclusion'] == 'failure'
     run('issue_comment', user(previous, comment_id=901))
-    assert 'stale or mismatched' in github.replies[-1]
+    assert 'older or mismatched' in github.replies[-1]
     assert github.checks[-1]['conclusion'] == 'failure'
 
 
@@ -449,3 +449,37 @@ def test_file_review_api_does_not_require_line(monkeypatch):
     monkeypatch.setattr(client, 'request', lambda method, path, body=None: calls.append((method, path, body)))
     client.create_comment(REPO, 7, 'review', 'a'*40, 'src/ranker.py')
     assert calls[-1][2] == {'body': 'review', 'commit_id': 'a'*40, 'path': 'src/ranker.py', 'subject_type': 'file'}
+
+
+def test_comments_are_concise_and_keep_analysis_question_sources_and_reply_guide(gated):
+    import re
+    config, github, contexts, run, snapshot, user = gated
+    run()
+    # One current status and one finding, no duplicate technical run summary.
+    assert len(github.remote) == 2
+    root = next(c['body'] for _, c in github.remote if gate.MARKER.search(c['body']))
+    visible = re.sub(r'<!--.*?-->', '', root, flags=re.S)
+    assert '### 🤖 Recruitment selection context' in visible
+    assert 'This model predicts applicant scores' in visible and '**Question:**' in visible
+    assert '[Code](' in visible and '[Annex III](' in visible
+    assert '/aiact ack' in visible and '/aiact fp <reason>' in visible
+    assert len(visible.split()) < 160
+    for clutter in ['Engineering review', 'certificate', 'Commit:', 'changed Python', 'unassigned', 'State:', '```']:
+        assert clutter not in visible
+    status = gate.snapshot_comment(github.remote, github, github.head)['body']
+    visible_status = re.sub(r'<!--.*?-->', '', status, flags=re.S).strip()
+    assert visible_status == '🤖 Review ready. Questions are attached to the code.'
+    assert '#discussion_r' in github.checks[-1]['summary']
+
+
+def test_citation_failure_is_visible_in_plain_language_and_still_blocks(gated):
+    import re
+    config, github, contexts, run, snapshot, user = gated
+    run(scanner=lambda *_: ScanResult(status='failed', errors=[
+        ScanError(code='citation_invalid', message='Question topic does not match its cited legal passage.')]))
+    assert len(github.remote) == 1
+    body = re.sub(r'<!--.*?-->', '', github.remote[0][1]['body'], flags=re.S)
+    assert "couldn't verify the legal references" in body and '/aiact rescan' in body
+    assert 'citation_invalid' not in body and 'Engineering review' not in body
+    assert github.checks[-1]['conclusion'] == 'failure'
+    assert "couldn't verify the legal references" in github.checks[-1]['summary']
