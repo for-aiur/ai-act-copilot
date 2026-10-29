@@ -20,6 +20,7 @@ Read `docs/POC-PLAN.md` for rationale, task order and scope cuts. Linear records
 7. New ideas go in the deferred section of the plan unless required for the current acceptance criteria. No new framework/service merely for future flexibility.
 8. Do not use em dashes (U+2014) in documentation, user-facing text or responses. Use a full stop, comma, colon or parentheses instead. Keep explanations short and concrete.
 9. Record published changes in CHANGELOG.md. Keep engine/pyproject.toml and engine/src/aiact/__init__.py versions in sync; keep extension package.json and package-lock.json versions in sync. Engine and extension versions are independent. Never rewrite an already published release tag for a documentation follow-up.
+10. Create or resolve the Linear issue before starting a feature. Use its exact gitBranchName for the branch, include the issue identifier in the PR title and link the issue in the PR body. Do not use a codex/ branch prefix unless the user asks for it.
 
 Task handoff template:
 
@@ -38,7 +39,7 @@ Fallback / stop condition:
 
 One Python package and one thin TypeScript VS Code extension. The original local POC needs no backend or database.
 
-Current user-authorized PR slice: stateless GitHub Actions, trusted default-branch code only, no retained database/cache/artifact of review state. Role-configured PR comments and authorized rescan are supported; durable feedback history, automatic resolution and dashboard are deferred. See docs/PR-ACTIONS.md.
+Current user-authorized PR slice: stateless GitHub Actions, trusted default-branch code only, no retained database/cache/artifact of review state. Use a dedicated GitHub App identity. Read signed bot snapshots and current GitHub replies to enforce an App-owned acknowledgement check: every current finding needs an authorized acknowledge or false-positive command with a reason. Bot replies are deterministic receipts, not AI legal approval. Durable history and dashboard are deferred. See docs/PR-ACTIONS.md.
 
 Deferred PR-bot phase: GitHub App webhook service and persistent SQLite, with configurable GitHub role assignments and optional container packaging. Keep this adapter separate from inference/domain modules. Never execute PR code or read bot credentials/configuration from a PR head. Preserve comment revisions and decision history; failed/partial scans must not close findings. The dashboard UI, additional services/frameworks and vector databases remain out of scope. See docs/PR-BOT-PLAN.md.
 

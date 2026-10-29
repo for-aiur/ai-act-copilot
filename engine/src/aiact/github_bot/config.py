@@ -17,12 +17,15 @@ class BotConfig:
     endpoint: str = 'http://127.0.0.1:11434'
     cloud_review: bool = False
     allow_forks: bool = False
+    acknowledgement_gate: bool = False
     roles: dict[str, list[str]] = field(default_factory=lambda: {'privacy_officer': [], 'model_owner': [], 'engineering': []})
     routing: dict[str, list[str]] = field(default_factory=lambda: {
         'article-4a': ['privacy_officer'], 'article-10': ['privacy_officer', 'model_owner'],
         'annex-iv-2': ['model_owner'], 'article-15': ['model_owner'], 'article-14': ['engineering']})
 
     def __post_init__(self):
+        if type(self.acknowledgement_gate) is not bool:
+            raise ValueError('acknowledgement_gate must be a boolean.')
         if not self.repositories or any(not REPO.fullmatch(r) for r in self.repositories):
             raise ValueError('Configure explicit owner/repository names.')
         self.repositories = [r.lower() for r in self.repositories]

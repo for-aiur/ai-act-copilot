@@ -2,19 +2,14 @@
   "name": "Evros AI Act Copilot",
   "url": "https://github.com/for-aiur/ai-act-copilot",
   "hook_attributes": {
-    "url": "https://YOUR-BOT-HOST/webhooks/github",
-    "active": true
+    "active": false
   },
   "public": false,
   "default_permissions": {
     "contents": "read",
     "pull_requests": "write",
-    "issues": "read"
+    "issues": "read",
+    "checks": "write"
   },
-  "default_events": [
-    "pull_request",
-    "issue_comment",
-    "pull_request_review_comment",
-    "pull_request_review"
-  ]
+  "default_events": []
 }

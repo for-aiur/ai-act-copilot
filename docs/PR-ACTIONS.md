@@ -1,48 +1,57 @@
-# PR review with GitHub Actions
+# PR review with our GitHub App
 
-PR event -> changed Python blobs -> existing two-pass engine -> PR questions and
-source evidence. Only trusted default-branch engine/configuration runs. PR code
-is downloaded through GitHub's API as data, never installed or executed.
+Actions runs the scanner; our App writes findings, replies and the merge check.
+No server, webhook or retained database is needed. [Setup](GITHUB-APP.md).
 
-## Setup
+## Review and reply
 
-1. Merge the engine, `bot/actions.toml` and `.github/workflows/pr-review.yml`
-   into the repository's default branch.
-2. In **Settings > Secrets and variables > Actions**, add the repository secret
-   `GEMINI_API_KEY`. The editor's saved key is separate.
-3. Edit `bot/actions.toml`: repository allowlist, model and optional GitHub logins
-   for privacy officer, model owner and engineering. Role routing uses the App
-   adapter's existing citation-prefix rules and can be overridden with `[routing]`.
-4. Set the Actions repository variable `AIACT_PR_REVIEW_ENABLED` to `true`.
-   Enabling this consents to sending selected changed code and retrieved legal
-   passages to Gemini using your API quota. Fork PRs remain disabled.
-5. Open or update an internal PR changing a Python file. Inspect the **AI Act PR
-   review** workflow and its PR comments. A writer, maintainer, admin or configured
-   role holder can post `/aiact rescan` as a PR conversation comment.
+1. An internal PR opens or changes. The bot scans changed Python files and posts
+   code evidence, official sources, a question and requested reviewer roles.
+2. Reply in the finding thread with context. The bot confirms receipt. This
+   does not count as a decision and is not sent to the model.
+3. Copy a command from each finding, replacing `<reason>`:
 
-No App registration, webhook, external server or AWS account is needed. Comments
-are authored by `github-actions[bot]`; a custom App avatar requires the deferred
-GitHub App setup. Repository/organization policy must permit this workflow and
-the declared token permissions. Actions and Gemini usage remain subject to their
-own quotas and billing.
+   ```text
+   /aiact acknowledge FINDING_ID REVIEW_TOKEN Reviewed the human oversight process.
+   /aiact false-positive FINDING_ID REVIEW_TOKEN This is a synthetic fixture.
+   /aiact reopen FINDING_ID REVIEW_TOKEN The evidence needs another review.
+   ```
 
-## State and limits
+   `ack` and `fp` are aliases. Commands work in an inline reply or the PR
+   conversation. The ID/token must match the current finding and revision.
+4. The bot accepts/rejects the command and updates **AI Act Copilot /
+   acknowledgements**. It passes only after a complete current review and an
+   authorized acknowledge/false-positive decision for every finding. Partial or
+   failed scans cannot pass, even with zero findings.
 
-- No database survives the job. Scratch SQLite reuses the tested adapter and is
-  deleted on normal exit; the hosted runner is discarded after the job. It is
-  never uploaded as an artifact, cached or committed.
-- PR comments remain on GitHub. Stable finding markers let subsequent jobs
-  update matching comments rather than posting the same finding repeatedly.
-  Deleted comments can be recreated; changed finding identities can create new
-  threads. Summaries are per commit/configuration, not a dashboard history.
-- Replies are for human discussion only. Evidence ingestion, false-positive/
-  resolved commands, decision replay and automatic closure are deferred. Old
-  comments can remain after a finding disappears; use their pinned commit links.
-- Reviews retain existing scan budgets and legal coverage limits. Failed or
-  partial reviews post their summary and fail the workflow; findings alone do
-  not fail it. Zero findings is not a compliance certificate.
-- Jobs serialize per PR. Stale head/base checks suppress results for outdated
-  revisions. No model credentials are exposed to PR code.
+Assigned role holders or repository maintainers/admins may decide. When no users
+are assigned to a finding's roles, repository writers may decide. Configure
+`[roles]` and optional citation-prefix `[routing]` in `bot/actions.toml`.
+Acknowledgement records human review, not verified compliance or AI approval.
 
-Disable by setting `AIACT_PR_REVIEW_ENABLED=false`. The existing local scanner
-and VS Code extension are independent of this switch.
+Writers, maintainers/admins and configured role holders may post `/aiact rescan`
+in the PR conversation. Scanning uses Gemini quota; reply processing does not.
+
+## Enforcement and limits
+
+The check only blocks merging when a branch rule requires it. After App setup
+and a live test, follow [branch-rule setup](GITHUB-APP.md#require-the-check).
+`acknowledgement_gate=true` enables this policy in `bot/actions.toml`.
+
+- The App signs a compact current-review snapshot in a PR comment. Every event
+  replays that snapshot and current human commands. Copied user markers, invalid
+  signatures, stale policy/base and absent reviews cannot authorize a merge.
+- New head commits, base revisions, policy or changed findings invalidate old
+  commands. Identical findings on the same revision can retain matching decisions
+  after a rescan. Editing/deleting a command or posting `reopen` recomputes the
+  gate. Deleting/tampering with the current signed snapshot blocks it.
+- Comments remain on GitHub. There is no immutable audit trail, dashboard or
+  persistent database. Old findings may remain after disappearing from a scan;
+  the signed current snapshot defines the gate. Deleting history removes it.
+- Scratch SQLite is deleted on normal job exit and the hosted runner is
+  discarded. Review state is never cached, uploaded or committed.
+- Only trusted default-branch engine/configuration runs. PR blobs are data, never
+  installed or executed. Fork PRs and merge queues are unsupported. Non-Python-only
+  PRs require no inference and can pass with limited Python review coverage.
+- Bot replies are deterministic receipts, not AI conversations. Administrators
+  can change policies and bypass settings; durable history is a later phase.

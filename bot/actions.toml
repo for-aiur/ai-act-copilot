@@ -4,6 +4,7 @@ provider = "gemini"
 model = "gemini-3.1-flash-lite"
 cloud_review = true
 allow_forks = false
+acknowledgement_gate = true
 
 [roles]
 privacy_officer = []
