@@ -151,7 +151,7 @@ Observed release checks:
 Native editor keyboard/theme/lifecycle acceptance remains the user's next task.
 This pre-release does not mark the full Linear POC milestone complete.
 
-## Final POC snapshot v0.1.6-poc.1
+## Final POC snapshot v0.1.6-poc.2
 
 Documentation, setup and packaging update; engine/provider/corpus and extension
 runtime source are unchanged. Main README now explains corpus size/storage,

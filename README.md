@@ -1,5 +1,7 @@
 # AI Act Copilot
 
+<img src="extensions/vscode/media/copilot-wig.png" width="128" alt="AI Act Copilot robot wearing a legal wig" />
+
 *by Evros Labs*
 
 AI Act Copilot reads selected Python code, compares its intended use with saved
@@ -96,14 +98,14 @@ configuration error. Zero findings does not mean compliant.
 The POC currently supports bounded Python source and selected recruitment,
 biometric, classification and transparency passages. See the
 [extension guide](extensions/vscode/README.md) and
-[release notes](docs/releases/v0.1.6-poc.1.md) for usage and limitations.
+[release notes](docs/releases/v0.1.6-poc.2.md) for usage and limitations.
 
 ## Install the VS Code extension
 
 First complete the CLI setup above. Then:
 
 1. Download `ai-act-copilot-0.1.6.vsix` from the
-   [POC release](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.1).
+   [POC release](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.2).
 2. In VS Code, open **Extensions → … → Install from VSIX**, select the file and
    run **Developer: Reload Window** if VS Code is already open.
 3. Open this repository root, trust it, open a Python file and run
