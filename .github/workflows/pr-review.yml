@@ -14,6 +14,7 @@ permissions:
 concurrency:
   group: aiact-review-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number || github.event.number }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   review:
