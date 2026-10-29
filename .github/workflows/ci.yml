@@ -1,0 +1,61 @@
+name: POC CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poc-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.13.6'
+          enable-cache: true
+          cache-dependency-glob: engine/uv.lock
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: extensions/vscode/package-lock.json
+      - name: Prepare Python
+        run: uv python install 3.12
+      - name: Test engine contracts, evidence, privacy and failures
+        run: uv run --project engine --python 3.12 --extra dev --locked python -m pytest engine/tests
+      - name: Install extension build dependencies
+        run: npm ci --prefix extensions/vscode
+      - name: Test extension contracts and lifecycle
+        run: npm test --prefix extensions/vscode
+      - name: Package engine and extension
+        run: |
+          uv build --project engine --wheel --out-dir "$GITHUB_WORKSPACE/dist/release"
+          npm run package --prefix extensions/vscode
+          cp extensions/vscode/*.vsix dist/release/
+      - name: Check installed wheel without the source checkout
+        run: |
+          uv venv --python 3.12 "$RUNNER_TEMP/aiact-wheel"
+          uv pip install --python "$RUNNER_TEMP/aiact-wheel/bin/python" dist/release/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/aiact-wheel/bin/aiact" --version
+          "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.corpus import load_corpus; assert len(load_corpus()["sections"]) == 6'
+      - name: Checksum release candidates
+        working-directory: dist/release
+        run: sha256sum *.whl *.vsix > SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: poc-packages-${{ github.sha }}
+          path: dist/release/
+          if-no-files-found: error
+          retention-days: 7

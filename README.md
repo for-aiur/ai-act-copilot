@@ -98,14 +98,14 @@ configuration error. Zero findings does not mean compliant.
 The POC currently supports bounded Python source and selected recruitment,
 biometric, classification and transparency passages. See the
 [extension guide](extensions/vscode/README.md) and
-[release notes](docs/releases/v0.1.6-poc.2.md) for usage and limitations.
+[release notes](docs/releases/v0.1.6-poc.3.md) for usage and limitations.
 
 ## Install the VS Code extension
 
 First complete the CLI setup above. Then:
 
 1. Download `ai-act-copilot-0.1.6.vsix` from the
-   [POC release](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.2).
+   [POC release](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.3).
 2. In VS Code, open **Extensions → … → Install from VSIX**, select the file and
    run **Developer: Reload Window** if VS Code is already open.
 3. Open this repository root, trust it, open a Python file and run
@@ -114,3 +114,9 @@ First complete the CLI setup above. Then:
 The checked-in workspace settings point to `engine/.venv/bin/aiact`, created by
 uv. The robot icon opens Local setup. If installed Ollama is stopped, use
 **Start local service**. The extension uses the same CLI and JSON results.
+
+## CI
+
+[GitHub Actions](https://github.com/for-aiur/ai-act-copilot/actions) runs engine
+and extension tests, builds wheel/VSIX packages and uploads release candidates
+on pushes and pull requests. See [CI details](docs/CI.md).

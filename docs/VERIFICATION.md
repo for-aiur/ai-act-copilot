@@ -151,7 +151,7 @@ Observed release checks:
 Native editor keyboard/theme/lifecycle acceptance remains the user's next task.
 This pre-release does not mark the full Linear POC milestone complete.
 
-## Final POC snapshot v0.1.6-poc.2
+## Final POC snapshot v0.1.6-poc.3
 
 Documentation, setup and packaging update; engine/provider/corpus and extension
 runtime source are unchanged. Main README now explains corpus size/storage,
@@ -177,3 +177,12 @@ No broad engine/adapter suite rerun for documentation/configuration changes.
 Earlier 44/20 passing results remain recorded above. Native editor acceptance
 is still separate; this release is the final limited POC snapshot, not a claim
 that every full-milestone manual gate passed.
+
+## CI addition for final snapshot
+
+Added a read-only, pinned-action GitHub workflow for pushes, pull requests and
+manual runs. It installs locked Python development dependencies, runs the engine
+and adapter suites, builds wheel/VSIX, smoke-checks a wheel installation outside
+the checkout, and uploads packages/checksums as seven-day artifacts. No Ollama
+installation or live model download is part of CI. Release publishing remains
+explicit. Local command rehearsal: 44 engine tests and 20 adapter tests passed.
