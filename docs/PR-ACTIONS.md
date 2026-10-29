@@ -55,3 +55,7 @@ and a live test, follow [branch-rule setup](GITHUB-APP.md#require-the-check).
   PRs require no inference and can pass with limited Python review coverage.
 - Bot replies are deterministic receipts, not AI conversations. Administrators
   can change policies and bypass settings; durable history is a later phase.
+- The per-PR Actions group uses `queue: max` with cancellation disabled, so rapid
+  replies wait sequentially rather than replacing pending decisions. GitHub's
+  queue holds at most 100 pending runs; retry a cancelled run if that limit is
+  reached. Missing verified decision events keep the gate blocked.

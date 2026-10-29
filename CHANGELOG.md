@@ -7,6 +7,8 @@ independent; Git tags identify the complete repository snapshot.
 
 Engine 0.4.1: App identity and acknowledgement gate (YIL-18).
 
+- Queue PR reply events sequentially instead of replacing pending replies when
+  several decisions arrive together (YIL-20).
 - Added a 512 px PNG App avatar below GitHub's 1 MB upload limit.
 
 - Use repository-scoped, short-lived GitHub App tokens in Actions. App credentials
