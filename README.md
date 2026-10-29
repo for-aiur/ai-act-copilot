@@ -99,6 +99,7 @@ The POC currently supports bounded Python source and selected recruitment,
 biometric, classification and transparency passages. See the
 [extension guide](extensions/vscode/README.md) and
 [release notes](docs/releases/v0.1.6-poc.3.md) for usage and limitations.
+Published changes are listed in the [changelog](CHANGELOG.md).
 
 ## Install the VS Code extension
 

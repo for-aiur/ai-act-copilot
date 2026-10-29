@@ -19,6 +19,7 @@ Read `docs/POC-PLAN.md` for rationale, task order and scope cuts. Linear records
 6. Finish each task with: changes, commands run and results, remaining limitation, next task. Never claim tests, offline operation or live inference passed without observing them.
 7. New ideas go in the deferred section of the plan unless required for the current acceptance criteria. No new framework/service merely for future flexibility.
 8. Do not use em dashes (U+2014) in documentation, user-facing text or responses. Use a full stop, comma, colon or parentheses instead. Keep explanations short and concrete.
+9. Record published changes in CHANGELOG.md. Keep engine/pyproject.toml and engine/src/aiact/__init__.py versions in sync; keep extension package.json and package-lock.json versions in sync. Engine and extension versions are independent. Never rewrite an already published release tag for a documentation follow-up.
 
 Task handoff template:
 
