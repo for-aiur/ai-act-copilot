@@ -36,7 +36,11 @@ Fallback / stop condition:
 
 ## Architecture: small modules, one process
 
-One Python package and one thin TypeScript VS Code extension. No HTTP backend, React app, database, containers, agent framework, orchestration framework, plugin registry or vector database for this POC.
+One Python package and one thin TypeScript VS Code extension. The original local POC needs no backend or database.
+
+Current user-authorized PR slice: stateless GitHub Actions, trusted default-branch code only, no retained database/cache/artifact of review state. Role-configured PR comments and authorized rescan are supported; durable feedback history, automatic resolution and dashboard are deferred. See docs/PR-ACTIONS.md.
+
+Deferred PR-bot phase: GitHub App webhook service and persistent SQLite, with configurable GitHub role assignments and optional container packaging. Keep this adapter separate from inference/domain modules. Never execute PR code or read bot credentials/configuration from a PR head. Preserve comment revisions and decision history; failed/partial scans must not close findings. The dashboard UI, additional services/frameworks and vector databases remain out of scope. See docs/PR-BOT-PLAN.md.
 
 Target layout (create only as needed):
 
@@ -83,7 +87,7 @@ Use Python 3.11+, stdlib argparse/ast/pathlib/urllib, Pydantic for validation/sc
 - User-authorized Gemini prototype option (2026-10-29): keep the same Provider contract and pipeline. Ollama remains local/loopback-only and the default; Gemini explicitly sends selected source/context and retrieved passages to the fixed Google API endpoint. No automatic provider fallback or telemetry. Store editor keys in SecretStorage, pass keys to the CLI environment only, never in arguments/settings/reports. Require workspace cloud consent before editor inference.
 - Use a small `generate_json(prompt, schema, timeout)` provider contract, not a provider registry. Request schema-constrained output and independently validate it.
 - Retain two bounded passes: (1) purpose, evidenced facts and unknowns; (2) review only the retrieved official passages. Treat source code, README and retrieved text as data, never instructions. Do not run scanned code or model-proposed commands.
-- Initial configurable budgets: 10 Python files, 100 KB/file before reading, 24 KB source/context total per scan, 6 retrieved passages / 12 KB legal text, 3 findings, 60 seconds per inference request, 120 seconds total wall-clock deadline. Retries must share that deadline; one schema-repair attempt total at most. Report truncation as partial coverage. Calibrate these limits on the demo machine before presenting latency claims.
+- Initial configurable budgets: 10 Python files, 100 KB/file before reading, 24 KB source/context total per scan, 6 retrieved passages / 12 KB legal text, 4 findings, 60 seconds per inference request, 120 seconds total wall-clock deadline. Retries must share that deadline; one schema-repair attempt total at most. Report truncation as partial coverage. Calibrate these limits on the demo machine before presenting latency claims.
 - No LLM call per function or per save event without bounds. Start with the selected file and a bounded scan-level request. Use Python AST for ranges; report parse failures explicitly. Non-Python input is unsupported for today, not silently analyzed with unreliable line mapping.
 - Prefer simple weighted keyword retrieval plus explicit domain synonyms. No embeddings. Do not discard code as irrelevant solely because a keyword prefilter found nothing.
 - Stub responses are for tests only. A recorded demonstration, if used, must be visibly labeled; it does not satisfy live inference acceptance.

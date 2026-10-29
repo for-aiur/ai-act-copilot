@@ -4,16 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-act-copilot"
-version = "0.3.2"
+version = "0.4.0"
 description = "Evidence-grounded engineering review assistant with local Ollama or opt-in Gemini"
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2.7,<3"]
 
 [project.optional-dependencies]
+bot = [
+  "PyJWT[crypto]>=2.10,<3",
+  "cryptography>=48,<49; platform_system == 'Darwin' and platform_machine == 'x86_64'",
+]
 dev = ["pytest>=8,<10", "jsonschema>=4,<5"]
 
 [project.scripts]
 aiact = "aiact.cli:main"
+aiact-bot = "aiact.github_bot.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

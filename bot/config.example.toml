@@ -1,0 +1,19 @@
+# Operator-owned file, never read from a PR branch. Copy to config.toml.
+repositories = ["for-aiur/ai-act-copilot"]
+database = ".aiact-bot/reviews.sqlite3"
+provider = "gemini"
+model = "gemini-3.1-flash-lite"
+cloud_review = true  # Sends selected changed Python and approved reviewer inputs to Google.
+allow_forks = false
+
+[roles]
+privacy_officer = []  # GitHub user logins, e.g. ["your-privacy-reviewer"]
+model_owner = []
+engineering = []
+
+[routing]
+"article-4a" = ["privacy_officer"]
+"article-10" = ["privacy_officer", "model_owner"]
+"annex-iv-2" = ["model_owner"]
+"article-15" = ["model_owner"]
+"article-14" = ["engineering"]

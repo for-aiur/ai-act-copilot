@@ -1,0 +1,26 @@
+services:
+  bot:
+    build:
+      context: ..
+      dockerfile: bot/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      AIACT_BOT_DATABASE: /data/reviews.sqlite3
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - bot-data:/data
+      - ./config.toml:/config/bot.toml:ro
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  bot-data:

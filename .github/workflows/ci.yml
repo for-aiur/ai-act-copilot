@@ -33,7 +33,16 @@ jobs:
       - name: Prepare Python
         run: uv python install 3.12
       - name: Test engine contracts, evidence, privacy and failures
-        run: uv run --project engine --python 3.12 --extra dev --locked python -m pytest engine/tests
+        run: uv run --project engine --python 3.12 --extra dev --extra bot --locked python -m pytest engine/tests
+      - name: Validate bot deployment configuration
+        run: |
+          cp bot/.env.example bot/.env
+          cp bot/config.example.toml bot/config.toml
+          docker compose -f bot/compose.yaml config --quiet
+      - name: Build and smoke-test bot image
+        run: |
+          docker build -f bot/Dockerfile -t aiact-bot:test .
+          docker run --rm --network none aiact-bot:test aiact-bot --help
       - name: Install extension build dependencies
         run: npm ci --prefix extensions/vscode
       - name: Test extension contracts and lifecycle
@@ -49,6 +58,7 @@ jobs:
           uv pip install --python "$RUNNER_TEMP/aiact-wheel/bin/python" dist/release/*.whl
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/aiact-wheel/bin/aiact" --version
+          "$RUNNER_TEMP/aiact-wheel/bin/aiact-bot" --help
           "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.corpus import load_corpus; assert len(load_corpus()["sections"]) == 114'
           "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.corpus import load_corpus; from aiact.questions import question_options_for; assert question_options_for("annex-iii-4-a", {s["id"] for s in load_corpus()["sections"]})'
       - name: Checksum release candidates

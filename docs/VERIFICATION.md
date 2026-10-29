@@ -350,3 +350,16 @@ these bank tests.
 
 Final engine suite for 0.3.2: **104 passed**. Editable environment synced to
 0.3.2; the next CLI/editor scan reads the updated bank without extension reload.
+
+## Stateless PR review (2026-10-29)
+
+- `engine/.venv/bin/python -m pytest engine/tests -q`: 131 passed in 11.17s
+  with local integration-test permissions. The restricted run had four sandbox
+  failures (socket binding and nested sandbox-exec), not assertion regressions.
+- After adding a per-comment rescan nonce, targeted Actions tests: 3 passed.
+  Tests use the real pipeline with test-only GitHub and model transports.
+- `git diff --check`: passed. Missing Actions environment returns a sanitized
+  configuration failure, without printing credentials.
+- Live GitHub/Gemini execution is not verified. The default-branch workflow,
+  repository secret and explicit enable variable are still required. No review
+  state is uploaded, committed or cached by the Actions workflow.

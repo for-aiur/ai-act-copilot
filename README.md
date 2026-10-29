@@ -169,3 +169,16 @@ returns at most four findings and retrieves at most six passages per scan.
 The corpus is searched locally with lexical ranking, topic gates and synonyms.
 No vector database or embeddings are required. Real Gemini output quality still
 needs manual review; fixture tests use test-only providers.
+
+## GitHub PR review
+
+GitHub Actions reviews changed Python files and posts code evidence, official
+sources and questions to the PR. No server or persistent database is required.
+Configure roles/model in `bot/actions.toml`, add the `GEMINI_API_KEY` Actions
+secret, then set the repository variable `AIACT_PR_REVIEW_ENABLED=true`.
+This enables sending selected PR code and legal passages to Google.
+
+An authorized reviewer can post `/aiact rescan` in the PR conversation.
+Matching bot comments are updated; replies remain in GitHub but are not consumed
+by the model. Decision history, automatic resolution and the dashboard are
+deferred. Fork PRs are disabled. [Setup and limits](docs/PR-ACTIONS.md).

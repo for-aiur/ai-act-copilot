@@ -5,6 +5,25 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine 0.4.0: stateless GitHub Actions PR review and deferred App adapter.
+
+- Added opt-in Actions review with the built-in GitHub token, Gemini secret,
+  trusted-branch configuration, matching-comment updates and authorized rescan.
+  No retained database, report artifact, App registration or server is required.
+  Human decision tracking and dashboard integration are deferred.
+
+- Added signed-webhook jobs, commit-pinned changed-Python snapshots and PR review
+  comments with code evidence, official quotations and configurable role input.
+- Added persistent SQLite scan/finding/comment/decision history, scoped
+  false-positive and resolved decisions, conservative rescan reconciliation,
+  crash recovery and priority-ordered export for a future dashboard.
+- Added App registration settings, optional authentication dependencies,
+  single-container configuration and local end-to-end tests. No PR code is run.
+- Live App installation/HTTPS/model acceptance requires operator credentials.
+  Extension 0.3.0 and existing scan result fields are unchanged.
+
+
+
 Engine 0.3.2: evidence-oriented question bank.
 
 - Expanded from 32 to 164 authored questions; every stored passage has a scoped

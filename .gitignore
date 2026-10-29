@@ -9,3 +9,7 @@ build/
 *.vsix
 .DS_Store
 .aiact-results/
+.aiact-bot/
+bot/.env
+bot/config.toml
+bot/*.pem
