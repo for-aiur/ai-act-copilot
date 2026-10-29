@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "status": "complete",
+  "findings": [
+    {
+      "id": "de3ed9bdaded582a",
+      "title": "Recruitment: confirm how scores affect selection",
+      "explanation": "The recruitment or selection context may be relevant to Annex III 4(a). Confirm how the model outputs influence real candidate selection; actual deployment and actor role are not established by this snippet.",
+      "kind": "context_question",
+      "priority": "high",
+      "evidence": {
+        "path": "examples/recruitment/ranker.py",
+        "start_line": 4,
+        "end_line": 7,
+        "quote": "def shortlist_candidates(applications, suitability_model):\n    scores = suitability_model.predict([person[\"resume\"] for person in applications])\n    ranked_candidates = sorted(zip(scores, applications), key=lambda pair: pair[0], reverse=True)\n    return [candidate for score, candidate in ranked_candidates[:5]]"
+      },
+      "citations": [
+        {
+          "section_id": "annex-iii-4-a",
+          "quote": "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;",
+          "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3"
+        }
+      ],
+      "suggested_next_action": "Ask who reviews the shortlist of candidates based on the model scores for actual hiring decisions in the EU context.",
+      "context_question": "Will these scores affect real hiring decisions in the EU, and who reviews the shortlist?"
+    }
+  ],
+  "errors": [],
+  "coverage": {
+    "scanned_files": [
+      "examples/recruitment/ranker.py"
+    ],
+    "skipped_files": [],
+    "truncated": false,
+    "supported_languages": [
+      "python"
+    ],
+    "corpus_scope": [
+      "annex-iii-4-a"
+    ],
+    "limitations": [
+      "Engineering review only; zero findings does not certify compliance.",
+      "Six reviewed passages only: recruitment, remote biometric identification, Article 6 classification conditions, direct AI interaction and generated-content transparency.",
+      "Not full AI Act coverage. No Article 5 prohibition analysis, actor-role determination, deployment facts or verified applicability dates. Consult the current official text; Commission summaries and guidance excluded.",
+      "Refresh re-verifies reviewed passages; changed text requires manual review and a package corpus revision. It does not discover amendments."
+    ]
+  },
+  "metadata": {
+    "model_id": "qwen2.5:3b",
+    "prompt_version": "poc-4",
+    "corpus_version": "reviewed-subset-2026-10-29",
+    "corpus_checksum": "b64c7135717800ff53aa5e61daf60449517a4bf0f5b3bc842081e9dbf895cd3b",
+    "input_fingerprint": "f7d9a6be4aaf046ff2e1af7a96ecfe0abb111fd983964602a32bdc977a8d49b9",
+    "elapsed_ms": 33883
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "name": "ai-act-copilot",
+  "displayName": "AI Act Copilot",
+  "description": "Review AI use in Python code with source evidence, official EU passages and practical context questions.",
+  "version": "0.1.5",
+  "publisher": "evros-labs",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "compile": "tsc -p .",
+    "package": "npm run compile && vsce package --no-dependencies --allow-missing-repository --skip-license --no-rewrite-relative-links",
+    "test": "npm run compile && node --test test/*.test.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  },
+  "overrides": {
+    "@azure/msal-node": "7.1.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Review invokes a configurable local executable."
+    },
+    "virtualWorkspaces": false
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "aiact.review",
+        "title": "AI Act Copilot: Review current Python file"
+      },
+      {
+        "command": "aiact.showReport",
+        "title": "AI Act Copilot: Show last review report"
+      },
+      {
+        "command": "aiact.answerContext",
+        "title": "AI Act Copilot: Answer context question and review"
+      },
+      {
+        "command": "aiact.revealFinding",
+        "title": "AI Act Copilot: Reveal code evidence"
+      },
+      {
+        "command": "aiact.openOfficialSource",
+        "title": "AI Act Copilot: Open official legal source"
+      },
+      {
+        "command": "aiact.showHealth",
+        "title": "AI Act Copilot: Show local health",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "aiact.refreshHealth",
+        "title": "AI Act Copilot: Refresh local health",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aiact.startLocalService",
+        "title": "AI Act Copilot: Start local service",
+        "icon": "$(play)"
+      },
+      {
+        "command": "aiact.showIntroduction",
+        "title": "AI Act Copilot: What is this tool?",
+        "icon": "$(book)"
+      },
+      {
+        "command": "aiact.showRoadmap",
+        "title": "AI Act Copilot: Future plans",
+        "icon": "$(telescope)"
+      }
+    ],
+    "configuration": {
+      "title": "AI Act Copilot",
+      "properties": {
+        "aiact.executable": {
+          "type": "string",
+          "default": "aiact",
+          "scope": "machine-overridable",
+          "description": "Local CLI executable path. Supports ${workspaceFolder}; paths with spaces need no quotes."
+        },
+        "aiact.model": {
+          "type": "string",
+          "default": "qwen2.5:3b",
+          "description": "Exact installed local Ollama model tag."
+        },
+        "aiact.endpoint": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "Loopback Ollama endpoint only."
+        },
+        "aiact.corpusPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional explicit corpus path. Empty uses the local cache or bundled reviewed subset."
+        },
+        "aiact.reviewOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Opt in to local reviews after save (800 ms debounce; one active scan)."
+        },
+        "aiact.ollamaExecutable": {
+          "type": "string",
+          "default": "ollama",
+          "scope": "machine-overridable",
+          "description": "Ollama binary for the Start local service action. The project helper or bundled local binary is used when present. No downloads."
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "aiact.review",
+          "when": "editorLangId == python",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "aiact.showIntroduction",
+          "when": "view == aiact.health",
+          "group": "navigation@1"
+        },
+        {
+          "command": "aiact.refreshHealth",
+          "when": "view == aiact.health",
+          "group": "navigation"
+        },
+        {
+          "command": "aiact.startLocalService",
+          "when": "view == aiact.health",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiact",
+          "title": "AI Act Copilot",
+          "icon": "media/copilot-wig.svg"
+        }
+      ]
+    },
+    "views": {
+      "aiact": [
+        {
+          "id": "aiact.health",
+          "name": "Local setup"
+        }
+      ]
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "icon": "media/copilot-wig.png",
+  "author": {
+    "name": "Evros Labs"
+  }
+}

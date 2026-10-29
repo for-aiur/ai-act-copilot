@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "status": "failed",
+  "findings": [],
+  "errors": [
+    {
+      "code": "model_unavailable",
+      "message": "Start Ollama and configure an installed model.",
+      "path": null
+    }
+  ],
+  "coverage": {
+    "scanned_files": [],
+    "skipped_files": [],
+    "truncated": false,
+    "supported_languages": [
+      "python"
+    ],
+    "corpus_scope": [],
+    "limitations": [
+      "Engineering review only; zero findings does not certify compliance."
+    ]
+  },
+  "metadata": {
+    "model_id": null,
+    "prompt_version": "poc-1",
+    "corpus_version": null,
+    "corpus_checksum": null,
+    "input_fingerprint": null,
+    "elapsed_ms": 0
+  }
+}

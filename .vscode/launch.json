@@ -1,0 +1,10 @@
+{
+  "version": "0.2.0",
+  "configurations": [{
+    "name": "Run AI Act Copilot extension",
+    "type": "extensionHost",
+    "request": "launch",
+    "args": ["--extensionDevelopmentPath=${workspaceFolder}/extensions/vscode", "${workspaceFolder}"],
+    "outFiles": ["${workspaceFolder}/extensions/vscode/dist/**/*.js"]
+  }]
+}

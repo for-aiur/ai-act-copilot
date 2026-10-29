@@ -1,0 +1,137 @@
+{
+  "$defs": {
+    "HealthCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "engine",
+            "ollama",
+            "model",
+            "corpus"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "unavailable",
+            "unknown"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "detail"
+      ],
+      "title": "HealthCheck",
+      "type": "object"
+    },
+    "ScanError": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Path"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ScanError",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "default": "unavailable",
+      "enum": [
+        "ready",
+        "unavailable"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "engine_version": {
+      "default": "0.1.0",
+      "title": "Engine Version",
+      "type": "string"
+    },
+    "python_version": {
+      "title": "Python Version",
+      "type": "string"
+    },
+    "endpoint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Endpoint"
+    },
+    "model_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Id"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/HealthCheck"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "errors": {
+      "items": {
+        "$ref": "#/$defs/ScanError"
+      },
+      "title": "Errors",
+      "type": "array"
+    }
+  },
+  "title": "HealthResult",
+  "type": "object"
+}

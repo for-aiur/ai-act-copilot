@@ -1,0 +1,91 @@
+{
+  "version": "reviewed-subset-2026-10-29",
+  "source_identity": "Regulation (EU) 2024/1689; Commission AI Act Service Desk reproduction, pages retrieved 2026-10-29. Articles state based on EUR-Lex consolidation as at 27 July 2026. No independent EUR-Lex version verification (endpoint blocked).",
+  "retrieved_at": "2026-10-29",
+  "verified_at": "2026-10-29",
+  "source_checksums": {
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3": "c8b564720c4c7e2935316c237dbd404ccdddf7ae3006b2e16b10bbc1f46ee762",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6": "6b17a2b8b36387412c4a1508caa5ae6871d5307f8f038bee2f47055d8e907d78",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50": "df96e69bd031073cf8eae70910a511a309284887643ab119403a0568ef0903e5"
+  },
+  "scope_limits": [
+    "Six reviewed passages only: recruitment, remote biometric identification, Article 6 classification conditions, direct AI interaction and generated-content transparency.",
+    "Not full AI Act coverage. No Article 5 prohibition analysis, actor-role determination, deployment facts or verified applicability dates. Consult the current official text; Commission summaries and guidance excluded.",
+    "Refresh re-verifies reviewed passages; changed text requires manual review and a package corpus revision. It does not discover amendments."
+  ],
+  "sections": [
+    {
+      "id": "annex-iii-4-a",
+      "title": "Annex III 4(a) · Recruitment",
+      "text": "(a) AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;",
+      "supporting_quotes": [
+        "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7664eb3d0495d0fa469da9ed8d9ec359287ca7aae444c1dbb803d8a386234b17"
+    },
+    {
+      "id": "annex-iii-1-a",
+      "title": "Annex III 1(a) · Remote biometrics",
+      "text": "(a) remote biometric identification systems. This shall not include AI systems intended to be used for biometric verification the sole purpose of which is to confirm that a specific natural person is the person he or she claims to be;",
+      "supporting_quotes": [
+        "remote biometric identification systems."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "932c2b67daa4164706e24f3fdf203777fd505238a4803f2bab7f805522512721"
+    },
+    {
+      "id": "article-6-2",
+      "title": "Article 6(2) · Annex III classification",
+      "text": "2. In addition to the high-risk AI systems referred to in paragraph 1, AI systems referred to in Annex III shall be considered to be high-risk.",
+      "supporting_quotes": [
+        "AI systems referred to in Annex III shall be considered to be high-risk."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "eeed91ee4bc59a1d5e45660ea081a5eb7886f569e2489504c8a0cddcb4e4b3d7"
+    },
+    {
+      "id": "article-6-3",
+      "title": "Article 6(3) · Classification conditions",
+      "text": "3. By derogation from paragraph 2, an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons, including by not materially influencing the outcome of decision making. The first subparagraph shall apply where any of the following conditions is fulfilled: (a) the AI system is intended to perform a narrow procedural task; (b) the AI system is intended to improve the result of a previously completed human activity; (c) the AI system is intended to detect decision-making patterns or deviations from prior decision-making patterns and is not meant to replace or influence the previously completed human assessment, without proper human review; or (d) the AI system is intended to perform a preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III. Notwithstanding the first subparagraph, an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.",
+      "supporting_quotes": [
+        "an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "f859f5a2e435bd84c7da404fd214279544868d431a63a582b4fe548dc94fb3e0"
+    },
+    {
+      "id": "article-50-1",
+      "title": "Article 50(1) · Direct AI interaction",
+      "text": "1. Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system, unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use. This obligation shall not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public to report a criminal offence.",
+      "supporting_quotes": [
+        "the natural persons concerned are informed that they are interacting with an AI system"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "bff7aabe84832bb9735caab00d96ec1b4a64515080a7d633f8cf11cfe56702c5"
+    },
+    {
+      "id": "article-50-2",
+      "title": "Article 50(2) · Generated content",
+      "text": "2. Providers of AI systems, including general-purpose AI systems, generating synthetic audio, image, video or text content, shall ensure that the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated. Providers shall ensure their technical solutions are effective, interoperable, robust and reliable as far as this is technically feasible, taking into account the specificities and limitations of various types of content, the costs of implementation and the generally acknowledged state of the art, as may be reflected in relevant technical standards. This obligation shall not apply to the extent the AI systems perform an assistive function for standard editing or do not substantially alter the input data provided by the deployer or the semantics thereof, or where authorised by law to detect, prevent, investigate or prosecute criminal offences.",
+      "supporting_quotes": [
+        "the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "8ccbcc4fd1ad4f3fd91be65631f8199521cd16336db9d3435bee4245ee6876d0"
+    }
+  ],
+  "checksum": "b64c7135717800ff53aa5e61daf60449517a4bf0f5b3bc842081e9dbf895cd3b"
+}
