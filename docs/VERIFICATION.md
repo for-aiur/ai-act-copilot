@@ -150,3 +150,30 @@ Observed release checks:
 
 Native editor keyboard/theme/lifecycle acceptance remains the user's next task.
 This pre-release does not mark the full Linear POC milestone complete.
+
+## Final POC snapshot v0.1.6-poc.1
+
+Documentation, setup and packaging update; engine/provider/corpus and extension
+runtime source are unchanged. Main README now explains corpus size/storage,
+the two model calls, curated question limits and explicit update behavior.
+Added a separate VSIX installation section. uv setup uses engine/.venv; the
+workspace setting and packaged extension guide point to that executable.
+engine/uv.lock records the resolved project dependencies from public PyPI.
+
+Observed checks:
+
+- uv 0.13.6 prepared a fresh engine/.venv and installed the editable engine.
+  doctor --json reported all four checks ready with qwen2.5:3b.
+- Real scan from the repository root using uv run --offline --project engine
+  --python 3.12, under loopback-only networking: exit 0, complete, one finding,
+  no operational errors, 48,407 ms. This also verified relative input paths.
+- Extension compile and package passed. Verified version/publisher, updated
+  guide and identical compiled runtime bytes compared with 0.1.5.
+- Installed evros-labs.ai-act-copilot@0.1.6 and confirmed the version through
+  the VS Code CLI. Assets include that VSIX and the unchanged 0.1.0 wheel.
+- Source whitespace check and release asset SHA-256 checks passed.
+
+No broad engine/adapter suite rerun for documentation/configuration changes.
+Earlier 44/20 passing results remain recorded above. Native editor acceptance
+is still separate; this release is the final limited POC snapshot, not a claim
+that every full-milestone manual gate passed.

@@ -2,210 +2,113 @@
 
 *by Evros Labs*
 
-Understand where the AI in your Python code needs a closer look. Run a local
-review to inspect source lines, a relevant official legal quotation, a next step
-and a specific context question. **This is an engineering review assistant, not
-a compliance certificate.**
+AI Act Copilot reads selected Python code, compares its intended use with saved
+AI Act passages, and returns code evidence, a legal quotation and a question
+about missing context. It helps engineering review; it does not certify compliance.
 
-New to the tool or the AI Act? Read the
-[plain-language introduction](extensions/vscode/README.md).
+## What legal text do we use?
 
-## POC release
+The original English AI Act published in July 2024 is **144 pages**, including
+its recitals and annexes ([official PDF](https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng/pdf)).
+That page count describes the original publication, not later consolidated versions.
+Our POC stores **six selected passages, 526 words in total**, roughly one page.
+They were selected during POC development from the Commission's reproductions
+of Annex III, Article 6 and Article 50, then checked against those source pages.
+There has been no independent legal review of this selection.
 
-**Tag: `v0.1.5-poc.1` · extension: `0.1.5` · Python engine: `0.1.0`.**
+We chose passages relevant to the recruitment, biometric and chatbot examples
+so we could build and inspect a small end-to-end demo. This was a scope choice,
+not a storage limit: saving the full law on disk is feasible. Wider coverage
+would require importing the remaining provisions and checking how we select
+and interpret them. The current tool cannot review provisions it does not have.
 
-This is a private GitHub pre-release for local POC testing, not a Marketplace or
-PyPI release. Download the VSIX, Python wheel and `SHA256SUMS.txt` from the
-[GitHub releases page](https://github.com/for-aiur/ai-act-copilot/releases).
-Repository access is required. Source archives are available with the tag.
-The [release notes](docs/releases/v0.1.5-poc.1.md) record scope and known limits.
-
-## First setup
-
-You need Python **3.11+**, VS Code **1.85+**, and
-[Ollama](https://ollama.com/download) installed locally. Node **22+** is only
-needed if you build the extension from source. Model/package downloads are
-explicit setup operations; scans never download anything.
-
-Clone the source and install the engine from the repository root:
-
-```sh
-git clone https://github.com/for-aiur/ai-act-copilot.git
-cd ai-act-copilot
-git checkout v0.1.5-poc.1
-python3 --version
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ./engine
+```mermaid
+flowchart LR
+    A[Official Commission web pages] -->|Selected during POC development| B[6 legal passages]
+    B --> C[(corpus.json saved on disk)]
 ```
 
-Use a Python 3.11+ executable for the venv command. If `python3` is older, replace
-it with your installed newer interpreter, such as `python3.12`. On Windows,
-activate with `.venv\Scripts\Activate.ps1` in PowerShell. You can install the
-release wheel instead of `-e ./engine` using `python -m pip install` followed by
-the downloaded wheel's path.
+“Corpus” just means **the legal text file the tool can search**. Our
+[`corpus.json`](engine/src/aiact/data/corpus.json) contains those six passages,
+their source links and verification details. It ships with the Python engine.
+During a scan, the file is read into memory. No legal website or API is called.
 
-Start Ollama (the desktop app or `ollama serve` in a separate terminal), then
-explicitly download the tested model:
+## What happens when you scan code?
+
+```mermaid
+flowchart TD
+    A[Your Python code] --> B[Model call 1: what does this code do?]
+    B --> C[Purpose, observed facts and missing context]
+    C --> D[Engine finds matching saved legal passages]
+    L[(Local corpus.json)] --> D
+    D --> E[Model call 2: compare the facts with those passages]
+    C --> E
+    E --> F[Engine checks code lines and exact quotations]
+    F --> G[JSON: finding, evidence and context question]
+```
+
+Both model calls use **Ollama**, the program running the model on your machine.
+For example, the first call may identify that code ranks job applicants. The
+engine then uses keyword matching to select the saved recruitment passage.
+The second call gets the code evidence, extracted facts and that passage to
+produce a review. The model does not search the web or read the whole law.
+
+Questions are partly templates in
+[`pipeline.py`](engine/src/aiact/pipeline.py). For recruitment, it can ask whether
+scores affect real hiring decisions. Matching a topic selects the question
+options; the model chooses among them in the initial review. This makes the
+POC more predictable, but its five examples do not prove that it generalizes to
+unseen code or topics. Exact quotation checks also do not prove legal relevance.
+
+## What does update do?
+
+**It runs only when someone explicitly executes `aiact update`.** It does not
+run on startup, on save or during a scan. There is no automatic schedule.
+
+It downloads the same three official pages and asks: “Are our six saved passages
+still there?” If yes, it saves a verified copy to `~/.cache/aiact/corpus.json`.
+Subsequent scans use that cache instead of the packaged copy unless an explicit
+corpus path is configured. If a passage changed or a download fails, it keeps
+the previous cache and reports an error.
+
+The command currently **rechecks existing text**. It does not import new
+articles or update changed legal wording. That needs a reviewed corpus revision.
+
+## Run a review
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and
+[Ollama](https://ollama.com/download), and start Ollama. From the repository root:
 
 ```sh
 ollama pull qwen2.5:3b
-aiact doctor
-aiact scan examples/recruitment/ranker.py --json
+uv run --project engine --python 3.12 aiact scan examples/recruitment/ranker.py --json
 ```
 
-Install the downloaded `ai-act-copilot-0.1.5.vsix` through VS Code's
-**Extensions → … → Install from VSIX**, or:
+Download the model once. `uv run` prepares Python, installs the engine and its
+dependencies in `engine/.venv`, then runs the scan. No environment activation
+is needed. For a setup check, run `uv run --project engine aiact doctor`.
 
-```sh
-code --install-extension /path/to/ai-act-copilot-0.1.5.vsix
-```
+`scan --json` returns `complete`, `partial` or `failed` status, findings,
+coverage, errors and model/corpus provenance. Exit code 0 means the review
+completed, 1 means it was incomplete or failed, and 2 means a usage or
+configuration error. Zero findings does not mean compliant.
 
-Replace `/path/to` with the real downloaded-file location. If VS Code is already
-open, run **Developer: Reload Window**. The extension ID is
-`evros-labs.ai-act-copilot`. No Marketplace account is needed for local VSIX use.
+The POC currently supports bounded Python source and selected recruitment,
+biometric, classification and transparency passages. See the
+[extension guide](extensions/vscode/README.md) and
+[release notes](docs/releases/v0.1.6-poc.1.md) for usage and limitations.
 
-## Review in VS Code
+## Install the VS Code extension
 
-1. Open this repository **root folder**, trust the workspace and save a Python file.
-2. Click the **robot icon** in the Activity Bar. Local setup shows the CLI,
-   Ollama, selected model and legal corpus separately.
-3. If Ollama is stopped, click **Start local service**. Keep its integrated
-   terminal open. The helper uses a local bundle when available, otherwise the
-   system Ollama; an explicit binary path is respected.
-4. Open `examples/recruitment/ranker.py` and click **Review current Python file**.
-5. Inspect Problems, hover and the report. Click source evidence to reveal code
-   and the official link to read the source. Answer the context question and
-   rerun if you have more deployment facts.
+First complete the CLI setup above. Then:
 
-The first manual review can offer service startup and continues once setup is
-ready. Startup health checks are read-only. The start action does not install
-anything, does not create an OS login service and does not start a second server
-when a healthy one is reachable. **Refresh health** checks setup again.
+1. Download `ai-act-copilot-0.1.6.vsix` from the
+   [POC release](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.1).
+2. In VS Code, open **Extensions → … → Install from VSIX**, select the file and
+   run **Developer: Reload Window** if VS Code is already open.
+3. Open this repository root, trust it, open a Python file and run
+   **AI Act Copilot: Review current Python file** from the Command Palette.
 
-## Configure it
-
-Press **Cmd+,** (macOS) or **Ctrl+,** (Windows/Linux), search
-`@ext:evros-labs.ai-act-copilot`, and choose **Workspace** for this project or
-**User** for global preferences. You can also run **Preferences: Open Workspace
-Settings (JSON)** from the Command Palette and edit `.vscode/settings.json`:
-
-```json
-{
-  "aiact.executable": "${workspaceFolder}/.venv/bin/aiact",
-  "aiact.model": "qwen2.5:3b",
-  "aiact.endpoint": "http://127.0.0.1:11434",
-  "aiact.reviewOnSave": false
-}
-```
-
-The CLI path above is for macOS/Linux; on Windows use
-`${workspaceFolder}/.venv/Scripts/aiact.exe`. The checked-in settings already
-configure this project's `.venv` and keep on-save off.
-
-- **`aiact.ollamaExecutable`:** usually leave unset. If needed, choose the actual
-  Ollama binary path, not a folder. For a standard macOS app installation, an
-  example is `/Applications/Ollama.app/Contents/Resources/ollama`; use it only if
-  the file exists. This is different from `aiact.executable`, the Python review CLI.
-- **`aiact.endpoint`:** the Ollama server address. It must be on this computer
-  (loopback), for example `http://127.0.0.1:11434`.
-- **`aiact.reviewOnSave`:** set to `true` to opt in. It waits 800 ms after the last
-  save, permits one active scan and discards results for changed content. It
-  never prompts or starts a service automatically. Cancel via the progress notice.
-- **`aiact.corpusPath`:** optional explicit cache file; normally leave unset.
-  `${workspaceFolder}` works in CLI, Ollama and corpus paths.
-
-After changing settings, click **Refresh health**. Service-start settings apply
-on the next start; changing them does not stop another running service.
-The extension's [full settings guide](extensions/vscode/README.md#configure-in-vs-code)
-includes examples and explanations for every setting.
-
-## Terminal commands and result contract
-
-```sh
-aiact doctor --json
-aiact scan examples/recruitment --json
-aiact scan examples/biometrics/identify.py --json
-aiact scan examples/chatbot/assistant.py --json
-aiact scan examples/negative_control/totals.py --json
-aiact scan examples/ambiguous/score.py --context 'Purpose and deployment are undecided.' --json
-aiact update --corpus /tmp/aiact-verified-cache.json
-```
-
-`scan --json` emits one JSON document on stdout; human errors use stderr.
-ScanResult includes version, complete/partial/failed status, findings, operational
-errors, coverage and model/prompt/corpus/input/timing metadata. Schema and example
-payloads are checked in under `schemas/`. `doctor --json` has a separate health
-contract so it can report an available corpus even when Ollama is stopped.
-
-- **0:** completed review, including findings. Zero findings is not certification.
-- **1:** incomplete or failed review, including skipped coverage.
-- **2:** usage/configuration error.
-
-CLI options `--model`, `--endpoint`, `--corpus` override `AIACT_MODEL`,
-`AIACT_OLLAMA_URL`, `AIACT_CORPUS`. Inference accepts loopback only, with redirects,
-proxies, remote model aliases and automatic fallback rejected.
-
-## Scope, evidence and privacy
-
-The POC uses one Python engine process and a thin TypeScript adapter; there is no
-HTTP backend, database, telemetry or scanned-code execution. Two local model
-passes extract purpose/facts and review retrieved passages. Initial
-missing-context explanations and question choices use reviewed domain wording;
-this is grounded triage, not unrestricted legal reasoning.
-
-Default bounds are 10 Python files, 100 KB/file before reading, 24 KB total source
-and explicit context, up to 6 passages/12 KB legal text, at most 3 findings
-(current prompt focuses on one), 60 seconds/request and 120 seconds/scan. One
-schema repair is allowed within the shared deadline. Coverage reports exclusions,
-parse errors and truncation. Hidden paths, dependencies/builds, gitignored files,
-symlinks and binary input are excluded. The allowlist cannot guarantee source is
-secret-free; inspect input before reviewing or sharing JSON evidence.
-
-The six-passage [reviewed corpus](corpus/README.md) covers selected recruitment,
-remote-biometric, classification and transparency provisions. It is not complete
-legal coverage. Actor roles, deployment facts and applicability dates are not
-inferred from an API name. `aiact update` explicitly verifies reviewed official
-passages and atomically replaces the cache, preserving the last good version on
-failure. Changed/new law requires manual review. Scans use only local resources;
-official links open on user action. Raw snippets are not persisted except when
-you explicitly save a result containing evidence.
-
-## Build and verify
-
-From the root with a Python 3.11+ venv activated and Node 22+ on PATH:
-
-```sh
-python -m pip install -e './engine[dev]'
-python -m pytest engine/tests
-cd extensions/vscode
-npm ci
-npm test
-npm run package
-```
-
-The lockfile is included. The generated VSIX contains the compiled adapter,
-introduction and icons, not Node build dependencies. No open-source distribution
-license has been selected; local/private packaging skips a license file.
-
-The explicit live evaluator uses the real installed model sequentially:
-
-```sh
-python scripts/evaluate_live.py --output-dir .aiact-results
-```
-
-Run that command from the repository root. Result JSON contains code evidence
-and is gitignored. Mechanical checks do not prove semantic support.
-
-See [verification](docs/VERIFICATION.md) for actual checks and remaining manual
-editor acceptance. The tested device is an Intel i5 Mac with 16 GB RAM, Python
-3.12 and Node 24. Earlier Qwen 3B CLI measurements were 61.2 s cold / 26.2 s warm;
-these are not guarantees on other devices. Phi3 timed out and Qwen 1.5B produced
-unreliable reasoning in earlier tests. The full Linear milestone is not closed
-merely by publishing this POC pre-release.
-
-On the existing demo Mac, `.venv` and `.tools/ollama` already exist. Reuse them;
-the system's default Python 3.9 and Node 20 are older than the build requirements.
-`sh scripts/start-local-model.sh` is an explicit source-checkout helper that keeps
-Ollama in the foreground, disables cloud mode and uses loopback-only networking
-on macOS. Keep its terminal open.
+The checked-in workspace settings point to `engine/.venv/bin/aiact`, created by
+uv. The robot icon opens Local setup. If installed Ollama is stopped, use
+**Start local service**. The extension uses the same CLI and JSON results.

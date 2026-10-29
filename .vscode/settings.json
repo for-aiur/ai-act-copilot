@@ -1,5 +1,5 @@
 {
-  "aiact.executable": "${workspaceFolder}/.venv/bin/aiact",
+  "aiact.executable": "${workspaceFolder}/engine/.venv/bin/aiact",
   "aiact.model": "qwen2.5:3b",
   "aiact.reviewOnSave": false
 }

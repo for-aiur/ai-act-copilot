@@ -1,4 +1,4 @@
-# AI Act Copilot — implementation playbook
+# AI Act Copilot: implementation playbook
 
 ## Mission and current state
 
@@ -18,6 +18,7 @@ Read `docs/POC-PLAN.md` for rationale, task order and scope cuts. Linear records
 5. For ordinary implementation choices, choose the simplest option consistent with this playbook. Escalate only a genuine product tradeoff, privacy change or incompatible contract change. Timebox exploration to 15 minutes; then use the documented fallback or report the concrete blocker.
 6. Finish each task with: changes, commands run and results, remaining limitation, next task. Never claim tests, offline operation or live inference passed without observing them.
 7. New ideas go in the deferred section of the plan unless required for the current acceptance criteria. No new framework/service merely for future flexibility.
+8. Do not use em dashes (U+2014) in documentation, user-facing text or responses. Use a full stop, comma, colon or parentheses instead. Keep explanations short and concrete.
 
 Task handoff template:
 

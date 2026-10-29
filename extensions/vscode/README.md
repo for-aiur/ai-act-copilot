@@ -93,7 +93,7 @@ role, or cover every provision from one file.
 
 Install the Python engine and a local Ollama model before reviewing. Configure
 `aiact.executable` with the CLI path, for example
-`${workspaceFolder}/.venv/bin/aiact`, and select an installed `aiact.model` tag.
+`${workspaceFolder}/engine/.venv/bin/aiact`, and select an installed `aiact.model` tag.
 Ollama is the local program that runs that model.
 
 The native health panel checks the CLI, Ollama, selected model and corpus
@@ -126,15 +126,14 @@ Palette. This edits `.vscode/settings.json` in the project. Start with:
 
 ```json
 {
-  "aiact.executable": "${workspaceFolder}/.venv/bin/aiact",
+  "aiact.executable": "${workspaceFolder}/engine/.venv/bin/aiact",
   "aiact.model": "qwen2.5:3b",
   "aiact.endpoint": "http://127.0.0.1:11434",
   "aiact.reviewOnSave": false
 }
 ```
 
-This example is for a macOS/Linux project with the engine installed in `.venv`.
-On Windows, use `${workspaceFolder}/.venv/Scripts/aiact.exe` for the engine path.
+This example uses the engine environment created by `uv run --project engine`.
 Paths containing spaces need no extra quotes inside the JSON string.
 
 | Setting | What it controls | When to change it |
