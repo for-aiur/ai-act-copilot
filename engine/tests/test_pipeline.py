@@ -117,3 +117,39 @@ def test_unsupported_legal_classification_fails_explicitly():
     output["findings"][0]["explanation"] = "This system is compliant and is not high-risk."
     result = scan(ROOT / "examples/recruitment/ranker.py", Stub(output))
     assert result.status == "failed" and result.errors[0].code == "invalid_response"
+
+
+def test_question_data_controls_model_options_and_independent_validation(tmp_path, monkeypatch):
+    import aiact.questions
+    bank = json.loads((ROOT / "engine/src/aiact/data/questions.json").read_text())
+    original = bank["questions"][0]["question"]
+    replacement = "Who reviews the candidate shortlist before a hiring decision?"
+    bank["questions"][0]["question"] = replacement
+    path = tmp_path / "data/questions.json"
+    path.parent.mkdir()
+    path.write_text(json.dumps(bank))
+    monkeypatch.setattr(aiact.questions, "files", lambda _: tmp_path)
+
+    class CheckOptions(Stub):
+        def generate_json(self, prompt, schema, timeout):
+            if self.calls:
+                choices = schema["$defs"]["DraftFinding"]["properties"]["context_question"]["enum"]
+                assert replacement in choices and original not in choices
+                data = json.loads(prompt.split("UNTRUSTED_DATA_JSON:\n", 1)[1])
+                assert data["context_question_options"] == choices
+            return super().generate_json(prompt, schema, timeout)
+
+    output = review_payload()
+    output["findings"][0]["context_question"] = replacement
+    result = scan(ROOT / "examples/recruitment/ranker.py", CheckOptions(output))
+    assert result.status == "complete" and result.findings[0].context_question == replacement
+    result = scan(ROOT / "examples/recruitment/ranker.py", CheckOptions(review_payload()))
+    assert result.status == "failed" and result.errors[0].code == "invalid_response"
+
+
+def test_missing_question_bank_is_an_operational_error(tmp_path, monkeypatch):
+    import aiact.questions
+    monkeypatch.setattr(aiact.questions, "files", lambda _: tmp_path)
+    result = scan(ROOT / "examples/recruitment/ranker.py", Stub())
+    assert result.status == "failed" and not result.findings
+    assert result.errors[0].code == "question_bank_invalid"

@@ -55,12 +55,15 @@ engine then uses keyword matching to select the saved recruitment passage.
 The second call gets the code evidence, extracted facts and that passage to
 produce a review. The model does not search the web or read the whole law.
 
-Questions are partly templates in
-[`pipeline.py`](engine/src/aiact/pipeline.py). For recruitment, it can ask whether
+Question options live in
+[`questions.json`](engine/src/aiact/data/questions.json), separately from code.
+For recruitment, it can ask whether
 scores affect real hiring decisions. Matching a topic selects the question
 options; the model chooses among them in the initial review. This makes the
 POC more predictable, but its five examples do not prove that it generalizes to
 unseen code or topics. Exact quotation checks also do not prove legal relevance.
+See [editing the question bank](docs/QUESTIONS.md) for the data format. Initial
+titles and explanations remain reviewed templates in the pipeline.
 
 ## What does update do?
 

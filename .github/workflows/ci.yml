@@ -50,6 +50,7 @@ jobs:
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/aiact-wheel/bin/aiact" --version
           "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.corpus import load_corpus; assert len(load_corpus()["sections"]) == 6'
+          "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.corpus import load_corpus; from aiact.questions import question_options_for; assert question_options_for("annex-iii-4-a", {s["id"] for s in load_corpus()["sections"]})'
       - name: Checksum release candidates
         working-directory: dist/release
         run: sha256sum *.whl *.vsix > SHA256SUMS.txt

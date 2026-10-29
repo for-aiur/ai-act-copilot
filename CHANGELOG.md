@@ -3,6 +3,13 @@
 Published POC snapshots are listed here. Extension and engine versions are
 independent; Git tags identify the complete repository snapshot.
 
+## Unreleased
+
+- Moved the ten existing question options into a packaged JSON bank with stable
+  IDs, topic/missing-fact tags and legal-source references.
+- Added bank validation and explicit errors for missing/invalid data, while
+  preserving current model selection and the public result contract.
+
 ## v0.1.6-poc.4 | 2026-10-29
 
 Presentation-ready POC snapshot. Extension 0.1.6 and engine 0.1.0 are unchanged.

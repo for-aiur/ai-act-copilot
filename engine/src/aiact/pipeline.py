@@ -10,6 +10,7 @@ from .corpus import load_corpus
 from .providers import Ollama, Provider, ReviewFailure
 from .retrieval import retrieve
 from .retrieval import DOMAINS
+from .questions import question_options_for
 from .validation import DraftReview, validate_review
 
 
@@ -99,13 +100,7 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
             "article-50-2": "The retrieved domain is synthetic content. Ask how AI-generated outputs are marked for detection.",
             "unknown": "The domain is unknown. Ask which real decisions these model predictions influence; do not invent an application domain.",
         }[domain_id]
-        question_options = {
-            "annex-iii-4-a": ["Will these scores affect real hiring decisions in the EU, and who reviews the shortlist?", "Are these predictions used only in testing, or to select actual applicants?"],
-            "annex-iii-1-a": ["Is this used to identify someone against a gallery, or solely to verify a claimed identity, and where is it deployed?", "Whose faces are processed, for what purpose, and in what deployment setting?"],
-            "article-50-1": ["Where are customers told they are interacting with AI before the first reply?", "Do you provide this chatbot under your own name, or deploy another provider's system?"],
-            "article-50-2": ["How are synthetic outputs marked as AI-generated and detected by downstream users?", "Which content types are generated, and what is your provider or deployer role?"],
-            "unknown": ["Which real decisions use these predictions, who is affected, and where will the system be deployed?", "Is this an AI model or a deterministic transformation, and what is the intended use of its predictions?"],
-        }[domain_id]
+        question_options = question_options_for(domain_id, {s["id"] for s in corpus["sections"]})
         context_titles = {
             "annex-iii-4-a": "Recruitment: confirm how scores affect selection",
             "annex-iii-1-a": "Biometrics: clarify identification or verification",

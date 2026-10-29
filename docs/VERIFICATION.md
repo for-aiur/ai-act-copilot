@@ -195,3 +195,20 @@ and versioning rules in the tagged source. Runtime versions are unchanged.
 This supersedes the earlier hold on POC handoff on the basis of user acceptance;
 it does not assert unobserved native keyboard/theme/lifecycle test results.
 Broader product validation remains future work.
+
+## Question bank follow-up (unreleased)
+
+YIL-14 moves the ten existing initial-review question strings from pipeline.py
+into packaged data/questions.json. Records include stable ID, topic, asks_about
+and optional legal_source; a small validated loader supplies the same schema
+choices and independent response check. Original text and option order were
+compared against the previous committed pipeline and preserved. Public schemas,
+prompt wording, title/explanation templates and model calls are unchanged.
+
+Observed checks: 53 engine tests passed, including bank errors and data edits
+controlling both model options and response acceptance. uv wheel build passed;
+an isolated installed wheel outside the checkout loaded its corpus and both
+domain/general question groups successfully. CI wheel checks now load the bank.
+No new live-model inference was run for this data extraction. asks_about remains
+editorial metadata, not automatic answer detection. Existing published POC tags
+are unchanged. See docs/QUESTIONS.md for editing and distribution.

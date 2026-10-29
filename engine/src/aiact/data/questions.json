@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "questions": [
+    {
+      "id": "recruitment_human_review",
+      "question": "Will these scores affect real hiring decisions in the EU, and who reviews the shortlist?",
+      "topic": "recruitment",
+      "asks_about": "selection_influence_and_human_review",
+      "legal_source": "annex-iii-4-a"
+    },
+    {
+      "id": "recruitment_real_use",
+      "question": "Are these predictions used only in testing, or to select actual applicants?",
+      "topic": "recruitment",
+      "asks_about": "testing_or_actual_selection",
+      "legal_source": "annex-iii-4-a"
+    },
+    {
+      "id": "biometrics_identification",
+      "question": "Is this used to identify someone against a gallery, or solely to verify a claimed identity, and where is it deployed?",
+      "topic": "biometrics",
+      "asks_about": "identification_or_verification_and_deployment",
+      "legal_source": "annex-iii-1-a"
+    },
+    {
+      "id": "biometrics_purpose",
+      "question": "Whose faces are processed, for what purpose, and in what deployment setting?",
+      "topic": "biometrics",
+      "asks_about": "affected_people_purpose_and_deployment",
+      "legal_source": "annex-iii-1-a"
+    },
+    {
+      "id": "chatbot_notice",
+      "question": "Where are customers told they are interacting with AI before the first reply?",
+      "topic": "chatbot",
+      "asks_about": "ai_interaction_notice",
+      "legal_source": "article-50-1"
+    },
+    {
+      "id": "chatbot_actor_role",
+      "question": "Do you provide this chatbot under your own name, or deploy another provider's system?",
+      "topic": "chatbot",
+      "asks_about": "provider_or_deployer_role",
+      "legal_source": "article-50-1"
+    },
+    {
+      "id": "synthetic_content_marking",
+      "question": "How are synthetic outputs marked as AI-generated and detected by downstream users?",
+      "topic": "synthetic_content",
+      "asks_about": "output_marking_and_detection",
+      "legal_source": "article-50-2"
+    },
+    {
+      "id": "synthetic_content_role",
+      "question": "Which content types are generated, and what is your provider or deployer role?",
+      "topic": "synthetic_content",
+      "asks_about": "content_types_and_actor_role",
+      "legal_source": "article-50-2"
+    },
+    {
+      "id": "general_decision_context",
+      "question": "Which real decisions use these predictions, who is affected, and where will the system be deployed?",
+      "topic": "general",
+      "asks_about": "decisions_affected_people_and_deployment",
+      "legal_source": null
+    },
+    {
+      "id": "general_model_purpose",
+      "question": "Is this an AI model or a deterministic transformation, and what is the intended use of its predictions?",
+      "topic": "general",
+      "asks_about": "ai_use_and_intended_purpose",
+      "legal_source": null
+    }
+  ]
+}
