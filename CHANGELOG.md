@@ -3,6 +3,18 @@
 Published POC snapshots are listed here. Extension and engine versions are
 independent; Git tags identify the complete repository snapshot.
 
+## v0.1.6-poc.4 | 2026-10-29
+
+Presentation-ready POC snapshot. Extension 0.1.6 and engine 0.1.0 are unchanged.
+
+- Included this changelog and version maintenance rules in the tagged source.
+- Accepted by the user as a limited end-to-end presentation demo.
+
+Automated CI remains the release gate. Detailed native keyboard/theme/lifecycle
+checks were not recorded separately; user acceptance does not create test evidence.
+
+[Release](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.4)
+
 ## v0.1.6-poc.3 | 2026-10-29
 
 Extension 0.1.6; engine 0.1.0; result schema 1.0; prompt poc-4.

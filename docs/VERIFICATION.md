@@ -186,3 +186,12 @@ and adapter suites, builds wheel/VSIX, smoke-checks a wheel installation outside
 the checkout, and uploads packages/checksums as seven-day artifacts. No Ollama
 installation or live model download is part of CI. Release publishing remains
 explicit. Local command rehearsal: 44 engine tests and 20 adapter tests passed.
+
+## User presentation acceptance
+
+29 October 2026: the user accepted the limited end-to-end POC as ready for
+presentation and requested closure for now. v0.1.6-poc.4 includes the changelog
+and versioning rules in the tagged source. Runtime versions are unchanged.
+This supersedes the earlier hold on POC handoff on the basis of user acceptance;
+it does not assert unobserved native keyboard/theme/lifecycle test results.
+Broader product validation remains future work.
