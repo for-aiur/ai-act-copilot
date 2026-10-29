@@ -383,3 +383,17 @@ command receipts in GitHub comments. No retained database or server is required.
 - App creation/install, repository App credentials and App-bound required-check
   configuration remain necessary. No branch protection was changed, and no
   claim of enforced merge blocking is made before those live checks.
+
+## YIL-19/YIL-20: live App acceptance
+
+PR #3, head c921adb, now produces four real Gemini findings under
+`evros-ai-act-copilot[bot]`. A plain inline reply received an App receipt without
+acknowledging the finding. An acknowledge command and a false-positive command
+were accepted, while the App-owned check stayed failed for undecided findings.
+These are explicitly labeled synthetic integration-test decisions.
+
+Closely spaced replies exposed GitHub's default one-pending-run replacement
+policy. Some commands never received verified event receipts, correctly keeping
+the check failed. YIL-20 adds `queue: max` to retain up to 100 pending runs while
+processing sequentially; engine code and dependencies are unchanged. Complete
+rapid-reply/reopen acceptance and repository required-check setup remain pending.
