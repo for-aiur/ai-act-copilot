@@ -301,3 +301,19 @@ that real key remains a manual check; mocked editor tests are not UI evidence.
 - Stored corpus coverage exceeds evaluated review coverage. General GDPR erasure
   requests are outside this corpus. Article 4a deletion is restricted to the
   exceptional special-category bias-audit processing scenario.
+
+## Gemini live-error follow-up (engine 0.3.1)
+
+User-reported live bias-audit requests returned HTTP 400 during legal review
+following successful purpose extraction, then a provider failure during purpose
+extraction on a subsequent attempt. Successful extraction establishes that the
+key/model worked for that request; it does not establish the 400 root cause.
+
+Changed transport grammar to avoid long question/quote enum combinations while
+preserving independent topic/bank/exact-quote validation. Added safe diagnostic
+categories, stage labels and explicit HTTP status; one transient 5xx retry shares
+the original request deadline. No raw Google messages or keys are exposed.
+
+Full engine tests: 94 passed. Live resolution remains pending another user run;
+the implementation agent has no access to the editor-stored API key. The broader
+per-passage question-bank expansion remains unfinished during this API fix.

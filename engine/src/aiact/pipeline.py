@@ -47,7 +47,8 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
                 return model.model_validate(result)
             except (ValidationError, ReviewFailure) as exc:
                 if isinstance(exc, ReviewFailure) and exc.code != "invalid_response":
-                    raise
+                    stage = "purpose extraction" if model is Understanding else "legal review"
+                    raise ReviewFailure(exc.code, f"{exc} Stage: {stage}.") from None
                 if repair_used:
                     raise ReviewFailure("invalid_response", "Model output failed schema validation after one repair; review incomplete.") from None
                 repair_used = True

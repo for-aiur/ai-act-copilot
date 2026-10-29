@@ -5,6 +5,17 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine 0.3.1: Gemini request diagnostics and resilience.
+
+- Identify purpose-extraction versus legal-review failures; classify HTTP 400
+  diagnostics without echoing provider messages, keys or request content.
+- Compact the Gemini review grammar by removing long question/quote enum
+  combinations; exact bank questions and citations remain validated locally.
+- Retry transient HTTP 500/502/503/504 once within the original request deadline;
+  report the HTTP status when the retry fails. No automatic provider fallback.
+- Live resolution of the user-reported API rejection remains unverified.
+
+
 Engine and extension 0.3.0: expanded corpus and multi-topic preview.
 
 - Stored 114 source-verified passages from 15 official pages and 32 questions.
