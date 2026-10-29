@@ -363,3 +363,23 @@ Final engine suite for 0.3.2: **104 passed**. Editable environment synced to
 - Live GitHub/Gemini execution is not verified. The default-branch workflow,
   repository secret and explicit enable variable are still required. No review
   state is uploaded, committed or cached by the Actions workflow.
+
+## YIL-18: App identity and acknowledgement gate
+
+Engine 0.4.1 adds an App-owned check, signed current-review snapshots and signed
+command receipts in GitHub comments. No retained database or server is required.
+
+- `engine/.venv/bin/python -m pytest engine/tests -q`: **151 passed in 15.35s**,
+  including 20 gate tests and the existing Actions/App adapter tests.
+- Gate tests exercise all-findings acknowledgement, false-positive/reopen,
+  authorization, real RSA App JWT signing, scoped installation permissions,
+  inline receipts, duplicate handling, edits/deletions, verified edit actors,
+  stale head/policy/tokens, tampered snapshots and incomplete reviews. Model and
+  GitHub transports are test-only; the core scanner and corpus are real.
+- `uv lock --project engine --offline`: resolved the existing 21 packages;
+  only the engine version changed. `git diff --check`: passed.
+- The earlier Actions-only demo ran live in PR #1 and produced four findings.
+  This does not validate the new App identity or acknowledgement gate live.
+- App creation/install, repository App credentials and App-bound required-check
+  configuration remain necessary. No branch protection was changed, and no
+  claim of enforced merge blocking is made before those live checks.

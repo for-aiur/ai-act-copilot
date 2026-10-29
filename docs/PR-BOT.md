@@ -23,7 +23,7 @@ flowchart LR
 Create a private GitHub App for the selected repositories. The reference
 [manifest](../bot/github-app-manifest.json) lists the settings; replace its
 placeholder webhook URL with your HTTPS address ending `/webhooks/github`.
-Use our [existing icon](../extensions/vscode/media/copilot-wig.png) as the App's
+Use our [existing icon](../extensions/vscode/media/copilot-wig-avatar.png) as the App's
 avatar. The GitHub App avatar identifies the bot in PRs; no broken private-repo
 image URL is embedded in comments.
 

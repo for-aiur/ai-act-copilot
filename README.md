@@ -172,13 +172,16 @@ needs manual review; fixture tests use test-only providers.
 
 ## GitHub PR review
 
-GitHub Actions reviews changed Python files and posts code evidence, official
-sources and questions to the PR. No server or persistent database is required.
-Configure roles/model in `bot/actions.toml`, add the `GEMINI_API_KEY` Actions
-secret, then set the repository variable `AIACT_PR_REVIEW_ENABLED=true`.
-This enables sending selected PR code and legal passages to Google.
+GitHub Actions reviews changed Python files using our GitHub App identity and
+posts code evidence, official sources and questions to the PR. No server or
+persistent database is required. [App and workflow setup](docs/PR-ACTIONS.md).
 
-An authorized reviewer can post `/aiact rescan` in the PR conversation.
-Matching bot comments are updated; replies remain in GitHub but are not consumed
-by the model. Decision history, automatic resolution and the dashboard are
-deferred. Fork PRs are disabled. [Setup and limits](docs/PR-ACTIONS.md).
+Each finding includes commands to **acknowledge** or mark it **false positive**
+with a reason. The bot replies and updates an App-owned merge check. Configure
+that check as required to prevent merging until every current finding has an
+authorized decision. A new commit invalidates earlier decisions.
+
+Replies are acknowledged with deterministic receipts, not sent to the model.
+Gemini receives selected code and legal passages only during scans. Roles/model
+live in `bot/actions.toml`; `/aiact rescan` requests another scan. Fork PRs are
+disabled. Dashboard and durable history remain deferred.

@@ -5,6 +5,20 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine 0.4.1: App identity and acknowledgement gate (YIL-18).
+
+- Added a 512 px PNG App avatar below GitHub's 1 MB upload limit.
+
+- Use repository-scoped, short-lived GitHub App tokens in Actions. App credentials
+  replace webhook/server setup; no retained database is needed.
+- Add a signed current-review snapshot, revision-bound acknowledge/false-positive/
+  reopen commands, configurable role authorization and deterministic bot replies.
+- Recompute an App-owned acknowledgement check on PR changes and comment
+  creation/edit/deletion. Incomplete scans, stale decisions and unverified state
+  block it; repository branch rules must require the check to enforce merging.
+- Use Linear-provided branch names and issue-linked PR titles for future work.
+
+
 Engine 0.4.0: stateless GitHub Actions PR review and deferred App adapter.
 
 - Added opt-in Actions review with the built-in GitHub token, Gemini secret,
