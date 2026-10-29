@@ -38,7 +38,7 @@ def test_training_workflow_has_four_independent_grounded_questions():
     assert len({f.id for f in result.findings})==4
     assert len({f.context_question for f in result.findings})==4
     assert {c.section_id for f in result.findings for c in f.citations}=={'annex-iii-4-a','article-10-2','article-14-4','article-15-1'}
-    assert result.metadata.prompt_version=='poc-5'
+    assert result.metadata.prompt_version=='poc-6'
 
 
 @pytest.mark.parametrize('mutation,code',[

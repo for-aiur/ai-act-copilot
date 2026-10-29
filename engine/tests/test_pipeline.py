@@ -164,3 +164,17 @@ def test_gemini_shares_pipeline_without_ollama(monkeypatch):
     result = scan(ROOT / "examples/recruitment/ranker.py", provider)
     assert result.status == "complete" and result.metadata.provider == "gemini"
     assert result.findings[0].citations[0].section_id == "annex-iii-4-a"
+
+
+def test_pipeline_exposes_evidence_requirements_in_bounded_question_options():
+    class EvidenceOptions(Stub):
+        def generate_json(self,prompt,schema,timeout):
+            if self.calls:
+                data=json.loads(prompt.split('UNTRUSTED_DATA_JSON:\n',1)[1])
+                options=data['review_questions']
+                assert options[0]['depth']=='evidence' and options[0]['evidence_expected']
+                assert all(q['audience']=='developer' for q in options)
+                assert len(options)<=6*6+2
+                assert 'concrete evidence_expected artifacts' in prompt
+            return super().generate_json(prompt,schema,timeout)
+    assert scan(ROOT/'examples/recruitment/ranker.py',EvidenceOptions()).status=='complete'

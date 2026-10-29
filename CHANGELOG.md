@@ -5,6 +5,18 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine 0.3.2: evidence-oriented question bank.
+
+- Expanded from 32 to 164 authored questions; every stored passage has a scoped
+  evidence question and expected artifact. Added detailed training, data-quality,
+  oversight, deletion and security challenges, plus a browsable catalogue.
+- Separated seven institutional passages into maintenance-only questions and
+  bounded per-passage options. Developer selection prefers evidence questions.
+- Bank format 1.1 accepts the existing 1.0 format; prompt version is poc-6.
+  Extension 0.3.0 and the four-finding result contract remain compatible.
+
+
+
 Engine 0.3.1: Gemini request diagnostics and resilience.
 
 - Identify purpose-extraction versus legal-review failures; classify HTTP 400

@@ -10,7 +10,7 @@ from .corpus import load_corpus
 from .providers import Ollama, Provider, ReviewFailure
 from .retrieval import retrieve
 from .retrieval import DOMAINS
-from .questions import load_question_bank
+from .questions import load_question_bank, review_questions_for
 from .validation import DraftReview, validate_review
 
 
@@ -95,7 +95,7 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
         bank = load_question_bank({s["id"] for s in corpus["sections"]})
         selected_ids = {p["id"] for p in passages}
         domain_ids = selected_ids & set(DOMAINS)
-        options = [q for q in bank.questions if q.legal_source in selected_ids or (not domain_ids and q.legal_source is None)]
+        options = review_questions_for(bank, selected_ids, include_general=not domain_ids)
         if not options:
             raise ReviewFailure("question_bank_invalid", "No reviewed questions cover the retrieved legal topics.")
         option_texts = [q.question for q in options]
@@ -118,6 +118,8 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
             "Return fewer if evidence does not support four; return findings: [] for ordinary non-AI code. "
             "Use only supplied evidence IDs and exact quote_options. Cite one or two passages that support each specific topic. "
             "Select a context_question from review_questions whose legal_source is among that finding's citations; null legal_source is for unknown use only. "
+            "Prefer depth=evidence questions that challenge design decisions with concrete evidence_expected artifacts. "
+            "Use applies_when to check scenario and actor relevance; if applicability is uncertain, state that uncertainty rather than assuming a duty. "
             "The question's topic must match the explanation and code evidence. Do not repeat a question or missing-fact topic. "
             "Each title and explanation must describe the actual code behavior and the specific information worth checking. "
             "High-risk requirements are CONDITIONAL: classification under Article 6, actor role and deployment are not established by code. "

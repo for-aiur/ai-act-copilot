@@ -52,12 +52,15 @@ produce up to four distinct review topics, each with its own evidence and questi
 
 Question options live in
 [`questions.json`](engine/src/aiact/data/questions.json), separately from code.
-For recruitment, it can ask whether
-scores affect real hiring decisions. Matching a topic selects the question
-options; the model chooses among them in the initial review. This makes the
-POC more predictable, but its five examples do not prove that it generalizes to
-unseen code or topics. Exact quotation checks also do not prove legal relevance.
-See [editing the question bank](docs/QUESTIONS.md) for the data format. Titles and explanations are generated from the selected code and passages.
+There are **164 authored questions**, including an evidence-oriented question
+for every stored passage. They ask for dataset lineage, experiment comparisons,
+subgroup tests, intervention records and other concrete evidence. The engine
+offers a bounded subset for the retrieved passages, with applicability hints;
+seven institutional passages have maintenance-only questions, excluded from
+developer scans. More questions do not establish broader tested domain coverage.
+See the [question catalogue](docs/QUESTION-CATALOG.md) and
+[selection rules](docs/QUESTIONS.md). Titles and explanations come from the model;
+source lines, bank membership and citation matching are checked independently.
 
 ## What does update do?
 

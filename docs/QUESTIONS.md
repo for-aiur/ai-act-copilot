@@ -1,37 +1,45 @@
 # Question bank
 
-The engine ships 32 reviewed question options in
-[`questions.json`](../engine/src/aiact/data/questions.json). The bank version is
-1.0. Each record has a stable ID, question text, topic, missing-fact tag and an
-optional legal section ID:
+The engine ships **164 authored questions** in
+[questions.json](../engine/src/aiact/data/questions.json), bank format 1.1.
+All 114 stored passages have at least one evidence-oriented question.
+[Read the full catalogue](QUESTION-CATALOG.md).
 
-```json
-{
-  "id": "chatbot_notice",
-  "question": "Where are customers told they are interacting with AI before the first reply?",
-  "topic": "chatbot",
-  "asks_about": "ai_interaction_notice",
-  "legal_source": "article-50-1"
-}
-```
+Questions challenge a concrete decision and ask for inspectable evidence:
 
-Edit or add records in this file instead of changing Python question strings.
-Drafts can be written by a person or prepared offline with a stronger model;
-check their relevance and wording before adding them. No generator runs during
-a scan, and a generated draft is not automatically approved.
+- Training: reproduce a dataset, trace label corrections and check holdout leakage.
+- Parameters: compare rejected configurations and justify measured trade-offs.
+- Oversight: demonstrate that a reviewer can challenge, stop or reverse an output.
+- Data: inspect missingness, group representation and bias-test results.
+- Sensitive bias-audit data: justify necessity, access restrictions and deletion.
 
-The current pipeline picks the legal domain and gives that domain's questions
-to the local model as allowed options for the initial review. A null
-legal_source marks a general question for unknown use cases. References must
-match a section in the loaded corpus. Duplicate IDs, invalid data, missing files
-or a domain with no questions produce an operational error.
+Each detailed question records its legal source, topic, missing-fact tag,
+`applies_when` scenario and `evidence_expected` artifact. The model receives these
+fields with the retrieved passages. Detailed questions are offered first;
+context questions remain available when the intended use is still unknown.
+Seven institutional passages have maintenance-only questions. They address
+source/guidance changes and are excluded from developer scan options.
 
-topic and asks_about are editorial metadata today. They do not automatically
-detect answered facts or suppress questions. With explicit user context, the
-existing follow-up path can still generate a question outside the initial bank.
-Titles and explanations are generated; each selected bank question must match a cited passage. Up to four distinct missing-fact topics are accepted.
+A scan still retrieves at most six passages and returns at most four distinct
+findings. Each passage contributes at most four detailed and two context options;
+unknown use cases can also receive two general questions. The full bank is not
+sent to the model. Editorial order currently chooses detailed options within a
+passage; it is not semantic question ranking or automatic answered-fact detection.
 
-An editable engine install reads this source file on the next scan. A wheel
-contains its own copy, so distribute edits by rebuilding/reinstalling the engine.
-This bank moves content out of code; it does not add legal coverage or establish
-generalization to unseen domains. The matching 0.3.0 engine and extension accept up to four findings.
+Selected questions must come from the offered bank and match their cited passage.
+Duplicate missing-fact topics and invented quotations are rejected independently.
+Applicability hints guide selection; they do not establish a legal duty or prove
+that the developer has supplied adequate evidence. Citation validity alone does
+not establish semantic legal support. Questions are editorial content, without
+independent legal review; live model question selection still needs evaluation.
+
+Edit the JSON to change questions. New `depth: evidence` records need a specific
+condition and expected artifact, an explicit audience and a question under 251
+characters. Stable IDs support review history. Do not turn an unknown safeguard
+into an accusation, ask the user to certify compliance, or treat Article 4a's
+exceptional bias-audit processing as a general personal-data erasure rule.
+
+People or an offline model can prepare drafts; review them before adding them.
+No question generator runs during a scan. An editable engine reads changes on
+the next scan; a wheel needs rebuilding. This follow-up needs engine 0.3.2; the
+0.3.0 extension remains compatible. Result fields and finding limits are unchanged.

@@ -317,3 +317,36 @@ the original request deadline. No raw Google messages or keys are exposed.
 Full engine tests: 94 passed. Live resolution remains pending another user run;
 the implementation agent has no access to the editor-stored API key. The broader
 per-passage question-bank expansion remains unfinished during this API fix.
+
+
+## Evidence-oriented question bank (engine 0.3.2)
+
+Expanded the bank to 164 authored questions: the original 32 context options,
+one detailed question for each of 114 stored passages, and 18 additional
+training/data/oversight/security challenges. Detailed records carry audience,
+applicability conditions and the concrete evidence artifact to inspect. This is
+editorial engineering content, not an independent legal review or proof of
+semantic coverage for every deployment.
+
+Seven institutional provisions have maintenance-only questions; those options
+are excluded from developer scans. Selection offers detailed questions before
+context questions, with at most four detailed plus two context options per
+retrieved passage and two general fallbacks for unknown use. Within a passage,
+detailed selection is editorial ordering, not semantic ranking. Scan limits
+remain six passages and four findings. Equivalent context/evidence variants use
+shared missing-fact tags where appropriate to prevent duplicate review topics.
+
+Tests cover 114/114 passage coverage, metadata and audience validation, duplicate
+text, the 250-character result-field limit, legacy format 1.0, prompt bounds and
+pipeline handoff. The complete bank is documented in QUESTION-CATALOG.md.
+The wheel build and an isolated Python 3.12 install outside the checkout passed:
+164 questions loaded, all 114 passages had evidence questions and maintenance
+filtering worked. No extension runtime change was required.
+
+Live Gemini question relevance and answer suppression remain unverified.
+Applicability hints are not automated legal determination or answered-fact
+proof. The prior live API error investigation is not certified resolved by
+these bank tests.
+
+Final engine suite for 0.3.2: **104 passed**. Editable environment synced to
+0.3.2; the next CLI/editor scan reads the updated bank without extension reload.

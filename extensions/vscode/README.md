@@ -220,7 +220,10 @@ These are future goals, not features available in this prototype:
 
 ## Expanded review preview (0.3.0)
 
-114 stored legal passages and 32 question options support multi-topic reviews.
+114 stored legal passages support multi-topic reviews. Engine 0.3.2 expands the
+question bank to 164 authored questions with applicability and expected-evidence
+hints. Seven institutional passages have maintenance-only questions, excluded
+from developer review options.
 Try `examples/recruitment/training_review.py` or `bias_audit.py`. Each finding
 keeps its question; Answer context question lets you choose which to answer.
 Training facts, data quality and applicability remain unverified unless supported
