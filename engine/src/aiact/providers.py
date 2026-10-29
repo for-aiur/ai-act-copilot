@@ -103,7 +103,7 @@ class Ollama:
         result = self.request("/api/generate", {
             "model": self.model, "prompt": prompt, "format": schema, "stream": False,
             "system": SYSTEM_PROMPT,
-            "options": {"temperature": 0, "num_predict": 1100, "num_ctx": 8192},
+            "options": {"temperature": 0, "num_predict": 2400 if "findings" in schema.get("properties", {}) else 1100, "num_ctx": 8192},
             "keep_alive": "20m",
         }, timeout=min(timeout, 60))
         try:

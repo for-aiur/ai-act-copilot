@@ -74,14 +74,13 @@ Review priority tells you what to inspect first. It is not a legal risk class.
 ## What works today
 
 This prototype reviews bounded Python input with Ollama or opt-in Gemini
-and a small reviewed subset of official legal text. Its examples cover
+and an expanded selected corpus of official legal text. Its examples cover
 recruitment, biometric identification, a chatbot, ordinary non-AI code and a model
 whose purpose is unknown.
 
 The model extracts purpose and facts, then reviews retrieved passages. Source
-ranges and legal quotations are checked independently. For the initial
-missing-context review, explanations use reviewed domain wording and questions
-come from reviewed options; the model also selects evidence, priority and a next
+ranges and legal quotations are checked independently. Reviews can show up to four distinct topics, each with evidence and its own
+question from the reviewed bank; the model also selects evidence, priority and a next
 action. It is not unrestricted legal reasoning.
 
 Ollama keeps inference on this machine. Gemini sends selected source, explicit
@@ -218,3 +217,11 @@ These are future goals, not features available in this prototype:
 5. **Keep past reviews current:** track official legal changes, distinguish
    binding text from guidance and proposals, and show which earlier reviews may
    need another look.
+
+## Expanded review preview (0.3.0)
+
+114 stored legal passages and 32 question options support multi-topic reviews.
+Try `examples/recruitment/training_review.py` or `bias_audit.py`. Each finding
+keeps its question; Answer context question lets you choose which to answer.
+Training facts, data quality and applicability remain unverified unless supported
+by supplied evidence. General personal-data erasure rights are outside this corpus.

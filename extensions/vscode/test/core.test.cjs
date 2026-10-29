@@ -59,3 +59,18 @@ test('Gemini provenance is validated and cloud data sharing appears in the repor
  assert.ok(text.includes('Gemini cloud review'));assert.ok(text.includes('Provider: gemini'));
  value.metadata.provider='unknown';assert.throws(()=>parseResult(JSON.stringify(value),root,target,input));
 });
+
+test('four findings preserve each question and accept the expanded official source map',()=>{
+ const value=complete();
+ value.findings=Array.from({length:4},(_,i)=>({...structuredClone(value.findings[0]),id:'topic-'+i,title:'Review topic '+i,context_question:'Question for topic '+i+'?',citations:[{section_id:['article-10-2','article-14-4','annex-iv-2-b','article-4a-1'][i],quote:'A supporting source quotation',url:'https://ai-act-service-desk.ec.europa.eu/en/ai-act/'+['article-10','article-14','annex-4','article-4a'][i]}]}));
+ assert.equal(parseResult(JSON.stringify(value),root,target,input).findings.length,4);
+ const text=report(value,line=>'file:///x.py#L'+line);
+ for(let i=0;i<4;i++)assert.ok(text.includes('Question for topic '+i));
+ value.findings.push(structuredClone(value.findings[0]));assert.throws(()=>parseResult(JSON.stringify(value),root,target,input));
+});
+test('adapter official source map matches the packaged engine corpus exactly',()=>{
+ const {sectionPages}=require('../dist/corpus-sections.js');
+ const corpus=JSON.parse(fs.readFileSync(path.join(root,'engine/src/aiact/data/corpus.json'),'utf8'));
+ assert.equal(Object.keys(sectionPages).length,114);
+ for(const section of corpus.sections)assert.equal(section.url,'https://ai-act-service-desk.ec.europa.eu/en/ai-act/'+sectionPages[section.id]);
+});

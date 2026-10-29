@@ -2,7 +2,7 @@
   "name": "ai-act-copilot",
   "displayName": "AI Act Copilot",
   "description": "Review AI use in Python code with source evidence, official EU passages and practical context questions.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "evros-labs",
   "engines": {
     "vscode": "^1.85.0"

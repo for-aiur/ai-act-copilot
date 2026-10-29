@@ -1,53 +1,95 @@
-"""Reproduce the reviewed subset from explicitly downloaded official HTML files.
+"""Build selected official articles from explicitly downloaded Commission HTML.
 
-Not a crawler or a model-generated corpus. Changes to selections require review.
+No crawler or generated law. Inspect source selection before changing this list.
 """
+import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from aiact.corpus import OFFICIAL, Paragraphs, digest
 
-selections = [
-    ("annex-iii-4-a", "Annex III 4(a) · Recruitment", "annex3", "annex-3", "(a) AI systems intended to be used for the recruitment"),
-    ("annex-iii-1-a", "Annex III 1(a) · Remote biometrics", "annex3", "annex-3", "(a) remote biometric identification"),
-    ("article-6-2", "Article 6(2) · Annex III classification", "article6", "article-6", "2. In addition to the high-risk"),
-    ("article-6-3", "Article 6(3) · Classification conditions", "article6", "article-6", "3. By derogation from paragraph 2"),
-    ("article-50-1", "Article 50(1) · Direct AI interaction", "article50", "article-50", "1. Providers shall ensure"),
-    ("article-50-2", "Article 50(2) · Generated content", "article50", "article-50", "2. Providers of AI systems"),
-]
-sections = []
-source_checksums = {}
-supporting_quotes = {
-    "annex-iii-4-a": "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;",
-    "annex-iii-1-a": "remote biometric identification systems.",
-    "article-6-2": "AI systems referred to in Annex III shall be considered to be high-risk.",
-    "article-6-3": "an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons",
-    "article-50-1": "the natural persons concerned are informed that they are interacting with an AI system",
-    "article-50-2": "the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated",
-}
-for sid, title, filename, page, prefix in selections:
-    raw = Path(f"/tmp/ai-act-{filename}.html").read_bytes()
-    parser = Paragraphs()
-    parser.feed(raw.decode())
-    matches = [text for text in parser.paragraphs if text.startswith(prefix)]
-    assert len(matches) == 1, (sid, matches)
-    text = matches[0]
-    if sid == "annex-iii-1-a":
-        text += " " + parser.paragraphs[parser.paragraphs.index(text) + 1]
-    if sid == "article-6-3":
-        start = parser.paragraphs.index(text)
-        end = next(i for i in range(start + 1, len(parser.paragraphs)) if parser.paragraphs[i].startswith("4. A provider"))
-        text = " ".join(parser.paragraphs[start:end])
-    assert supporting_quotes[sid] in text
-    sections.append({"id": sid, "title": title, "text": text, "supporting_quotes": [supporting_quotes[sid]], "url": OFFICIAL + page,
-                     "text_kind": "binding_text_reproduced_by_commission", "applicability_date": None,
-                     "checksum": hashlib.sha256(text.encode()).hexdigest()})
-    source_checksums[OFFICIAL + page] = hashlib.sha256(raw).hexdigest()
-data = {"version": "reviewed-subset-2026-10-29", "source_identity": "Regulation (EU) 2024/1689; Commission AI Act Service Desk reproduction, pages retrieved 2026-10-29. Articles state based on EUR-Lex consolidation as at 27 July 2026. No independent EUR-Lex version verification (endpoint blocked).",
-        "retrieved_at": "2026-10-29", "verified_at": "2026-10-29", "source_checksums": source_checksums,
-        "scope_limits": ["Six reviewed passages only: recruitment, remote biometric identification, Article 6 classification conditions, direct AI interaction and generated-content transparency.", "Not full AI Act coverage. No Article 5 prohibition analysis, actor-role determination, deployment facts or verified applicability dates. Consult the current official text; Commission summaries and guidance excluded.", "Refresh re-verifies reviewed passages; changed text requires manual review and a package corpus revision. It does not discover amendments."],
-        "sections": sections, "checksum": digest(sections)}
-destination = Path(__file__).resolve().parents[1] / "engine/src/aiact/data/corpus.json"
-destination.parent.mkdir(parents=True, exist_ok=True)
-destination.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
-print("Verified subset:", len(sections), "passages", sum(len(s["text"]) for s in sections), "characters")
+ARTICLES = {'4a':'Special-category data for bias detection',6:'Classification',8:'High-risk requirements',9:'Risk management',10:'Data governance',
+            11:'Technical documentation',12:'Logging',13:'Information to deployers',14:'Human oversight',
+            15:'Accuracy robustness and cybersecurity',16:'Provider responsibilities',26:'Deployer responsibilities',50:'Transparency'}
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def build(source_dir):
+    original = json.loads((ROOT/'engine/src/aiact/data/corpus.json').read_text())
+    original_quotes = {s['id']:s['supporting_quotes'] for s in original['sections']}
+    original_quotes.update({
+        'article-10-2': [
+            'data collection processes and the origin of data, and in the case of personal data, the original purpose of the data collection;',
+            'relevant data-preparation processing operations, such as annotation, labelling, cleaning, updating, enrichment and aggregation;',
+            'appropriate measures to detect, prevent and mitigate possible biases identified according to point (f);'],
+        'article-14-4': ['to decide, in any particular situation, not to use the high-risk AI system or to otherwise disregard, override or reverse the output of the high-risk AI system;'],
+        'annex-iv-2-b': ['what the system is designed to optimise for, and the relevance of the different parameters;'],
+        'annex-iv-2-d': ['how the data was obtained and selected; labelling procedures (e.g. for supervised learning), data cleaning methodologies (e.g. outliers detection);'],
+        'article-4a-1': ['the special categories of personal data are deleted once the bias has been corrected or the personal data has reached the end of its retention period, whichever comes first;']
+    })
+    sections, checksums = [], {}
+    def add(sid,title,paragraphs,page):
+        text=' '.join(paragraphs)
+        if 'Not present after the amendment.' in text:
+            return
+        quotes=original_quotes.get(sid)
+        if not quotes:
+            # Exact short source extract, not a synthetic summary. No model involved.
+            first=next((p for p in paragraphs if len(p)>40),text)
+            quote=re.sub(r'^\d+\.\s*','',first)
+            quote=re.split(r'(?<=[.;])\s',quote,maxsplit=1)[0]
+            if len(quote)>280:
+                quote=quote[:280].rsplit(' ',1)[0]
+            quotes=[quote]
+        assert all(q in text and 10<=len(q)<=300 for q in quotes),sid
+        sections.append(dict(id=sid,title=title,text=text,supporting_quotes=quotes,url=OFFICIAL+page,
+            text_kind='binding_text_reproduced_by_commission',applicability_date=None,
+            checksum=hashlib.sha256(text.encode()).hexdigest()))
+    for page in ['annex-3','annex-4']+[f'article-{n}' for n in ARTICLES]:
+        raw=(source_dir/(page+'.html')).read_bytes()
+        parser=Paragraphs();parser.feed(raw.decode())
+        ps=[p for p in parser.paragraphs if p not in {'AMENDED','NEW','Follow the European Commission'}]
+        checksums[OFFICIAL+page]=hashlib.sha256(raw).hexdigest()
+        if page in {'annex-3','annex-4'}:
+            starts=[i for i,p in enumerate(ps) if re.match(r'^\d+\.\s',p)]
+            assert len(starts)==(8 if page=='annex-3' else 9)
+            roman='iii' if page=='annex-3' else 'iv'
+            for pos,start in enumerate(starts):
+                end=starts[pos+1] if pos+1<len(starts) else len(ps)
+                number=re.match(r'^(\d+)\.',ps[start])[1]
+                clauses=[i for i in range(start+1,end) if re.match(r'^\([a-z]\)\s',ps[i])]
+                if not clauses:
+                    add('annex-'+roman+'-'+number,'Annex '+roman.upper()+' '+number,ps[start:end],page)
+                for j,i in enumerate(clauses):
+                    last=clauses[j+1] if j+1<len(clauses) else end
+                    letter=ps[i][1]
+                    add(f'annex-{roman}-{number}-{letter}',f'Annex {roman.upper()} {number}({letter})',ps[i:last],page)
+        elif page=='article-16':
+            start=next(i for i,p in enumerate(ps) if p.startswith('Providers of high-risk AI systems shall'))
+            add('article-16','Article 16: '+ARTICLES[16],ps[start:],page)
+        else:
+            starts=[i for i,p in enumerate(ps) if re.match(r'^\d+\.\s',p)]
+            assert starts and ps[starts[0]].startswith('1.'),page
+            for j,i in enumerate(starts):
+                last=starts[j+1] if j+1<len(starts) else len(ps)
+                paragraph=re.match(r'^(\d+)\.',ps[i])[1]
+                add(f'{page}-{paragraph}',f'{page.replace("article-","Article ")}({paragraph}): '+ARTICLES[int(page.split('-')[1]) if page.split('-')[1].isdigit() else page.split('-')[1]],ps[i:last],page)
+    data=dict(version='expanded-subset-2026-10-29',source_identity=original['source_identity'],
+        retrieved_at='2026-10-29',verified_at='2026-10-29',source_checksums=checksums,
+        scope_limits=[
+            'Selected official text: Annexes III-IV and Articles 4a, 6, 8-16, 26 and 50; article/paragraph chunks, excluding deleted paragraph markers and nonbinding summaries.',
+            'Stored text coverage is broader than evaluated use cases. Recruitment, remote biometrics and chatbot fixtures are tested; other uses require evaluation. No full AI Act coverage or independent legal review.',
+            'Requirements for high-risk systems are conditional review questions, not a determination of classification, actor role, applicability dates, bias or dataset quality.',
+            'Refresh re-verifies this selected text; changed text requires manual review and a package corpus revision. It does not discover amendments.'],
+        sections=sections,checksum=digest(sections))
+    target=ROOT/'engine/src/aiact/data';(target/'corpus.json').write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
+    pages={s['id']:s['url'].removeprefix(OFFICIAL) for s in sections}
+    (target/'section-pages.json').write_text(json.dumps(pages,indent=2)+'\n')
+    (ROOT/'extensions/vscode/src/corpus-sections.ts').write_text('// Generated from the verified corpus by scripts/build_reviewed_corpus.py.\nexport const sectionPages: Record<string, string> = '+json.dumps(pages,indent=2)+';\n')
+    print(len(sections),'passages;',sum(len(s['text'].split()) for s in sections),'words;',len(checksums),'official pages;',data['checksum'])
+
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser();parser.add_argument('--source-dir',type=Path,required=True)
+    build(parser.parse_args().source_dir)

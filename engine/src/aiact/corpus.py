@@ -12,7 +12,9 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 from .providers import ReviewFailure
 
 OFFICIAL = "https://ai-act-service-desk.ec.europa.eu/en/ai-act/"
-SECTION_PAGES = {"annex-iii-4-a": "annex-3", "annex-iii-1-a": "annex-3", "article-6-2": "article-6", "article-6-3": "article-6", "article-50-1": "article-50", "article-50-2": "article-50"}
+SECTION_PAGES = json.loads(files("aiact").joinpath("data/section-pages.json").read_text())
+LEGACY_IDS = {"annex-iii-4-a", "annex-iii-1-a", "article-6-2", "article-6-3", "article-50-1", "article-50-2"}
+
 
 
 def normalize(text: str) -> str:
@@ -61,7 +63,8 @@ def validate_corpus(data: dict) -> dict:
             if not section["supporting_quotes"] or any(q not in section["text"] for q in section["supporting_quotes"]):
                 raise ValueError()
             ids.add(sid)
-        if ids != set(SECTION_PAGES):
+        expected = LEGACY_IDS if data["version"] == "reviewed-subset-2026-10-29" else set(SECTION_PAGES)
+        if ids != expected:
             raise ValueError()
         return data
     except (KeyError, TypeError, ValueError):
@@ -74,6 +77,10 @@ def load_corpus(path: Path | None = None) -> dict:
             text = path.read_text()
         elif default_cache().exists():
             text = default_cache().read_text()
+            cached = validate_corpus(json.loads(text))
+            if cached["version"] == "reviewed-subset-2026-10-29":
+                # Use the newer packaged revision without modifying the old cache or fetching.
+                text = files("aiact").joinpath("data/corpus.json").read_text()
         else:
             text = files("aiact").joinpath("data/corpus.json").read_text()
         return validate_corpus(json.loads(text))
@@ -105,7 +112,7 @@ def update_corpus(target: Path, fetch=fetch_official) -> dict:
             raw = fetch(url)
             parser = Paragraphs()
             parser.feed(raw.decode("utf-8"))
-            source_text = normalize(" ".join(parser.paragraphs))
+            source_text = normalize(" ".join(p for p in parser.paragraphs if p not in {"NEW", "AMENDED"}))
             for section in candidate["sections"]:
                 if section["url"] == url and normalize(section["text"]) not in source_text:
                     raise ReviewFailure("update_failed", f"Reviewed passage {section['id']} changed or is missing. Last good cache preserved; manual legal review required.")

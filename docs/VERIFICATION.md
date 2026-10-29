@@ -280,3 +280,24 @@ that real key remains a manual check; mocked editor tests are not UI evidence.
 - Final wheel installed in an isolated uv environment outside the checkout with
   explicit Python 3.12; Gemini import and corpus/question-bank loading passed.
   VS Code CLI confirmed `evros-labs.ai-act-copilot@0.2.0` installed.
+
+## Expanded multi-topic preview (0.3.0)
+
+- 114 passages / 8,296 words from 15 Commission pages: Articles 4a, 6,
+  8-16, 26, 50 and Annexes III-IV. All selected text was reverified against
+  downloaded official HTML using update_corpus and per-source checksums.
+  Commission amendment labels are excluded from legal text. No independent
+  EUR-Lex version or applicability-date verification is claimed.
+- 32 bank questions. At most four findings, two citations each, six retrieved
+  passages / 12 KB legal text. Questions must match cited topics; repeated
+  missing-fact topics, invented quotations and unsupported guarantees fail.
+- Engine suite: 87 passed. Extension suite: 31 passed. VSIX 0.3.0 packaged.
+- Local retrieval benchmark, 200 calls over the expanded in-memory corpus:
+  median 3.64 ms, p95 4.59 ms. This is search only, not Gemini/model latency.
+- Four-topic training result verified with a test-only provider. No live Gemini
+  output quality or latency is established. User API key remains in editor secure
+  storage and was not extracted for CLI tests. Actual result count is model- and
+  evidence-dependent; four findings are a ceiling, not a quota.
+- Stored corpus coverage exceeds evaluated review coverage. General GDPR erasure
+  requests are outside this corpus. Article 4a deletion is restricted to the
+  exceptional special-category bias-audit processing scenario.

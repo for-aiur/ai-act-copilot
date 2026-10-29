@@ -70,6 +70,160 @@
       "topic": "general",
       "asks_about": "ai_use_and_intended_purpose",
       "legal_source": null
+    },
+    {
+      "id": "data_origin",
+      "question": "Where did the training data come from, how were labels checked, and what cleaning or exclusion steps were documented?",
+      "topic": "data_governance",
+      "asks_about": "data_origin_and_preparation",
+      "legal_source": "article-10-2"
+    },
+    {
+      "id": "data_bias",
+      "question": "Which bias tests and mitigation steps were performed on the training and validation data for the affected applicant groups?",
+      "topic": "data_governance",
+      "asks_about": "bias_testing_and_mitigation",
+      "legal_source": "article-10-2"
+    },
+    {
+      "id": "data_quality",
+      "question": "How were missing values, label errors and representativeness checked for the intended applicant population?",
+      "topic": "data_quality",
+      "asks_about": "dataset_quality_and_representativeness",
+      "legal_source": "article-10-3"
+    },
+    {
+      "id": "data_context",
+      "question": "Which deployment population and environment were used when selecting the training and evaluation data?",
+      "topic": "data_quality",
+      "asks_about": "deployment_population",
+      "legal_source": "article-10-4"
+    },
+    {
+      "id": "oversight_override",
+      "question": "Who can inspect and override the shortlist, and how can they pause or reverse an automated decision?",
+      "topic": "human_oversight",
+      "asks_about": "human_override_and_intervention",
+      "legal_source": "article-14-4"
+    },
+    {
+      "id": "accuracy_validation",
+      "question": "Which held-out evaluation results and acceptance thresholds support using these scores for the intended hiring task?",
+      "topic": "model_evaluation",
+      "asks_about": "evaluation_results_and_thresholds",
+      "legal_source": "article-15-1"
+    },
+    {
+      "id": "accuracy_metrics",
+      "question": "Which accuracy metrics and limitations are communicated to the people using these model outputs?",
+      "topic": "model_evaluation",
+      "asks_about": "declared_metrics",
+      "legal_source": "article-15-3"
+    },
+    {
+      "id": "model_security",
+      "question": "How are loaded model artifacts and prediction inputs checked for tampering or poisoning?",
+      "topic": "model_security",
+      "asks_about": "artifact_and_input_integrity",
+      "legal_source": "article-15-5"
+    },
+    {
+      "id": "risk_lifecycle",
+      "question": "Where are risks from intended use and foreseeable misuse recorded, evaluated and reviewed over time?",
+      "topic": "risk_management",
+      "asks_about": "lifecycle_risk_review",
+      "legal_source": "article-9-2"
+    },
+    {
+      "id": "risk_test",
+      "question": "What predefined metrics and thresholds are used to test the model before deployment?",
+      "topic": "risk_management",
+      "asks_about": "predeployment_testing",
+      "legal_source": "article-9-8"
+    },
+    {
+      "id": "documentation",
+      "question": "Where are the model version, intended use, training choices and evaluation evidence documented?",
+      "topic": "documentation",
+      "asks_about": "technical_documentation",
+      "legal_source": "article-11-1"
+    },
+    {
+      "id": "logging",
+      "question": "Which model version, input reference, score and reviewer action are logged for each decision?",
+      "topic": "logging",
+      "asks_about": "decision_traceability",
+      "legal_source": "article-12-1"
+    },
+    {
+      "id": "instructions",
+      "question": "What limitations and instructions do the people interpreting these scores receive?",
+      "topic": "transparency",
+      "asks_about": "instructions_and_limitations",
+      "legal_source": "article-13-1"
+    },
+    {
+      "id": "provider_role",
+      "question": "Who provides this system under their name and is responsible for its development and documentation?",
+      "topic": "actor_role",
+      "asks_about": "provider_identity",
+      "legal_source": "article-16"
+    },
+    {
+      "id": "deployer_oversight",
+      "question": "Who operates this system and assigns trained people with authority to review its decisions?",
+      "topic": "actor_role",
+      "asks_about": "deployer_oversight",
+      "legal_source": "article-26-2"
+    },
+    {
+      "id": "deployer_input",
+      "question": "Who controls the live input data and checks that it represents the intended population?",
+      "topic": "deployment",
+      "asks_about": "live_input_quality",
+      "legal_source": "article-26-4"
+    },
+    {
+      "id": "affected_people_notice",
+      "question": "How are people informed that this system contributes to decisions affecting them?",
+      "topic": "transparency",
+      "asks_about": "affected_person_notice",
+      "legal_source": "article-26-11"
+    },
+    {
+      "id": "deepfake_notice",
+      "question": "How are viewers informed when this output is a deepfake rather than authentic content?",
+      "topic": "synthetic_content",
+      "asks_about": "deepfake_disclosure",
+      "legal_source": "article-50-4"
+    },
+    {
+      "id": "notice_timing",
+      "question": "When and in what accessible form is the AI disclosure shown to the affected person?",
+      "topic": "transparency",
+      "asks_about": "disclosure_timing_and_accessibility",
+      "legal_source": "article-50-5"
+    },
+    {
+      "id": "training_parameters",
+      "question": "Where are the training objective, hyperparameter choices and their trade-offs documented and evaluated?",
+      "topic": "training",
+      "asks_about": "training_objective_and_parameters",
+      "legal_source": "annex-iv-2-b"
+    },
+    {
+      "id": "training_datasheet",
+      "question": "Where is the datasheet recording training methodology, dataset provenance, selection, labelling and cleaning?",
+      "topic": "training",
+      "asks_about": "training_methodology_and_datasheet",
+      "legal_source": "annex-iv-2-d"
+    },
+    {
+      "id": "bias_audit_deletion",
+      "question": "For special-category data used specifically for bias auditing, how is access restricted and deletion triggered after correction or retention expiry?",
+      "topic": "sensitive_data",
+      "asks_about": "bias_audit_retention_and_deletion",
+      "legal_source": "article-4a-1"
     }
   ]
 }

@@ -64,7 +64,7 @@ class Coverage(Contract):
 class Metadata(Contract):
     provider: Literal["ollama", "gemini"] | None = None
     model_id: str | None = None
-    prompt_version: str = "poc-4"
+    prompt_version: str = "poc-5"
     corpus_version: str | None = None
     corpus_checksum: str | None = None
     input_fingerprint: str | None = None
@@ -74,7 +74,7 @@ class Metadata(Contract):
 class ScanResult(Contract):
     schema_version: Literal["1.0"] = "1.0"
     status: Literal["complete", "partial", "failed"]
-    findings: list[Finding] = Field(default_factory=list, max_length=3)
+    findings: list[Finding] = Field(default_factory=list, max_length=4)
     errors: list[ScanError] = Field(default_factory=list)
     coverage: Coverage = Field(default_factory=Coverage)
     metadata: Metadata = Field(default_factory=Metadata)

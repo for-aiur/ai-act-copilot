@@ -116,7 +116,7 @@ def test_unsupported_legal_classification_fails_explicitly():
     output = review_payload()
     output["findings"][0]["explanation"] = "This system is compliant and is not high-risk."
     result = scan(ROOT / "examples/recruitment/ranker.py", Stub(output))
-    assert result.status == "failed" and result.errors[0].code == "invalid_response"
+    assert result.status == "failed" and result.errors[0].code == "review_unsupported"
 
 
 def test_question_data_controls_model_options_and_independent_validation(tmp_path, monkeypatch):
@@ -136,7 +136,7 @@ def test_question_data_controls_model_options_and_independent_validation(tmp_pat
                 choices = schema["$defs"]["DraftFinding"]["properties"]["context_question"]["enum"]
                 assert replacement in choices and original not in choices
                 data = json.loads(prompt.split("UNTRUSTED_DATA_JSON:\n", 1)[1])
-                assert data["context_question_options"] == choices
+                assert [q["question"] for q in data["review_questions"]] == choices
             return super().generate_json(prompt, schema, timeout)
 
     output = review_payload()

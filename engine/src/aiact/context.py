@@ -155,7 +155,7 @@ def collect(path: Path, explicit_context: str = "", budgets: Budgets = Budgets()
             for node in ast.walk(tree):
                 if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
                         and isinstance(node.func.value, ast.Name)
-                        and node.func.attr in {"predict", "predict_proba", "generate", "encode", "invoke"}
+                        and node.func.attr in {"predict", "predict_proba", "generate", "encode", "invoke", "fit", "fit_transform", "partial_fit"}
                         and ("model" in node.func.value.id.lower() or node.func.value.id.lower() in {"llm", "classifier", "pipeline"})):
                     calls.append(ast.get_source_segment(text, node) or node.func.attr)
             context.sources.append(Source(rel, text, ranges or [(1, max(1, len(text.splitlines())))], calls))

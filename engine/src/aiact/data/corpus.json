@@ -1,34 +1,35 @@
 {
-  "version": "reviewed-subset-2026-10-29",
+  "version": "expanded-subset-2026-10-29",
   "source_identity": "Regulation (EU) 2024/1689; Commission AI Act Service Desk reproduction, pages retrieved 2026-10-29. Articles state based on EUR-Lex consolidation as at 27 July 2026. No independent EUR-Lex version verification (endpoint blocked).",
   "retrieved_at": "2026-10-29",
   "verified_at": "2026-10-29",
   "source_checksums": {
-    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3": "c8b564720c4c7e2935316c237dbd404ccdddf7ae3006b2e16b10bbc1f46ee762",
-    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6": "6b17a2b8b36387412c4a1508caa5ae6871d5307f8f038bee2f47055d8e907d78",
-    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50": "df96e69bd031073cf8eae70910a511a309284887643ab119403a0568ef0903e5"
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3": "4def69646506dd971e739284be37cec36b030ad447570b51cdf5940917e1295c",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4": "9c5446955cbd99383cdcbd51ffc47c00c084b35f3aa235bdd89d97b50338abcb",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-4a": "6d236b85d645aebb7dd1d0ca5975686f543605cb812cc508a918dfa740e02db5",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6": "b5904dafdbc4b0d4a903b58c3ad5949bfa45585d8619da63503adc4248c7401a",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-8": "729a163f646b28289f59779b944e01d6499d75ce17208127a3905d3f2629f51c",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9": "93049e0d44f6b04ef96e400ea3824e2c8f58fa0cc1d200b508dc5a3525128a61",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-10": "5411cf67cd781ff7031ce6459fabb12088cfe2dc46395ceabd3f2cb75b75f318",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-11": "aeb6a7d3a6399b6b1b44743d081b9a803271a57f1f6d0ec76bd5badd27b12a7c",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-12": "b86089cb0169ddd7886ef9f55463f9c47b449da8ff6a2d4cd71ba9cab6f22594",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-13": "e46ffc780fd26373b3be2aaabbaec64333af937e2729c32879b411e51a4ca418",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-14": "4e39a94a7f5150c34691f9539e498af19f68a3ab9bc916ed05b84ddc845272e7",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-15": "f33d6fab1c86adba78f48e3192811e32434845f01b2ed9778250a878f6775fcc",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-16": "64760f92f6b7cad30fe06eea9f80d1bd89070976b129f608633a82af9a3d1700",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26": "782e51ce303af4db2bb570c8abdb0f7174fa0a1923f8e3a72fc0a06482ab4fb8",
+    "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50": "e692da609032229f8fc67d9fd20defbdf7a1a3662cd9b70c4b5566daa6b3dd42"
   },
   "scope_limits": [
-    "Six reviewed passages only: recruitment, remote biometric identification, Article 6 classification conditions, direct AI interaction and generated-content transparency.",
-    "Not full AI Act coverage. No Article 5 prohibition analysis, actor-role determination, deployment facts or verified applicability dates. Consult the current official text; Commission summaries and guidance excluded.",
-    "Refresh re-verifies reviewed passages; changed text requires manual review and a package corpus revision. It does not discover amendments."
+    "Selected official text: Annexes III-IV and Articles 4a, 6, 8-16, 26 and 50; article/paragraph chunks, excluding deleted paragraph markers and nonbinding summaries.",
+    "Stored text coverage is broader than evaluated use cases. Recruitment, remote biometrics and chatbot fixtures are tested; other uses require evaluation. No full AI Act coverage or independent legal review.",
+    "Requirements for high-risk systems are conditional review questions, not a determination of classification, actor role, applicability dates, bias or dataset quality.",
+    "Refresh re-verifies this selected text; changed text requires manual review and a package corpus revision. It does not discover amendments."
   ],
   "sections": [
     {
-      "id": "annex-iii-4-a",
-      "title": "Annex III 4(a) · Recruitment",
-      "text": "(a) AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;",
-      "supporting_quotes": [
-        "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;"
-      ],
-      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
-      "text_kind": "binding_text_reproduced_by_commission",
-      "applicability_date": null,
-      "checksum": "7664eb3d0495d0fa469da9ed8d9ec359287ca7aae444c1dbb803d8a386234b17"
-    },
-    {
       "id": "annex-iii-1-a",
-      "title": "Annex III 1(a) · Remote biometrics",
+      "title": "Annex III 1(a)",
       "text": "(a) remote biometric identification systems. This shall not include AI systems intended to be used for biometric verification the sole purpose of which is to confirm that a specific natural person is the person he or she claims to be;",
       "supporting_quotes": [
         "remote biometric identification systems."
@@ -39,8 +40,608 @@
       "checksum": "932c2b67daa4164706e24f3fdf203777fd505238a4803f2bab7f805522512721"
     },
     {
+      "id": "annex-iii-1-b",
+      "title": "Annex III 1(b)",
+      "text": "(b) AI systems intended to be used for biometric categorisation, according to sensitive or protected attributes or characteristics based on the inference of those attributes or characteristics;",
+      "supporting_quotes": [
+        "(b) AI systems intended to be used for biometric categorisation, according to sensitive or protected attributes or characteristics based on the inference of those attributes or characteristics;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "110fd18e0a0531cfe81b144e07fd789e898594241e040fde3baba0fa22a4bc11"
+    },
+    {
+      "id": "annex-iii-1-c",
+      "title": "Annex III 1(c)",
+      "text": "(c) AI systems intended to be used for emotion recognition.",
+      "supporting_quotes": [
+        "(c) AI systems intended to be used for emotion recognition."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "3eba0904f215b0684ffdc77b7ab1ab0609db43823963ecb63e7ae06cf67d3774"
+    },
+    {
+      "id": "annex-iii-2",
+      "title": "Annex III 2",
+      "text": "2. Critical infrastructure: AI systems intended to be used as safety components in the management and operation of critical digital infrastructure, road traffic, or in the supply of water, gas, heating or electricity.",
+      "supporting_quotes": [
+        "Critical infrastructure: AI systems intended to be used as safety components in the management and operation of critical digital infrastructure, road traffic, or in the supply of water, gas, heating or electricity."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "e56950faf8923612a7b256a7851d49c2231e1f44798b9fa42aa49079235fd213"
+    },
+    {
+      "id": "annex-iii-3-a",
+      "title": "Annex III 3(a)",
+      "text": "(a) AI systems intended to be used to determine access or admission or to assign natural persons to educational and vocational training institutions at all levels;",
+      "supporting_quotes": [
+        "(a) AI systems intended to be used to determine access or admission or to assign natural persons to educational and vocational training institutions at all levels;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "3d2fb4a62a8e8280f426eb2ed5f0f6e615013cd15504e47bba803920f9cd9b34"
+    },
+    {
+      "id": "annex-iii-3-b",
+      "title": "Annex III 3(b)",
+      "text": "(b) AI systems intended to be used to evaluate learning outcomes, including when those outcomes are used to steer the learning process of natural persons in educational and vocational training institutions at all levels;",
+      "supporting_quotes": [
+        "(b) AI systems intended to be used to evaluate learning outcomes, including when those outcomes are used to steer the learning process of natural persons in educational and vocational training institutions at all levels;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "fa3dc996c959cd1a15223b023e6bb41be40d732a15510e8d3cbe88abd9d12f3a"
+    },
+    {
+      "id": "annex-iii-3-c",
+      "title": "Annex III 3(c)",
+      "text": "(c) AI systems intended to be used for the purpose of assessing the appropriate level of education that an individual will receive or will be able to access, in the context of or within educational and vocational training institutions at all levels;",
+      "supporting_quotes": [
+        "(c) AI systems intended to be used for the purpose of assessing the appropriate level of education that an individual will receive or will be able to access, in the context of or within educational and vocational training institutions at all levels;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "f5b1d414920282b668961a979ed68ddf58c86bc9e20c9c122dea305582df4179"
+    },
+    {
+      "id": "annex-iii-3-d",
+      "title": "Annex III 3(d)",
+      "text": "(d) AI systems intended to be used for monitoring and detecting prohibited behaviour of students during tests in the context of or within educational and vocational training institutions at all levels.",
+      "supporting_quotes": [
+        "(d) AI systems intended to be used for monitoring and detecting prohibited behaviour of students during tests in the context of or within educational and vocational training institutions at all levels."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "f7f81b498e95e90dbce05beb413031e03d10689f8ca5b0adcccaa9b9a6762429"
+    },
+    {
+      "id": "annex-iii-4-a",
+      "title": "Annex III 4(a)",
+      "text": "(a) AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;",
+      "supporting_quotes": [
+        "AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7664eb3d0495d0fa469da9ed8d9ec359287ca7aae444c1dbb803d8a386234b17"
+    },
+    {
+      "id": "annex-iii-4-b",
+      "title": "Annex III 4(b)",
+      "text": "(b) AI systems intended to be used to make decisions affecting terms of work-related relationships, the promotion or termination of work-related contractual relationships, to allocate tasks based on individual behaviour or personal traits or characteristics or to monitor and evaluate the performance and behaviour of persons in such relationships.",
+      "supporting_quotes": [
+        "(b) AI systems intended to be used to make decisions affecting terms of work-related relationships, the promotion or termination of work-related contractual relationships, to allocate tasks based on individual behaviour or personal traits or characteristics or to monitor and"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "2a026325e871b15deedfbd94ebfbbe37dc9b485c7c2e2e43eff4b5feef9ed166"
+    },
+    {
+      "id": "annex-iii-5-a",
+      "title": "Annex III 5(a)",
+      "text": "(a) AI systems intended to be used by public authorities or on behalf of public authorities to evaluate the eligibility of natural persons for essential public assistance benefits and services, including healthcare services, as well as to grant, reduce, revoke, or reclaim such benefits and services;",
+      "supporting_quotes": [
+        "(a) AI systems intended to be used by public authorities or on behalf of public authorities to evaluate the eligibility of natural persons for essential public assistance benefits and services, including healthcare services, as well as to grant, reduce, revoke, or reclaim such"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "a7adb5ad7d2d9510d488ca1c14bfebce66ba1b5c55a9b466f73a400ff1191e65"
+    },
+    {
+      "id": "annex-iii-5-b",
+      "title": "Annex III 5(b)",
+      "text": "(b) AI systems intended to be used to evaluate the creditworthiness of natural persons or establish their credit score, with the exception of AI systems used for the purpose of detecting financial fraud;",
+      "supporting_quotes": [
+        "(b) AI systems intended to be used to evaluate the creditworthiness of natural persons or establish their credit score, with the exception of AI systems used for the purpose of detecting financial fraud;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "6abf6a9240d4b1205a119982e4051c30355da6236f3c13bf600357b951a4f7e7"
+    },
+    {
+      "id": "annex-iii-5-c",
+      "title": "Annex III 5(c)",
+      "text": "(c) AI systems intended to be used for risk assessment and pricing in relation to natural persons in the case of life and health insurance;",
+      "supporting_quotes": [
+        "(c) AI systems intended to be used for risk assessment and pricing in relation to natural persons in the case of life and health insurance;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7c1369af6de269b0841ec457dc3bfbab1d7eb9c955de3aa7ee8946b2d6ca95e8"
+    },
+    {
+      "id": "annex-iii-5-d",
+      "title": "Annex III 5(d)",
+      "text": "(d) AI systems intended to evaluate and classify emergency calls by natural persons or to be used to dispatch, or to establish priority in the dispatching of, emergency first response services, including by police, firefighters and medical aid, as well as of emergency healthcare patient triage systems.",
+      "supporting_quotes": [
+        "(d) AI systems intended to evaluate and classify emergency calls by natural persons or to be used to dispatch, or to establish priority in the dispatching of, emergency first response services, including by police, firefighters and medical aid, as well as of emergency healthcare"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "889402cc1511d8d800cac081a3f534ba0371fb83aae6c0d04321dece1d6d3dcc"
+    },
+    {
+      "id": "annex-iii-6-a",
+      "title": "Annex III 6(a)",
+      "text": "(a) AI systems intended to be used by or on behalf of law enforcement authorities, or by Union institutions, bodies, offices or agencies in support of law enforcement authorities or on their behalf to assess the risk of a natural person becoming the victim of criminal offences;",
+      "supporting_quotes": [
+        "(a) AI systems intended to be used by or on behalf of law enforcement authorities, or by Union institutions, bodies, offices or agencies in support of law enforcement authorities or on their behalf to assess the risk of a natural person becoming the victim of criminal offences;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "b0223b80d84afcda407dd4086ee22cb4ffb48626732f75e938f397ab50e0addd"
+    },
+    {
+      "id": "annex-iii-6-b",
+      "title": "Annex III 6(b)",
+      "text": "(b) AI systems intended to be used by or on behalf of law enforcement authorities or by Union institutions, bodies, offices or agencies in support of law enforcement authorities as polygraphs or similar tools;",
+      "supporting_quotes": [
+        "(b) AI systems intended to be used by or on behalf of law enforcement authorities or by Union institutions, bodies, offices or agencies in support of law enforcement authorities as polygraphs or similar tools;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "e556674838e7f1e4d003ec85694351b5cc3457dc291cd104eaa98d5f0d13860e"
+    },
+    {
+      "id": "annex-iii-6-c",
+      "title": "Annex III 6(c)",
+      "text": "(c) AI systems intended to be used by or on behalf of law enforcement authorities, or by Union institutions, bodies, offices or agencies, in support of law enforcement authorities to evaluate the reliability of evidence in the course of the investigation or prosecution of criminal offences;",
+      "supporting_quotes": [
+        "(c) AI systems intended to be used by or on behalf of law enforcement authorities, or by Union institutions, bodies, offices or agencies, in support of law enforcement authorities to evaluate the reliability of evidence in the course of the investigation or prosecution of"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "ed494be1a03a1ddeb358f044e04cac05b26873dea3d6b00464b6d597354d2e03"
+    },
+    {
+      "id": "annex-iii-6-d",
+      "title": "Annex III 6(d)",
+      "text": "(d) AI systems intended to be used by law enforcement authorities or on their behalf or by Union institutions, bodies, offices or agencies in support of law enforcement authorities for assessing the risk of a natural person offending or re-offending not solely on the basis of the profiling of natural persons as referred to in Article 3(4) of Directive (EU) 2016/680, or to assess personality traits and characteristics or past criminal behaviour of natural persons or groups;",
+      "supporting_quotes": [
+        "(d) AI systems intended to be used by law enforcement authorities or on their behalf or by Union institutions, bodies, offices or agencies in support of law enforcement authorities for assessing the risk of a natural person offending or re-offending not solely on the basis of"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "e9e55a81494100e15f28988abdc63869e2f03b040dd464e682b7d7224a2c8efa"
+    },
+    {
+      "id": "annex-iii-6-e",
+      "title": "Annex III 6(e)",
+      "text": "(e) AI systems intended to be used by or on behalf of law enforcement authorities or by Union institutions, bodies, offices or agencies in support of law enforcement authorities for the profiling of natural persons as referred to in Article 3(4) of Directive (EU) 2016/680 in the course of the detection, investigation or prosecution of criminal offences.",
+      "supporting_quotes": [
+        "(e) AI systems intended to be used by or on behalf of law enforcement authorities or by Union institutions, bodies, offices or agencies in support of law enforcement authorities for the profiling of natural persons as referred to in Article 3(4) of Directive (EU) 2016/680 in the"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "47ba7873b7f39c22588983837edf649bd79d57f020d98a1f5d271ba9b7ad75db"
+    },
+    {
+      "id": "annex-iii-7-a",
+      "title": "Annex III 7(a)",
+      "text": "(a) AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies, offices or agencies as polygraphs or similar tools;",
+      "supporting_quotes": [
+        "(a) AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies, offices or agencies as polygraphs or similar tools;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "04d4a3c0f8c34e62a1f9c82f8361beeb26ccf82afa26bf2acf052095c993db2d"
+    },
+    {
+      "id": "annex-iii-7-b",
+      "title": "Annex III 7(b)",
+      "text": "(b) AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies, offices or agencies to assess a risk, including a security risk, a risk of irregular migration, or a health risk, posed by a natural person who intends to enter or who has entered into the territory of a Member State;",
+      "supporting_quotes": [
+        "(b) AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies, offices or agencies to assess a risk, including a security risk, a risk of irregular migration, or a health risk, posed by a natural person who intends to enter"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "d3b40bacd1cb39fba6b901162f11738336ecdf7b6c90ee31ff54223a978691b6"
+    },
+    {
+      "id": "annex-iii-7-c",
+      "title": "Annex III 7(c)",
+      "text": "(c) AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies, offices or agencies to assist competent public authorities for the examination of applications for asylum, visa or residence permits and for associated complaints with regard to the eligibility of the natural persons applying for a status, including related assessments of the reliability of evidence;",
+      "supporting_quotes": [
+        "(c) AI systems intended to be used by or on behalf of competent public authorities or by Union institutions, bodies, offices or agencies to assist competent public authorities for the examination of applications for asylum, visa or residence permits and for associated complaints"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "011b5f5c1f21899baa2b2959ec5f4dfaea84034c1335d1774cc1ec35974fb790"
+    },
+    {
+      "id": "annex-iii-7-d",
+      "title": "Annex III 7(d)",
+      "text": "(d) AI systems intended to be used by or on behalf of competent public authorities, or by Union institutions, bodies, offices or agencies, in the context of migration, asylum or border control management, for the purpose of detecting, recognising or identifying natural persons, with the exception of the verification of travel documents.",
+      "supporting_quotes": [
+        "(d) AI systems intended to be used by or on behalf of competent public authorities, or by Union institutions, bodies, offices or agencies, in the context of migration, asylum or border control management, for the purpose of detecting, recognising or identifying natural persons,"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "77cad27f912381ca20937e3c5d0e0e2f8befa63f3b833d5817334a15676b0aec"
+    },
+    {
+      "id": "annex-iii-8-a",
+      "title": "Annex III 8(a)",
+      "text": "(a) AI systems intended to be used by a judicial authority or on their behalf to assist a judicial authority in researching and interpreting facts and the law and in applying the law to a concrete set of facts, or to be used in a similar way in alternative dispute resolution;",
+      "supporting_quotes": [
+        "(a) AI systems intended to be used by a judicial authority or on their behalf to assist a judicial authority in researching and interpreting facts and the law and in applying the law to a concrete set of facts, or to be used in a similar way in alternative dispute resolution;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "f2665ea409fa12fa4266a4aaae04446284bcebcd30ac0110691a0b1b87cdf3b2"
+    },
+    {
+      "id": "annex-iii-8-b",
+      "title": "Annex III 8(b)",
+      "text": "(b) AI systems intended to be used for influencing the outcome of an election or referendum or the voting behaviour of natural persons in the exercise of their vote in elections or referenda. This does not include AI systems to the output of which natural persons are not directly exposed, such as tools used to organise, optimise or structure political campaigns from an administrative or logistical point of view.",
+      "supporting_quotes": [
+        "(b) AI systems intended to be used for influencing the outcome of an election or referendum or the voting behaviour of natural persons in the exercise of their vote in elections or referenda."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "26d184e5321fa96dbaabdfd65addfc69b669c18a1e0951ce55a8d3fea5b854cf"
+    },
+    {
+      "id": "annex-iv-1-a",
+      "title": "Annex IV 1(a)",
+      "text": "(a) its intended purpose, the name of the provider and the version of the system reflecting its relation to previous versions;",
+      "supporting_quotes": [
+        "(a) its intended purpose, the name of the provider and the version of the system reflecting its relation to previous versions;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "bb9e724ee25c0dc7e97219c116a376418a691baf34041adacbdc06cfef7787bd"
+    },
+    {
+      "id": "annex-iv-1-b",
+      "title": "Annex IV 1(b)",
+      "text": "(b) how the AI system interacts with, or can be used to interact with, hardware or software, including with other AI systems, that are not part of the AI system itself, where applicable;",
+      "supporting_quotes": [
+        "(b) how the AI system interacts with, or can be used to interact with, hardware or software, including with other AI systems, that are not part of the AI system itself, where applicable;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "ccbf8d878de099b6009900ede9382bde68161039dd693d247f492cee380c72d1"
+    },
+    {
+      "id": "annex-iv-1-c",
+      "title": "Annex IV 1(c)",
+      "text": "(c) the versions of relevant software or firmware, and any requirements related to version updates;",
+      "supporting_quotes": [
+        "(c) the versions of relevant software or firmware, and any requirements related to version updates;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "2a66d35a7c4a16de03f44fda7b77a4ac9d432e291621c1841f0862449a3dc324"
+    },
+    {
+      "id": "annex-iv-1-d",
+      "title": "Annex IV 1(d)",
+      "text": "(d) the description of all the forms in which the AI system is placed on the market or put into service, such as software packages embedded into hardware, downloads, or APIs;",
+      "supporting_quotes": [
+        "(d) the description of all the forms in which the AI system is placed on the market or put into service, such as software packages embedded into hardware, downloads, or APIs;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "a2dc6c79e5cbc4943b170fdf95ad06d2834bb4593c3d9ebb51c7d9eb7a0a1f4b"
+    },
+    {
+      "id": "annex-iv-1-e",
+      "title": "Annex IV 1(e)",
+      "text": "(e) the description of the hardware on which the AI system is intended to run;",
+      "supporting_quotes": [
+        "(e) the description of the hardware on which the AI system is intended to run;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "58ae6213c330083167bdbd6922055f80ec73badb41d194386f71e974ee02f159"
+    },
+    {
+      "id": "annex-iv-1-f",
+      "title": "Annex IV 1(f)",
+      "text": "(f) where the AI system is a component of products, photographs or illustrations showing external features, the marking and internal layout of those products;",
+      "supporting_quotes": [
+        "(f) where the AI system is a component of products, photographs or illustrations showing external features, the marking and internal layout of those products;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "f26fbad37afe05102dc5c1256f062e6fa206bc37f341a6902af8537f87332c92"
+    },
+    {
+      "id": "annex-iv-1-g",
+      "title": "Annex IV 1(g)",
+      "text": "(g) a basic description of the user-interface provided to the deployer;",
+      "supporting_quotes": [
+        "(g) a basic description of the user-interface provided to the deployer;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "b06e3a2c6823727305bf5652e0e9cb3899fb6c424114e3f494a6c9c4894c7286"
+    },
+    {
+      "id": "annex-iv-1-h",
+      "title": "Annex IV 1(h)",
+      "text": "(h) instructions for use for the deployer, and a basic description of the user-interface provided to the deployer, where applicable;",
+      "supporting_quotes": [
+        "(h) instructions for use for the deployer, and a basic description of the user-interface provided to the deployer, where applicable;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "65c7f4596df05e8d097ffe1b8d3fe3f613c1fe3ebd4cd6121bf4ab6c48bc1d84"
+    },
+    {
+      "id": "annex-iv-2-a",
+      "title": "Annex IV 2(a)",
+      "text": "(a) the methods and steps performed for the development of the AI system, including, where relevant, recourse to pre-trained systems or tools provided by third parties and how those were used, integrated or modified by the provider;",
+      "supporting_quotes": [
+        "(a) the methods and steps performed for the development of the AI system, including, where relevant, recourse to pre-trained systems or tools provided by third parties and how those were used, integrated or modified by the provider;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "343db2f007d7d2e988d51ec450a221c1bec2811aebc47dab409197467c6fb936"
+    },
+    {
+      "id": "annex-iv-2-b",
+      "title": "Annex IV 2(b)",
+      "text": "(b) the design specifications of the system, namely the general logic of the AI system and of the algorithms; the key design choices including the rationale and assumptions made, including with regard to persons or groups of persons in respect of who, the system is intended to be used; the main classification choices; what the system is designed to optimise for, and the relevance of the different parameters; the description of the expected output and output quality of the system; the decisions about any possible trade-off made regarding the technical solutions adopted to comply with the requirements set out in Chapter III, Section 2;",
+      "supporting_quotes": [
+        "what the system is designed to optimise for, and the relevance of the different parameters;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "2365bad7c401b28b1065a0fbaee2b66a8561cec193aedf5f6a377e4730c6e09f"
+    },
+    {
+      "id": "annex-iv-2-c",
+      "title": "Annex IV 2(c)",
+      "text": "(c) the description of the system architecture explaining how software components build on or feed into each other and integrate into the overall processing; the computational resources used to develop, train, test and validate the AI system;",
+      "supporting_quotes": [
+        "(c) the description of the system architecture explaining how software components build on or feed into each other and integrate into the overall processing;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "e8cfc5d88b1615932a5c5e745434569e186d420ebdd33a453544fc35327b5175"
+    },
+    {
+      "id": "annex-iv-2-d",
+      "title": "Annex IV 2(d)",
+      "text": "(d) where relevant, the data requirements in terms of datasheets describing the training methodologies and techniques and the training data sets used, including a general description of these data sets, information about their provenance, scope and main characteristics; how the data was obtained and selected; labelling procedures (e.g. for supervised learning), data cleaning methodologies (e.g. outliers detection);",
+      "supporting_quotes": [
+        "how the data was obtained and selected; labelling procedures (e.g. for supervised learning), data cleaning methodologies (e.g. outliers detection);"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "01c7d70aeb3cd08f415b849ca1b54b75fcf0a914ee3271344aa67a547c4bff00"
+    },
+    {
+      "id": "annex-iv-2-e",
+      "title": "Annex IV 2(e)",
+      "text": "(e) assessment of the human oversight measures needed in accordance with Article 14, including an assessment of the technical measures needed to facilitate the interpretation of the outputs of AI systems by the deployers, in accordance with Article 13(3), point (d);",
+      "supporting_quotes": [
+        "(e) assessment of the human oversight measures needed in accordance with Article 14, including an assessment of the technical measures needed to facilitate the interpretation of the outputs of AI systems by the deployers, in accordance with Article 13(3), point (d);"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "481fa97bc3302c2c1bb4d7419847a394f282604d7c59938d6400e443c11b67d6"
+    },
+    {
+      "id": "annex-iv-2-f",
+      "title": "Annex IV 2(f)",
+      "text": "(f) where applicable, a detailed description of pre-determined changes to the AI system and its performance, together with all the relevant information related to the technical solutions adopted to ensure continuous compliance of the AI system with the relevant requirements set out in Chapter III, Section 2;",
+      "supporting_quotes": [
+        "(f) where applicable, a detailed description of pre-determined changes to the AI system and its performance, together with all the relevant information related to the technical solutions adopted to ensure continuous compliance of the AI system with the relevant requirements set"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "f3c5071ffb611b37f879c2b00d451cadf878728dbcf76b34df758c1a864ad3cf"
+    },
+    {
+      "id": "annex-iv-2-g",
+      "title": "Annex IV 2(g)",
+      "text": "(g) the validation and testing procedures used, including information about the validation and testing data used and their main characteristics; metrics used to measure accuracy, robustness and compliance with other relevant requirements set out in Chapter III, Section 2, as well as potentially discriminatory impacts; test logs and all test reports dated and signed by the responsible persons, including with regard to pre-determined changes as referred to under point (f);",
+      "supporting_quotes": [
+        "(g) the validation and testing procedures used, including information about the validation and testing data used and their main characteristics;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "556443684adf88661493931f37fb3f059f47e69b87ef479e20b6dc29ccf2bdae"
+    },
+    {
+      "id": "annex-iv-2-h",
+      "title": "Annex IV 2(h)",
+      "text": "(h) cybersecurity measures put in place;",
+      "supporting_quotes": [
+        "(h) cybersecurity measures put in place;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7f441ddce6df109abe425a7ffcb52b0fda37b0818ecd33cfe60d38903745a91e"
+    },
+    {
+      "id": "annex-iv-3",
+      "title": "Annex IV 3",
+      "text": "3. Detailed information about the monitoring, functioning and control of the AI system, in particular with regard to: its capabilities and limitations in performance, including the degrees of accuracy for specific persons or groups of persons on which the system is intended to be used and the overall expected level of accuracy in relation to its intended purpose; the foreseeable unintended outcomes and sources of risks to health and safety, fundamental rights and discrimination in view of the intended purpose of the AI system; the human oversight measures needed in accordance with Article 14, including the technical measures put in place to facilitate the interpretation of the outputs of AI systems by the deployers; specifications on input data, as appropriate;",
+      "supporting_quotes": [
+        "Detailed information about the monitoring, functioning and control of the AI system, in particular with regard to: its capabilities and limitations in performance, including the degrees of accuracy for specific persons or groups of persons on which the system is intended to be"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "38f3878ff29b2c70adc86ef7bb958edecdf2935e746bcf91baf92e69a3b21de1"
+    },
+    {
+      "id": "annex-iv-4",
+      "title": "Annex IV 4",
+      "text": "4. A description of the appropriateness of the performance metrics for the specific AI system;",
+      "supporting_quotes": [
+        "A description of the appropriateness of the performance metrics for the specific AI system;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "4383c86374fa579e8b2afeeaf88ae6e377191213840afd4cbd2b55037346c68a"
+    },
+    {
+      "id": "annex-iv-5",
+      "title": "Annex IV 5",
+      "text": "5. A detailed description of the risk management system in accordance with Article 9;",
+      "supporting_quotes": [
+        "A detailed description of the risk management system in accordance with Article 9;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "65a2b37f8f2b82a5a5479fceb47e479072b46a104e43d7be1812914b289e9df6"
+    },
+    {
+      "id": "annex-iv-6",
+      "title": "Annex IV 6",
+      "text": "6. A description of relevant changes made by the provider to the system through its lifecycle;",
+      "supporting_quotes": [
+        "A description of relevant changes made by the provider to the system through its lifecycle;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "51499ae44440e490ebe47c2451aa9dc0b3efa7adc6be9dea02057c201d72fea0"
+    },
+    {
+      "id": "annex-iv-7",
+      "title": "Annex IV 7",
+      "text": "7. A list of the harmonised standards applied in full or in part the references of which have been published in the Official Journal of the European Union; where no such harmonised standards have been applied, a detailed description of the solutions adopted to meet the requirements set out in Chapter III, Section 2, including a list of other relevant standards and technical specifications applied;",
+      "supporting_quotes": [
+        "A list of the harmonised standards applied in full or in part the references of which have been published in the Official Journal of the European Union;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "f2396d612e01f421ac6e929e08656ec390ef6bf97a4b26b272924cf57e4e19cf"
+    },
+    {
+      "id": "annex-iv-8",
+      "title": "Annex IV 8",
+      "text": "8. A copy of the EU declaration of conformity referred to in Article 47;",
+      "supporting_quotes": [
+        "A copy of the EU declaration of conformity referred to in Article 47;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "02effa0027e9e0b8b616e7956220adcd43281c38ec08842a40bc66e57496e259"
+    },
+    {
+      "id": "annex-iv-9",
+      "title": "Annex IV 9",
+      "text": "9. A detailed description of the system in place to evaluate the AI system performance in the post-market phase in accordance with Article 72, including the post-market monitoring plan referred to in Article 72(3).",
+      "supporting_quotes": [
+        "A detailed description of the system in place to evaluate the AI system performance in the post-market phase in accordance with Article 72, including the post-market monitoring plan referred to in Article 72(3)."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-4",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "a079979be317a65c7fc4c2adcfcec3bf6ec33d28916eb6160e166484e8c7b5b7"
+    },
+    {
+      "id": "article-4a-1",
+      "title": "Article 4a(1): Special-category data for bias detection",
+      "text": "1. To the extent strictly necessary to ensure bias detection and correction in relation to high-risk AI systems in accordance with Article 10(2), points (f) and (g), of this Regulation, providers of such systems may exceptionally process special categories of personal data, subject to appropriate safeguards for the fundamental rights and freedoms of natural persons. In addition to the provisions set out in Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680, as applicable, all the following conditions shall be met in order for such processing to occur: (a) the bias detection and correction cannot be effectively fulfilled by processing other data, including synthetic or anonymised data; (b) the special categories of personal data are subject to technical limitations on the re-use of personal data, and state-of-the-art security and privacy-preserving measures, including pseudonymisation; (c) the special categories of personal data are subject to measures to ensure that the personal data processed are secured and protected, subject to suitable safeguards, including strict controls and documentation of the access, to avoid misuse and to ensure that only authorised persons have access to those personal data with appropriate confidentiality obligations; (d) the special categories of personal data are not transmitted, transferred or otherwise accessed by other parties; (e) the special categories of personal data are deleted once the bias has been corrected or the personal data has reached the end of its retention period, whichever comes first; and (f) the records of processing activities pursuant to Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680 include the reasons why the processing of special categories of personal data was strictly necessary to detect and correct biases, and why that objective could not be achieved by processing other data.",
+      "supporting_quotes": [
+        "the special categories of personal data are deleted once the bias has been corrected or the personal data has reached the end of its retention period, whichever comes first;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-4a",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "66472c28ff615698c56cea439eacd49cde82e486f879b6f670d40693863e2a12"
+    },
+    {
+      "id": "article-4a-2",
+      "title": "Article 4a(2): Special-category data for bias detection",
+      "text": "2. Providers and deployers of other AI systems and models and deployers of high-risk AI systems may exceptionally process special categories of personal data to the extent that: (a) such processing is strictly necessary to ensure bias detection and correction in view of possible biases that are likely to affect the health and safety of persons, have a negative impact on fundamental rights or lead to discrimination prohibited pursuant to Union law, especially where data outputs influence inputs for future operations; and (b) all of the conditions and safeguards set out in paragraph 1 are applied. This paragraph does not create any obligation to conduct such bias detection and correction.",
+      "supporting_quotes": [
+        "Providers and deployers of other AI systems and models and deployers of high-risk AI systems may exceptionally process special categories of personal data to the extent that:"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-4a",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "40991ee1026132b52357ba9fe32567e0d1483768387830446f84493ddff96c24"
+    },
+    {
+      "id": "article-6-1",
+      "title": "Article 6(1): Classification",
+      "text": "1. Irrespective of whether an AI system is placed on the market or put into service independently of the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled: (a) the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex I; (b) the product whose safety component pursuant to point (a) is the AI system, or the AI system itself as a product, is required to undergo a third-party conformity assessment, with a view to the placing on the market or the putting into service of that product pursuant to the Union harmonisation legislation listed in Annex I. 1a. For the purposes of this Regulation, including paragraph 1 of this Article, AI systems that are solely used for non-safety related aspects of user assistance, performance optimisation, service efficiency, automation or convenience or quality control shall not qualify as safety components. 1b. Notwithstanding paragraph 1a, AI systems the failure or malfunctioning of which would endanger health and safety shall qualify as safety components. 1c. A product that is required to undergo a third-party conformity assessment solely due to risks other than risks to health and safety, in particular risks relating to the distribution of radio spectrum or electromagnetic interference that do not affect health and safety, shall not be considered as fulfilling the condition in paragraph 1, point (b).",
+      "supporting_quotes": [
+        "Irrespective of whether an AI system is placed on the market or put into service independently of the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled:"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "3008cea88aa75363b4ec27453ef9986043416ab66b12e17555f9f73cdf298c07"
+    },
+    {
       "id": "article-6-2",
-      "title": "Article 6(2) · Annex III classification",
+      "title": "Article 6(2): Classification",
       "text": "2. In addition to the high-risk AI systems referred to in paragraph 1, AI systems referred to in Annex III shall be considered to be high-risk.",
       "supporting_quotes": [
         "AI systems referred to in Annex III shall be considered to be high-risk."
@@ -52,7 +653,7 @@
     },
     {
       "id": "article-6-3",
-      "title": "Article 6(3) · Classification conditions",
+      "title": "Article 6(3): Classification",
       "text": "3. By derogation from paragraph 2, an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons, including by not materially influencing the outcome of decision making. The first subparagraph shall apply where any of the following conditions is fulfilled: (a) the AI system is intended to perform a narrow procedural task; (b) the AI system is intended to improve the result of a previously completed human activity; (c) the AI system is intended to detect decision-making patterns or deviations from prior decision-making patterns and is not meant to replace or influence the previously completed human assessment, without proper human review; or (d) the AI system is intended to perform a preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III. Notwithstanding the first subparagraph, an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons.",
       "supporting_quotes": [
         "an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons"
@@ -63,8 +664,658 @@
       "checksum": "f859f5a2e435bd84c7da404fd214279544868d431a63a582b4fe548dc94fb3e0"
     },
     {
+      "id": "article-6-4",
+      "title": "Article 6(4): Classification",
+      "text": "4. A provider who considers that an AI system referred to in Annex III is not high-risk shall document its assessment before that system is placed on the market or put into service. Such provider shall be subject to the registration obligation set out in Article 49(2). Upon request of national competent authorities, the provider shall provide the documentation of the assessment.",
+      "supporting_quotes": [
+        "A provider who considers that an AI system referred to in Annex III is not high-risk shall document its assessment before that system is placed on the market or put into service."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "51ce6d9ffc701ea01ff899f329c19c5733c7d99097165b10bb28bb532d24e67a"
+    },
+    {
+      "id": "article-6-5",
+      "title": "Article 6(5): Classification",
+      "text": "5. The Commission shall, after consulting the European Artificial Intelligence Board (the ‘Board’), and no later than 2 February 2026, provide guidelines specifying the practical implementation of this Article in line with Article 96 together with a comprehensive list of practical examples of use cases of AI systems that are high-risk and not high-risk.",
+      "supporting_quotes": [
+        "The Commission shall, after consulting the European Artificial Intelligence Board (the ‘Board’), and no later than 2 February 2026, provide guidelines specifying the practical implementation of this Article in line with Article 96 together with a comprehensive list of practical"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "0ea6d6b47da7db207035b4326932f034864282743e4d2deccfdccd940d151774"
+    },
+    {
+      "id": "article-6-6",
+      "title": "Article 6(6): Classification",
+      "text": "6. The Commission is empowered to adopt delegated acts in accordance with Article 97 in order to amend paragraph 3, second subparagraph, of this Article by adding new conditions to those laid down therein, or by modifying them, where there is concrete and reliable evidence of the existence of AI systems that fall under the scope of Annex III, but do not pose a significant risk of harm to the health, safety or fundamental rights of natural persons.",
+      "supporting_quotes": [
+        "The Commission is empowered to adopt delegated acts in accordance with Article 97 in order to amend paragraph 3, second subparagraph, of this Article by adding new conditions to those laid down therein, or by modifying them, where there is concrete and reliable evidence of the"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "987006acfe5d6aa147f67adf7b0c51670f42c6e30e14ccba58e33f06677dc047"
+    },
+    {
+      "id": "article-6-7",
+      "title": "Article 6(7): Classification",
+      "text": "7. The Commission shall adopt delegated acts in accordance with Article 97 in order to amend paragraph 3, second subparagraph, of this Article by deleting any of the conditions laid down therein, where there is concrete and reliable evidence that this is necessary to maintain the level of protection of health, safety and fundamental rights provided for by this Regulation.",
+      "supporting_quotes": [
+        "The Commission shall adopt delegated acts in accordance with Article 97 in order to amend paragraph 3, second subparagraph, of this Article by deleting any of the conditions laid down therein, where there is concrete and reliable evidence that this is necessary to maintain the"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "88cfef482e25ee93c555cabb48876addd6efa060160d564b7a0fbcf53957137f"
+    },
+    {
+      "id": "article-6-8",
+      "title": "Article 6(8): Classification",
+      "text": "8. Any amendment to the conditions laid down in paragraph 3, second subparagraph, adopted in accordance with paragraphs 6 and 7 of this Article shall not decrease the overall level of protection of health, safety and fundamental rights provided for by this Regulation and shall ensure consistency with the delegated acts adopted pursuant to Article 7(1), and take account of market and technological developments.",
+      "supporting_quotes": [
+        "Any amendment to the conditions laid down in paragraph 3, second subparagraph, adopted in accordance with paragraphs 6 and 7 of this Article shall not decrease the overall level of protection of health, safety and fundamental rights provided for by this Regulation and shall"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "5195742df39dc65f80e499b2f340b2352bce761228c31a6c44284f32996e0cc4"
+    },
+    {
+      "id": "article-8-1",
+      "title": "Article 8(1): High-risk requirements",
+      "text": "1. High-risk AI systems shall comply with the requirements laid down in this Section, taking into account their intended purpose as well as the generally acknowledged state of the art on AI and AI-related technologies. The risk management system referred to in Article 9 shall be taken into account when ensuring compliance with those requirements.",
+      "supporting_quotes": [
+        "High-risk AI systems shall comply with the requirements laid down in this Section, taking into account their intended purpose as well as the generally acknowledged state of the art on AI and AI-related technologies."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-8",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "10c70cce9794aa1a0a4fd8e2396c8bd5fcc4a5625ea86981f7853aa8353ef8f6"
+    },
+    {
+      "id": "article-8-2",
+      "title": "Article 8(2): High-risk requirements",
+      "text": "2. Where a product contains an AI system, to which the requirements of this Regulation as well as requirements of the Union harmonisation legislation listed in Section A of Annex I apply, providers shall be responsible for ensuring that their product is fully compliant with all applicable requirements under applicable Union harmonisation legislation. In ensuring the compliance of high-risk AI systems referred to in paragraph 1 with the requirements set out in this Section, and in order to ensure consistency, avoid duplication and minimise additional burdens, providers shall have a choice of integrating, as appropriate, the necessary testing and reporting processes, information and documentation they provide with regard to their product into documentation and procedures that already exist and are required under the Union harmonisation legislation listed in Section A of Annex I.",
+      "supporting_quotes": [
+        "Where a product contains an AI system, to which the requirements of this Regulation as well as requirements of the Union harmonisation legislation listed in Section A of Annex I apply, providers shall be responsible for ensuring that their product is fully compliant with all"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-8",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "acc79a8fdb2bf7bbfda4fb81ead01edb28efeecc00af65780b5e85d4c3262a03"
+    },
+    {
+      "id": "article-9-1",
+      "title": "Article 9(1): Risk management",
+      "text": "1. A risk management system shall be established, implemented, documented and maintained in relation to high-risk AI systems.",
+      "supporting_quotes": [
+        "A risk management system shall be established, implemented, documented and maintained in relation to high-risk AI systems."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "4d060f4a2dd33b7fa32c1bc34894fe34b68687b4bf1f2eec9481f35a32a92483"
+    },
+    {
+      "id": "article-9-2",
+      "title": "Article 9(2): Risk management",
+      "text": "2. The risk management system shall be understood as a continuous iterative process planned and run throughout the entire lifecycle of a high-risk AI system, requiring regular systematic review and updating. It shall comprise the following steps: (a) the identification and analysis of the known and the reasonably foreseeable risks that the high-risk AI system can pose to health, safety or fundamental rights when the high-risk AI system is used in accordance with its intended purpose; (b) the estimation and evaluation of the risks that may emerge when the high-risk AI system is used in accordance with its intended purpose, and under conditions of reasonably foreseeable misuse; (c) the evaluation of other risks possibly arising, based on the analysis of data gathered from the post-market monitoring system referred to in Article 72; (d) the adoption of appropriate and targeted risk management measures designed to address the risks identified pursuant to point (a).",
+      "supporting_quotes": [
+        "The risk management system shall be understood as a continuous iterative process planned and run throughout the entire lifecycle of a high-risk AI system, requiring regular systematic review and updating."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "2a8620cfb8318d2f05d157057b4dcaa248def0a585c6763a5df66b2659989a4f"
+    },
+    {
+      "id": "article-9-3",
+      "title": "Article 9(3): Risk management",
+      "text": "3. The risks referred to in this Article shall concern only those which may be reasonably mitigated or eliminated through the development or design of the high-risk AI system, or the provision of adequate technical information.",
+      "supporting_quotes": [
+        "The risks referred to in this Article shall concern only those which may be reasonably mitigated or eliminated through the development or design of the high-risk AI system, or the provision of adequate technical information."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "0f85e7a58733ce7b3e328bb3579cc6e1310b5989ded80ae755d45269abe83dfc"
+    },
+    {
+      "id": "article-9-4",
+      "title": "Article 9(4): Risk management",
+      "text": "4. The risk management measures referred to in paragraph 2, point (d), shall give due consideration to the effects and possible interaction resulting from the combined application of the requirements set out in this Section, with a view to minimising risks more effectively while achieving an appropriate balance in implementing the measures to fulfil those requirements.",
+      "supporting_quotes": [
+        "The risk management measures referred to in paragraph 2, point (d), shall give due consideration to the effects and possible interaction resulting from the combined application of the requirements set out in this Section, with a view to minimising risks more effectively while"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "5e2822891fedebc2b1e671872e598159ac175079e208038c05fb51b2ce68890a"
+    },
+    {
+      "id": "article-9-5",
+      "title": "Article 9(5): Risk management",
+      "text": "5. The risk management measures referred to in paragraph 2, point (d), shall be such that the relevant residual risk associated with each hazard, as well as the overall residual risk of the high-risk AI systems is judged to be acceptable. In identifying the most appropriate risk management measures, the following shall be ensured: (a) elimination or reduction of risks identified and evaluated pursuant to paragraph 2 in as far as technically feasible through adequate design and development of the high-risk AI system; (b) where appropriate, implementation of adequate mitigation and control measures addressing risks that cannot be eliminated; (c) provision of information required pursuant to Article 13 and, where appropriate, training to deployers. With a view to eliminating or reducing risks related to the use of the high-risk AI system, due consideration shall be given to the technical knowledge, experience, education, the training to be expected by the deployer, and the presumable context in which the system is intended to be used.",
+      "supporting_quotes": [
+        "The risk management measures referred to in paragraph 2, point (d), shall be such that the relevant residual risk associated with each hazard, as well as the overall residual risk of the high-risk AI systems is judged to be acceptable."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "1d0476763022b929fd0c0b8ddf15a0b92d7d67fd4f4e1f7317bebf4ecb66da4f"
+    },
+    {
+      "id": "article-9-6",
+      "title": "Article 9(6): Risk management",
+      "text": "6. High-risk AI systems shall be tested for the purpose of identifying the most appropriate and targeted risk management measures. Testing shall ensure that high-risk AI systems perform consistently for their intended purpose and that they are in compliance with the requirements set out in this Section.",
+      "supporting_quotes": [
+        "High-risk AI systems shall be tested for the purpose of identifying the most appropriate and targeted risk management measures."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "637203dd4dc96bc35c43f0d7deb97e8045692f1998f740f60ef932f6937053d5"
+    },
+    {
+      "id": "article-9-7",
+      "title": "Article 9(7): Risk management",
+      "text": "7. Testing procedures may include testing in real-world conditions in accordance with Article 60.",
+      "supporting_quotes": [
+        "Testing procedures may include testing in real-world conditions in accordance with Article 60."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "5901685f07eb36fb3f0ee2873de8eb13bd595e1628769b5cc8ccb5eeb85e28fb"
+    },
+    {
+      "id": "article-9-8",
+      "title": "Article 9(8): Risk management",
+      "text": "8. The testing of high-risk AI systems shall be performed, as appropriate, at any time throughout the development process, and, in any event, prior to their being placed on the market or put into service. Testing shall be carried out against prior defined metrics and probabilistic thresholds that are appropriate to the intended purpose of the high-risk AI system.",
+      "supporting_quotes": [
+        "The testing of high-risk AI systems shall be performed, as appropriate, at any time throughout the development process, and, in any event, prior to their being placed on the market or put into service."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "64e6dbc2b9368f37fa57abfc197c3e1e674c77c4b0ef3f0777390413f5a7f693"
+    },
+    {
+      "id": "article-9-9",
+      "title": "Article 9(9): Risk management",
+      "text": "9. When implementing the risk management system as provided for in paragraphs 1 to 7, providers shall give consideration to whether in view of its intended purpose the high-risk AI system is likely to have an adverse impact on persons under the age of 18 and, as appropriate, other vulnerable groups.",
+      "supporting_quotes": [
+        "When implementing the risk management system as provided for in paragraphs 1 to 7, providers shall give consideration to whether in view of its intended purpose the high-risk AI system is likely to have an adverse impact on persons under the age of 18 and, as appropriate, other"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "64c9044649b12fb3a37e6f03e9a917edec573968081bf59ef5fdf95f00ce1f71"
+    },
+    {
+      "id": "article-9-10",
+      "title": "Article 9(10): Risk management",
+      "text": "10. For providers of high-risk AI systems that are subject to requirements regarding internal risk management processes under other relevant provisions of Union law, the aspects provided in paragraphs 1 to 9 may be part of, or combined with, the risk management procedures established pursuant to that law.",
+      "supporting_quotes": [
+        "For providers of high-risk AI systems that are subject to requirements regarding internal risk management processes under other relevant provisions of Union law, the aspects provided in paragraphs 1 to 9 may be part of, or combined with, the risk management procedures"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-9",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "3474e9dee69cb234696d542940e7ae4f2bf4a25e271305bc0cfe054b4ea40d04"
+    },
+    {
+      "id": "article-10-1",
+      "title": "Article 10(1): Data governance",
+      "text": "1. High-risk AI systems which make use of techniques involving the training of AI models with data shall be developed on the basis of training, validation and testing data sets that meet the quality criteria referred to in paragraphs 2, 3 and 4 of this Article and in Article 4a(1) whenever such data sets are used.",
+      "supporting_quotes": [
+        "High-risk AI systems which make use of techniques involving the training of AI models with data shall be developed on the basis of training, validation and testing data sets that meet the quality criteria referred to in paragraphs 2, 3 and 4 of this Article and in Article 4a(1)"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-10",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "819b8e6fdd02c7f82b3961e1830b2c717f4cecb3ad6835db511f38b94f131eb6"
+    },
+    {
+      "id": "article-10-2",
+      "title": "Article 10(2): Data governance",
+      "text": "2. Training, validation and testing data sets shall be subject to data governance and management practices appropriate for the intended purpose of the high-risk AI system. Those practices shall concern in particular: (a) the relevant design choices; (b) data collection processes and the origin of data, and in the case of personal data, the original purpose of the data collection; (c) relevant data-preparation processing operations, such as annotation, labelling, cleaning, updating, enrichment and aggregation; (d) the formulation of assumptions, in particular with respect to the information that the data are supposed to measure and represent; (e) an assessment of the availability, quantity and suitability of the data sets that are needed; (f) examination in view of possible biases that are likely to affect the health and safety of persons, have a negative impact on fundamental rights or lead to discrimination prohibited under Union law, especially where data outputs influence inputs for future operations; (g) appropriate measures to detect, prevent and mitigate possible biases identified according to point (f); (h) the identification of relevant data gaps or shortcomings that prevent compliance with this Regulation, and how those gaps and shortcomings can be addressed.",
+      "supporting_quotes": [
+        "data collection processes and the origin of data, and in the case of personal data, the original purpose of the data collection;",
+        "relevant data-preparation processing operations, such as annotation, labelling, cleaning, updating, enrichment and aggregation;",
+        "appropriate measures to detect, prevent and mitigate possible biases identified according to point (f);"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-10",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "8ba61dfdfdeb6703f4cf241b8514d7f74cbfad07e6152559f45092860bd3ee1f"
+    },
+    {
+      "id": "article-10-3",
+      "title": "Article 10(3): Data governance",
+      "text": "3. Training, validation and testing data sets shall be relevant, sufficiently representative, and to the best extent possible, free of errors and complete in view of the intended purpose. They shall have the appropriate statistical properties, including, where applicable, as regards the persons or groups of persons in relation to whom the high-risk AI system is intended to be used. Those characteristics of the data sets may be met at the level of individual data sets or at the level of a combination thereof.",
+      "supporting_quotes": [
+        "Training, validation and testing data sets shall be relevant, sufficiently representative, and to the best extent possible, free of errors and complete in view of the intended purpose."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-10",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "73d03d4052901c612e3e2436a45e185c16bb263a9d708c940a64000e9e4aa1fc"
+    },
+    {
+      "id": "article-10-4",
+      "title": "Article 10(4): Data governance",
+      "text": "4. Data sets shall take into account, to the extent required by the intended purpose, the characteristics or elements that are particular to the specific geographical, contextual, behavioural or functional setting within which the high-risk AI system is intended to be used. DELETED",
+      "supporting_quotes": [
+        "Data sets shall take into account, to the extent required by the intended purpose, the characteristics or elements that are particular to the specific geographical, contextual, behavioural or functional setting within which the high-risk AI system is intended to be used."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-10",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "0f99de7fb46bd490dec13bd99d15279c88e509697a6ea8462c089e42eb091ba0"
+    },
+    {
+      "id": "article-10-6",
+      "title": "Article 10(6): Data governance",
+      "text": "6. For the development of high-risk AI systems not using techniques involving the training of AI models, paragraphs 2, 3 and 4 of this Article and Article 4a(1) shall apply only to the testing data sets.",
+      "supporting_quotes": [
+        "For the development of high-risk AI systems not using techniques involving the training of AI models, paragraphs 2, 3 and 4 of this Article and Article 4a(1) shall apply only to the testing data sets."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-10",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "96aa4dfd4f8c337400885dae033afd3bfa2010d35662dea548621f9393a25315"
+    },
+    {
+      "id": "article-11-1",
+      "title": "Article 11(1): Technical documentation",
+      "text": "1. The technical documentation of a high-risk AI system shall be drawn up before that system is placed on the market or put into service and shall be kept up-to date. That technical documentation shall be drawn up in such a way as to demonstrate that the high-risk AI system complies with the requirements set out in this Section and to provide national competent authorities and notified bodies with the necessary information in a clear and comprehensive form to assess the compliance of the AI system with those requirements. It shall contain, at a minimum, the elements set out in Annex IV. SMEs, including start-ups, and SMCs, may provide the elements of the technical documentation specified in Annex IV in a simplified manner. To that end, the Commission shall establish a simplified technical documentation form targeted at the needs of SMEs, including start-ups, and SMCs. Where an SME, including a start-up, or an SMC, opts to provide the information required in Annex IV in a simplified manner, it shall use the form referred to in this paragraph. Notified bodies shall accept the form for the purposes of the conformity assessment.",
+      "supporting_quotes": [
+        "The technical documentation of a high-risk AI system shall be drawn up before that system is placed on the market or put into service and shall be kept up-to date."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-11",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "295bb76a8b76a2f0101cbeadf6b0ec17dd0c18dee3c71703ccb8ab80a64d0c13"
+    },
+    {
+      "id": "article-11-2",
+      "title": "Article 11(2): Technical documentation",
+      "text": "2. Where a high-risk AI system related to a product covered by the Union harmonisation legislation listed in Section A of Annex I is placed on the market or put into service, a single set of technical documentation shall be drawn up containing all the information set out in paragraph 1, as well as the information required under those legal acts.",
+      "supporting_quotes": [
+        "Where a high-risk AI system related to a product covered by the Union harmonisation legislation listed in Section A of Annex I is placed on the market or put into service, a single set of technical documentation shall be drawn up containing all the information set out in"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-11",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "81edcfd99abb269ad47bd06c57110e79a96703ceeabe788cca74ed006228adb1"
+    },
+    {
+      "id": "article-11-3",
+      "title": "Article 11(3): Technical documentation",
+      "text": "3. The Commission is empowered to adopt delegated acts in accordance with Article 97 in order to amend Annex IV, where necessary, to ensure that, in light of technical progress, the technical documentation provides all the information necessary to assess the compliance of the system with the requirements set out in this Section.",
+      "supporting_quotes": [
+        "The Commission is empowered to adopt delegated acts in accordance with Article 97 in order to amend Annex IV, where necessary, to ensure that, in light of technical progress, the technical documentation provides all the information necessary to assess the compliance of the"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-11",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "741fc93b6e18a8d3f1f42b379c90fb5ebfc851970b9e55c1bfe819b8d4e23ba6"
+    },
+    {
+      "id": "article-12-1",
+      "title": "Article 12(1): Logging",
+      "text": "1. High-risk AI systems shall technically allow for the automatic recording of events (logs) over the lifetime of the system.",
+      "supporting_quotes": [
+        "High-risk AI systems shall technically allow for the automatic recording of events (logs) over the lifetime of the system."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-12",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "cc4235f0509499118fd441054dce8f9e5db99920c7b8c120dd733af6e17d722a"
+    },
+    {
+      "id": "article-12-2",
+      "title": "Article 12(2): Logging",
+      "text": "2. In order to ensure a level of traceability of the functioning of a high-risk AI system that is appropriate to the intended purpose of the system, logging capabilities shall enable the recording of events relevant for: (a) identifying situations that may result in the high-risk AI system presenting a risk within the meaning of Article 79(1) or in a substantial modification; (b) facilitating the post-market monitoring referred to in Article 72; and (c) monitoring the operation of high-risk AI systems referred to in Article 26(5).",
+      "supporting_quotes": [
+        "In order to ensure a level of traceability of the functioning of a high-risk AI system that is appropriate to the intended purpose of the system, logging capabilities shall enable the recording of events relevant for:"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-12",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "5cfc6af5e59b685cf3f03f613481bf21550491e55498619dccd08988932f9a47"
+    },
+    {
+      "id": "article-12-3",
+      "title": "Article 12(3): Logging",
+      "text": "3. For high-risk AI systems referred to in point 1 (a), of Annex III, the logging capabilities shall provide, at a minimum: (a) recording of the period of each use of the system (start date and time and end date and time of each use); (b) the reference database against which input data has been checked by the system; (c) the input data for which the search has led to a match; (d) the identification of the natural persons involved in the verification of the results, as referred to in Article 14(5).",
+      "supporting_quotes": [
+        "For high-risk AI systems referred to in point 1 (a), of Annex III, the logging capabilities shall provide, at a minimum:"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-12",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "106261dd9ffb7a99873dec844b1e641127d6a22c8965d84538a7d636cb5c049e"
+    },
+    {
+      "id": "article-13-1",
+      "title": "Article 13(1): Information to deployers",
+      "text": "1. High-risk AI systems shall be designed and developed in such a way as to ensure that their operation is sufficiently transparent to enable deployers to interpret a system’s output and use it appropriately. An appropriate type and degree of transparency shall be ensured with a view to achieving compliance with the relevant obligations of the provider and deployer set out in Section 3.",
+      "supporting_quotes": [
+        "High-risk AI systems shall be designed and developed in such a way as to ensure that their operation is sufficiently transparent to enable deployers to interpret a system’s output and use it appropriately."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-13",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "2b3db5ca6f2c1ea6acdc3fc099f7f54a8b24ba4f22326fe45fee1fe8df1b6438"
+    },
+    {
+      "id": "article-13-2",
+      "title": "Article 13(2): Information to deployers",
+      "text": "2. High-risk AI systems shall be accompanied by instructions for use in an appropriate digital format or otherwise that include concise, complete, correct and clear information that is relevant, accessible and comprehensible to deployers.",
+      "supporting_quotes": [
+        "High-risk AI systems shall be accompanied by instructions for use in an appropriate digital format or otherwise that include concise, complete, correct and clear information that is relevant, accessible and comprehensible to deployers."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-13",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "764d29294d1f4d2d209f3a231da7b7054f82452648a17cb107540a7b2ac52e03"
+    },
+    {
+      "id": "article-13-3",
+      "title": "Article 13(3): Information to deployers",
+      "text": "3. The instructions for use shall contain at least the following information: (a) the identity and the contact details of the provider and, where applicable, of its authorised representative; (b) the characteristics, capabilities and limitations of performance of the high-risk AI system, including: (i) its intended purpose; (ii) the level of accuracy, including its metrics, robustness and cybersecurity referred to in Article 15 against which the high-risk AI system has been tested and validated and which can be expected, and any known and foreseeable circumstances that may have an impact on that expected level of accuracy, robustness and cybersecurity; (iii) any known or foreseeable circumstance, related to the use of the high-risk AI system in accordance with its intended purpose or under conditions of reasonably foreseeable misuse, which may lead to risks to the health and safety or fundamental rights referred to in Article 9(2); (iv) where applicable, the technical capabilities and characteristics of the high-risk AI system to provide information that is relevant to explain its output; (v) when appropriate, its performance regarding specific persons or groups of persons on which the system is intended to be used; (vi) when appropriate, specifications for the input data, or any other relevant information in terms of the training, validation and testing data sets used, taking into account the intended purpose of the high-risk AI system; (vii) where applicable, information to enable deployers to interpret the output of the high-risk AI system and use it appropriately; (c) the changes to the high-risk AI system and its performance which have been pre-determined by the provider at the moment of the initial conformity assessment, if any; (d) the human oversight measures referred to in Article 14, including the technical measures put in place to facilitate the interpretation of the outputs of the high-risk AI systems by the deployers; (e) the computational and hardware resources needed, the expected lifetime of the high-risk AI system and any necessary maintenance and care measures, including their frequency, to ensure the proper functioning of that AI system, including as regards software updates; (f) where relevant, a description of the mechanisms included within the high-risk AI system that allows deployers to properly collect, store and interpret the logs in accordance with Article 12.",
+      "supporting_quotes": [
+        "The instructions for use shall contain at least the following information:"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-13",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "db68b4a03e26a38ebfe8d97fa40de3e33aa1ce70bbd7946e91a78de56de6264a"
+    },
+    {
+      "id": "article-14-1",
+      "title": "Article 14(1): Human oversight",
+      "text": "1. High-risk AI systems shall be designed and developed in such a way, including with appropriate human-machine interface tools, that they can be effectively overseen by natural persons during the period in which they are in use.",
+      "supporting_quotes": [
+        "High-risk AI systems shall be designed and developed in such a way, including with appropriate human-machine interface tools, that they can be effectively overseen by natural persons during the period in which they are in use."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-14",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7e021b1b51687a1312ec0c878f7d464b2bfd674782e3702e976d8f1253f89da6"
+    },
+    {
+      "id": "article-14-2",
+      "title": "Article 14(2): Human oversight",
+      "text": "2. Human oversight shall aim to prevent or minimise the risks to health, safety or fundamental rights that may emerge when a high-risk AI system is used in accordance with its intended purpose or under conditions of reasonably foreseeable misuse, in particular where such risks persist despite the application of other requirements set out in this Section.",
+      "supporting_quotes": [
+        "Human oversight shall aim to prevent or minimise the risks to health, safety or fundamental rights that may emerge when a high-risk AI system is used in accordance with its intended purpose or under conditions of reasonably foreseeable misuse, in particular where such risks"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-14",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "b4451d837589af8e2b3940271b508ce4d1cdf169d7654102139d85af36d05b89"
+    },
+    {
+      "id": "article-14-3",
+      "title": "Article 14(3): Human oversight",
+      "text": "3. The oversight measures shall be commensurate with the risks, level of autonomy and context of use of the high-risk AI system, and shall be ensured through either one or both of the following types of measures: (a) measures identified and built, when technically feasible, into the high-risk AI system by the provider before it is placed on the market or put into service; (b) measures identified by the provider before placing the high-risk AI system on the market or putting it into service and that are appropriate to be implemented by the deployer.",
+      "supporting_quotes": [
+        "The oversight measures shall be commensurate with the risks, level of autonomy and context of use of the high-risk AI system, and shall be ensured through either one or both of the following types of measures:"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-14",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "5eeb1e54b8a9d1bf0e15c2c57c9b9f655f5b492701ad275432315acf170b46a8"
+    },
+    {
+      "id": "article-14-4",
+      "title": "Article 14(4): Human oversight",
+      "text": "4. For the purpose of implementing paragraphs 1, 2 and 3, the high-risk AI system shall be provided to the deployer in such a way that natural persons to whom human oversight is assigned are enabled, as appropriate and proportionate: (a) to properly understand the relevant capacities and limitations of the high-risk AI system and be able to duly monitor its operation, including in view of detecting and addressing anomalies, dysfunctions and unexpected performance; (b) to remain aware of the possible tendency of automatically relying or over-relying on the output produced by a high-risk AI system (automation bias), in particular for high-risk AI systems used to provide information or recommendations for decisions to be taken by natural persons; (c) to correctly interpret the high-risk AI system’s output, taking into account, for example, the interpretation tools and methods available; (d) to decide, in any particular situation, not to use the high-risk AI system or to otherwise disregard, override or reverse the output of the high-risk AI system; (e) to intervene in the operation of the high-risk AI system or interrupt the system through a ‘stop’ button or a similar procedure that allows the system to come to a halt in a safe state.",
+      "supporting_quotes": [
+        "to decide, in any particular situation, not to use the high-risk AI system or to otherwise disregard, override or reverse the output of the high-risk AI system;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-14",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "e820ff8171281084133eed984a3c7244f9ccd3ed37161e67f7b7f181834f5c4f"
+    },
+    {
+      "id": "article-14-5",
+      "title": "Article 14(5): Human oversight",
+      "text": "5. For high-risk AI systems referred to in point 1(a) of Annex III, the measures referred to in paragraph 3 of this Article shall be such as to ensure that, in addition, no action or decision is taken by the deployer on the basis of the identification resulting from the system unless that identification has been separately verified and confirmed by at least two natural persons with the necessary competence, training and authority. The requirement for a separate verification by at least two natural persons shall not apply to high-risk AI systems used for the purposes of law enforcement, migration, border control or asylum, where Union or national law considers the application of this requirement to be disproportionate.",
+      "supporting_quotes": [
+        "For high-risk AI systems referred to in point 1(a) of Annex III, the measures referred to in paragraph 3 of this Article shall be such as to ensure that, in addition, no action or decision is taken by the deployer on the basis of the identification resulting from the system"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-14",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "bd520291b6c4abe37152e07db3cca599d2d24ceaa5990a5ea118041d8a6b9775"
+    },
+    {
+      "id": "article-15-1",
+      "title": "Article 15(1): Accuracy robustness and cybersecurity",
+      "text": "1. High-risk AI systems shall be designed and developed in such a way that they achieve an appropriate level of accuracy, robustness, and cybersecurity, and that they perform consistently in those respects throughout their lifecycle.",
+      "supporting_quotes": [
+        "High-risk AI systems shall be designed and developed in such a way that they achieve an appropriate level of accuracy, robustness, and cybersecurity, and that they perform consistently in those respects throughout their lifecycle."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-15",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "5d02fa0489478582ad29722a96c4c9bb53eb7dbf22ecaac7a87e76088663f693"
+    },
+    {
+      "id": "article-15-2",
+      "title": "Article 15(2): Accuracy robustness and cybersecurity",
+      "text": "2. To address the technical aspects of how to measure the appropriate levels of accuracy and robustness set out in paragraph 1 and any other relevant performance metrics, the Commission shall, in cooperation with relevant stakeholders and organisations such as metrology and benchmarking authorities, encourage, as appropriate, the development of benchmarks and measurement methodologies.",
+      "supporting_quotes": [
+        "To address the technical aspects of how to measure the appropriate levels of accuracy and robustness set out in paragraph 1 and any other relevant performance metrics, the Commission shall, in cooperation with relevant stakeholders and organisations such as metrology and"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-15",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "9e623b36874446c6a3507ca956699394adf4b282ea5c1ee2b35db74f7edff61d"
+    },
+    {
+      "id": "article-15-3",
+      "title": "Article 15(3): Accuracy robustness and cybersecurity",
+      "text": "3. The levels of accuracy and the relevant accuracy metrics of high-risk AI systems shall be declared in the accompanying instructions of use.",
+      "supporting_quotes": [
+        "The levels of accuracy and the relevant accuracy metrics of high-risk AI systems shall be declared in the accompanying instructions of use."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-15",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "61ad458ce938b590860d1af860b9faa40434db902fbc4c9181bb300c036a9b48"
+    },
+    {
+      "id": "article-15-4",
+      "title": "Article 15(4): Accuracy robustness and cybersecurity",
+      "text": "4. High-risk AI systems shall be as resilient as possible regarding errors, faults or inconsistencies that may occur within the system or the environment in which the system operates, in particular due to their interaction with natural persons or other systems. Technical and organisational measures shall be taken in this regard. The robustness of high-risk AI systems may be achieved through technical redundancy solutions, which may include backup or fail-safe plans. High-risk AI systems that continue to learn after being placed on the market or put into service shall be developed in such a way as to eliminate or reduce as far as possible the risk of possibly biased outputs influencing input for future operations (feedback loops), and as to ensure that any such feedback loops are duly addressed with appropriate mitigation measures.",
+      "supporting_quotes": [
+        "High-risk AI systems shall be as resilient as possible regarding errors, faults or inconsistencies that may occur within the system or the environment in which the system operates, in particular due to their interaction with natural persons or other systems."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-15",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "5d0b4236c387ba8a112ec0174bc75e79fa87315f538f405a820aefc1ea695907"
+    },
+    {
+      "id": "article-15-5",
+      "title": "Article 15(5): Accuracy robustness and cybersecurity",
+      "text": "5. High-risk AI systems shall be resilient against attempts by unauthorised third parties to alter their use, outputs or performance by exploiting system vulnerabilities. The technical solutions aiming to ensure the cybersecurity of high-risk AI systems shall be appropriate to the relevant circumstances and the risks. The technical solutions to address AI specific vulnerabilities shall include, where appropriate, measures to prevent, detect, respond to, resolve and control for attacks trying to manipulate the training data set (data poisoning), or pre-trained components used in training (model poisoning), inputs designed to cause the AI model to make a mistake (adversarial examples or model evasion), confidentiality attacks or model flaws.",
+      "supporting_quotes": [
+        "High-risk AI systems shall be resilient against attempts by unauthorised third parties to alter their use, outputs or performance by exploiting system vulnerabilities."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-15",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "848d98cca2e2a744eb53c72547feba1cad1e9e281a49043825256f7f421ca05f"
+    },
+    {
+      "id": "article-16",
+      "title": "Article 16: Provider responsibilities",
+      "text": "Providers of high-risk AI systems shall: (a) ensure that their high-risk AI systems are compliant with the requirements set out in Section 2; (b) indicate on the high-risk AI system or, where that is not possible, on its packaging or its accompanying documentation, as applicable, their name, registered trade name or registered trade mark, the address at which they can be contacted; (c) have a quality management system in place which complies with Article 17; (d) keep the documentation referred to in Article 18; (e) when under their control, keep the logs automatically generated by their high-risk AI systems as referred to in Article 19; (f) ensure that the high-risk AI system undergoes the relevant conformity assessment procedure as referred to in Article 43, prior to its being placed on the market or put into service; (g) draw up an EU declaration of conformity in accordance with Article 47; (h) affix the CE marking to the high-risk AI system or, where that is not possible, on its packaging or its accompanying documentation, to indicate conformity with this Regulation, in accordance with Article 48; (i) comply with the registration obligations referred to in Article 49(1); (j) take the necessary corrective actions and provide information as required in Article 20; (k) upon a reasoned request of a national competent authority, demonstrate the conformity of the high-risk AI system with the requirements set out in Section 2; (l) ensure that the high-risk AI system complies with accessibility requirements in accordance with Directives (EU) 2016/2102 and (EU) 2019/882.",
+      "supporting_quotes": [
+        "(a) ensure that their high-risk AI systems are compliant with the requirements set out in Section 2;"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-16",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7eea21f9b78a96373ba0338d880b1d209c78ff922b1b88aad3668e26663b17f1"
+    },
+    {
+      "id": "article-26-1",
+      "title": "Article 26(1): Deployer responsibilities",
+      "text": "1. Deployers of high-risk AI systems shall take appropriate technical and organisational measures to ensure they use such systems in accordance with the instructions for use accompanying the systems, pursuant to paragraphs 3 and 6.",
+      "supporting_quotes": [
+        "Deployers of high-risk AI systems shall take appropriate technical and organisational measures to ensure they use such systems in accordance with the instructions for use accompanying the systems, pursuant to paragraphs 3 and 6."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "d195ddadea691635410c69fa132bfbd21b65d11963260c78392ebcd2676b6577"
+    },
+    {
+      "id": "article-26-2",
+      "title": "Article 26(2): Deployer responsibilities",
+      "text": "2. Deployers shall assign human oversight to natural persons who have the necessary competence, training and authority, as well as the necessary support.",
+      "supporting_quotes": [
+        "Deployers shall assign human oversight to natural persons who have the necessary competence, training and authority, as well as the necessary support."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "987e04e8a8d12b8b0e55df63692fd8e7c90ba20b6a75745fe15e6be86c21acfb"
+    },
+    {
+      "id": "article-26-3",
+      "title": "Article 26(3): Deployer responsibilities",
+      "text": "3. The obligations set out in paragraphs 1 and 2, are without prejudice to other deployer obligations under Union or national law and to the deployer’s freedom to organise its own resources and activities for the purpose of implementing the human oversight measures indicated by the provider.",
+      "supporting_quotes": [
+        "The obligations set out in paragraphs 1 and 2, are without prejudice to other deployer obligations under Union or national law and to the deployer’s freedom to organise its own resources and activities for the purpose of implementing the human oversight measures indicated by the"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7443e37fe264159c637fb7e7f768721956f6e335993891e92195273c41c574f7"
+    },
+    {
+      "id": "article-26-4",
+      "title": "Article 26(4): Deployer responsibilities",
+      "text": "4. Without prejudice to paragraphs 1 and 2, to the extent the deployer exercises control over the input data, that deployer shall ensure that input data is relevant and sufficiently representative in view of the intended purpose of the high-risk AI system.",
+      "supporting_quotes": [
+        "Without prejudice to paragraphs 1 and 2, to the extent the deployer exercises control over the input data, that deployer shall ensure that input data is relevant and sufficiently representative in view of the intended purpose of the high-risk AI system."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "7f84902a6e893128d2e2c4ab0072816d0e1834d19827811cda9fcb22b0991a00"
+    },
+    {
+      "id": "article-26-5",
+      "title": "Article 26(5): Deployer responsibilities",
+      "text": "5. Deployers shall monitor the operation of the high-risk AI system on the basis of the instructions for use and, where relevant, inform providers in accordance with Article 72. Where deployers have reason to consider that the use of the high-risk AI system in accordance with the instructions may result in that AI system presenting a risk within the meaning of Article 79(1), they shall, without undue delay, inform the provider or distributor and the relevant market surveillance authority, and shall suspend the use of that system. Where deployers have identified a serious incident, they shall also immediately inform first the provider, and then the importer or distributor and the relevant market surveillance authorities of that incident. If the deployer is not able to reach the provider, Article 73 shall apply mutatis mutandis. This obligation shall not cover sensitive operational data of deployers of AI systems which are law enforcement authorities. For deployers that are financial institutions subject to requirements regarding their internal governance, arrangements or processes under Union financial services law, the monitoring obligation set out in the first subparagraph shall be deemed to be fulfilled by complying with the rules on internal governance arrangements, processes and mechanisms pursuant to the relevant financial service law.",
+      "supporting_quotes": [
+        "Deployers shall monitor the operation of the high-risk AI system on the basis of the instructions for use and, where relevant, inform providers in accordance with Article 72."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "efe55551b5687a2b433a90a3672f0520a3239ba9c8b677a6d8102e7d78e94461"
+    },
+    {
+      "id": "article-26-6",
+      "title": "Article 26(6): Deployer responsibilities",
+      "text": "6. Deployers of high-risk AI systems shall keep the logs automatically generated by that high-risk AI system to the extent such logs are under their control, for a period appropriate to the intended purpose of the high-risk AI system, of at least six months, unless provided otherwise in applicable Union or national law, in particular in Union law on the protection of personal data. Deployers that are financial institutions subject to requirements regarding their internal governance, arrangements or processes under Union financial services law shall maintain the logs as part of the documentation kept pursuant to the relevant Union financial service law.",
+      "supporting_quotes": [
+        "Deployers of high-risk AI systems shall keep the logs automatically generated by that high-risk AI system to the extent such logs are under their control, for a period appropriate to the intended purpose of the high-risk AI system, of at least six months, unless provided"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "945af85b9edc7c36c1aa4c7646ed60c99fad1b9c86ee6e758166c0a478595eca"
+    },
+    {
+      "id": "article-26-7",
+      "title": "Article 26(7): Deployer responsibilities",
+      "text": "7. Before putting into service or using a high-risk AI system at the workplace, deployers who are employers shall inform workers’ representatives and the affected workers that they will be subject to the use of the high-risk AI system. This information shall be provided, where applicable, in accordance with the rules and procedures laid down in Union and national law and practice on information of workers and their representatives.",
+      "supporting_quotes": [
+        "Before putting into service or using a high-risk AI system at the workplace, deployers who are employers shall inform workers’ representatives and the affected workers that they will be subject to the use of the high-risk AI system."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "63b6dfd5c32978d2ca0d6dcab81d6f99f3613e1294f2e0d4cb75413eb0a30bc3"
+    },
+    {
+      "id": "article-26-8",
+      "title": "Article 26(8): Deployer responsibilities",
+      "text": "8. Deployers of high-risk AI systems that are public authorities, or Union institutions, bodies, offices or agencies shall comply with the registration obligations referred to in Article 49. When such deployers find that the high-risk AI system that they envisage using has not been registered in the EU database referred to in Article 71, they shall not use that system and shall inform the provider or the distributor.",
+      "supporting_quotes": [
+        "Deployers of high-risk AI systems that are public authorities, or Union institutions, bodies, offices or agencies shall comply with the registration obligations referred to in Article 49."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "4db0ba5cdb3ae95a29d27fc05575b1cacba4a1f84804fa1ffc291438f2f91e14"
+    },
+    {
+      "id": "article-26-9",
+      "title": "Article 26(9): Deployer responsibilities",
+      "text": "9. Where applicable, deployers of high-risk AI systems shall use the information provided under Article 13 of this Regulation to comply with their obligation to carry out a data protection impact assessment under Article 35 of Regulation (EU) 2016/679 or Article 27 of Directive (EU) 2016/680.",
+      "supporting_quotes": [
+        "Where applicable, deployers of high-risk AI systems shall use the information provided under Article 13 of this Regulation to comply with their obligation to carry out a data protection impact assessment under Article 35 of Regulation (EU) 2016/679 or Article 27 of Directive"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "803547f25a70ba9103eb26b2b2eb64f9d5192cebe3c729905fe20bfc0d0daaed"
+    },
+    {
+      "id": "article-26-10",
+      "title": "Article 26(10): Deployer responsibilities",
+      "text": "10. Without prejudice to Directive (EU) 2016/680, in the framework of an investigation for the targeted search of a person suspected or convicted of having committed a criminal offence, the deployer of a high-risk AI system for post-remote biometric identification shall request an authorisation, ex ante, or without undue delay and no later than 48 hours, by a judicial authority or an administrative authority whose decision is binding and subject to judicial review, for the use of that system, except when it is used for the initial identification of a potential suspect based on objective and verifiable facts directly linked to the offence. Each use shall be limited to what is strictly necessary for the investigation of a specific criminal offence. If the authorisation requested pursuant to the first subparagraph is rejected, the use of the post-remote biometric identification system linked to that requested authorisation shall be stopped with immediate effect and the personal data linked to the use of the high-risk AI system for which the authorisation was requested shall be deleted. In no case shall such high-risk AI system for post-remote biometric identification be used for law enforcement purposes in an untargeted way, without any link to a criminal offence, a criminal proceeding, a genuine and present or genuine and foreseeable threat of a criminal offence, or the search for a specific missing person. It shall be ensured that no decision that produces an adverse legal effect on a person may be taken by the law enforcement authorities based solely on the output of such post-remote biometric identification systems. This paragraph is without prejudice to Article 9 of Regulation (EU) 2016/679 and Article 10 of Directive (EU) 2016/680 for the processing of biometric data. Regardless of the purpose or deployer, each use of such high-risk AI systems shall be documented in the relevant police file and shall be made available to the relevant market surveillance authority and the national data protection authority upon request, excluding the disclosure of sensitive operational data related to law enforcement. This subparagraph shall be without prejudice to the powers conferred by Directive (EU) 2016/680 on supervisory authorities. Deployers shall submit annual reports to the relevant market surveillance and national data protection authorities on their use of post-remote biometric identification systems, excluding the disclosure of sensitive operational data related to law enforcement. The reports may be aggregated to cover more than one deployment. Member States may introduce, in accordance with Union law, more restrictive laws on the use of post-remote biometric identification systems.",
+      "supporting_quotes": [
+        "Without prejudice to Directive (EU) 2016/680, in the framework of an investigation for the targeted search of a person suspected or convicted of having committed a criminal offence, the deployer of a high-risk AI system for post-remote biometric identification shall request an"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "4706a0994dd4e70d72427acdc1a447a3c74843c441587af74f1eaa0bad20f5bc"
+    },
+    {
+      "id": "article-26-11",
+      "title": "Article 26(11): Deployer responsibilities",
+      "text": "11. Without prejudice to Article 50 of this Regulation, deployers of high-risk AI systems referred to in Annex III that make decisions or assist in making decisions related to natural persons shall inform the natural persons that they are subject to the use of the high-risk AI system. For high-risk AI systems used for law enforcement purposes Article 13 of Directive (EU) 2016/680 shall apply.",
+      "supporting_quotes": [
+        "Without prejudice to Article 50 of this Regulation, deployers of high-risk AI systems referred to in Annex III that make decisions or assist in making decisions related to natural persons shall inform the natural persons that they are subject to the use of the high-risk AI"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "a58d08b8127eecdb746f59f3fc774b384894a67641602cf7b19935e7b1e0c33d"
+    },
+    {
+      "id": "article-26-12",
+      "title": "Article 26(12): Deployer responsibilities",
+      "text": "12. Deployers shall cooperate with the relevant competent authorities in any action those authorities take in relation to the high-risk AI system in order to implement this Regulation.",
+      "supporting_quotes": [
+        "Deployers shall cooperate with the relevant competent authorities in any action those authorities take in relation to the high-risk AI system in order to implement this Regulation."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "3424989be5d5cac7caae92c32542650c6574580c7bbefb23f917b9e16eb9cfda"
+    },
+    {
       "id": "article-50-1",
-      "title": "Article 50(1) · Direct AI interaction",
+      "title": "Article 50(1): Transparency",
       "text": "1. Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system, unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use. This obligation shall not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public to report a criminal offence.",
       "supporting_quotes": [
         "the natural persons concerned are informed that they are interacting with an AI system"
@@ -76,7 +1327,7 @@
     },
     {
       "id": "article-50-2",
-      "title": "Article 50(2) · Generated content",
+      "title": "Article 50(2): Transparency",
       "text": "2. Providers of AI systems, including general-purpose AI systems, generating synthetic audio, image, video or text content, shall ensure that the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated. Providers shall ensure their technical solutions are effective, interoperable, robust and reliable as far as this is technically feasible, taking into account the specificities and limitations of various types of content, the costs of implementation and the generally acknowledged state of the art, as may be reflected in relevant technical standards. This obligation shall not apply to the extent the AI systems perform an assistive function for standard editing or do not substantially alter the input data provided by the deployer or the semantics thereof, or where authorised by law to detect, prevent, investigate or prosecute criminal offences.",
       "supporting_quotes": [
         "the outputs of the AI system are marked in a machine-readable format and detectable as artificially generated or manipulated"
@@ -85,7 +1336,67 @@
       "text_kind": "binding_text_reproduced_by_commission",
       "applicability_date": null,
       "checksum": "8ccbcc4fd1ad4f3fd91be65631f8199521cd16336db9d3435bee4245ee6876d0"
+    },
+    {
+      "id": "article-50-3",
+      "title": "Article 50(3): Transparency",
+      "text": "3. Deployers of an emotion recognition system or a biometric categorisation system shall inform the natural persons exposed thereto of the operation of the system, and shall process the personal data in accordance with Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680, as applicable. This obligation shall not apply to AI systems used for biometric categorisation and emotion recognition, which are permitted by law to detect, prevent or investigate criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, and in accordance with Union law.",
+      "supporting_quotes": [
+        "Deployers of an emotion recognition system or a biometric categorisation system shall inform the natural persons exposed thereto of the operation of the system, and shall process the personal data in accordance with Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU)"
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "2b791d524de7ca1511504264e9e58d09cbd44024f99a2de56e907a5bf4db6002"
+    },
+    {
+      "id": "article-50-4",
+      "title": "Article 50(4): Transparency",
+      "text": "4. Deployers of an AI system that generates or manipulates image, audio or video content constituting a deep fake, shall disclose that the content has been artificially generated or manipulated. This obligation shall not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offence. Where the content forms part of an evidently artistic, creative, satirical, fictional or analogous work or programme, the transparency obligations set out in this paragraph are limited to disclosure of the existence of such generated or manipulated content in an appropriate manner that does not hamper the display or enjoyment of the work. Deployers of an AI system that generates or manipulates text which is published with the purpose of informing the public on matters of public interest shall disclose that the text has been artificially generated or manipulated. This obligation shall not apply where the use is authorised by law to detect, prevent, investigate or prosecute criminal offences or where the AI-generated content has undergone a process of human review or editorial control and where a natural or legal person holds editorial responsibility for the publication of the content.",
+      "supporting_quotes": [
+        "Deployers of an AI system that generates or manipulates image, audio or video content constituting a deep fake, shall disclose that the content has been artificially generated or manipulated."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "24e75b91b844ddf00777e57e82390af77550be0adf1e5d400ecaf6096a7b9e0a"
+    },
+    {
+      "id": "article-50-5",
+      "title": "Article 50(5): Transparency",
+      "text": "5. The information referred to in paragraphs 1 to 4 shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements.",
+      "supporting_quotes": [
+        "The information referred to in paragraphs 1 to 4 shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction or exposure."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "65fdb9d5b649190565c447f420ae1a011967f8534e993c54e9461308635b2441"
+    },
+    {
+      "id": "article-50-6",
+      "title": "Article 50(6): Transparency",
+      "text": "6. Paragraphs 1 to 4 shall not affect the requirements and obligations set out in Chapter III, and shall be without prejudice to other transparency obligations laid down in Union or national law for deployers of AI systems.",
+      "supporting_quotes": [
+        "Paragraphs 1 to 4 shall not affect the requirements and obligations set out in Chapter III, and shall be without prejudice to other transparency obligations laid down in Union or national law for deployers of AI systems."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "4bd20e069dc7cbb19ece9acfe110c63521aa4255b9c6a6d079793bea90789555"
+    },
+    {
+      "id": "article-50-7",
+      "title": "Article 50(7): Transparency",
+      "text": "7. The Commission shall encourage and facilitate the drawing up of codes of practice at Union level to facilitate the effective implementation of the obligations regarding the detection, marking and labelling of artificially generated or manipulated content. The Commission, taking utmost account of the opinion of the Board, shall assess whether adherence to those codes of practice is adequate to ensure compliance with the obligations laid down in paragraphs 2 and 4 of this Article, in accordance with the procedure laid down in Article 56(6). If it deems the code of practice to be inadequate, the Commission may adopt an implementing act specifying common rules for the implementation of those obligations in accordance with the examination procedure laid down in Article 98(2).",
+      "supporting_quotes": [
+        "The Commission shall encourage and facilitate the drawing up of codes of practice at Union level to facilitate the effective implementation of the obligations regarding the detection, marking and labelling of artificially generated or manipulated content."
+      ],
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50",
+      "text_kind": "binding_text_reproduced_by_commission",
+      "applicability_date": null,
+      "checksum": "d4147f6ed5d4111c9f4c09bf6298efd529acea9a5cf8244846141f562d8dd8ae"
     }
   ],
-  "checksum": "b64c7135717800ff53aa5e61daf60449517a4bf0f5b3bc842081e9dbf895cd3b"
+  "checksum": "c99d8b03eb70802c4006ffa160078255876109819d941bdebd3b7f79a1d19673"
 }

@@ -21,12 +21,8 @@ class QuestionBank(Contract):
     questions: list[Question] = Field(min_length=1, max_length=1000)
 
 
-def question_options_for(section_id: str, known_sections: set[str]) -> list[str]:
-    """Load matching options; unknown use cases get the explicit general group.
-
-    Topic and asks_about describe editorial intent. They do not implement
-    missing-fact detection or automatic suppression of answered questions.
-    """
+def load_question_bank(known_sections: set[str]) -> QuestionBank:
+    """Validate editorial data. Tags describe questions, not proof of missing facts."""
     try:
         bank = QuestionBank.model_validate_json(files("aiact").joinpath("data/questions.json").read_text())
         ids = [q.id for q in bank.questions]
@@ -36,13 +32,14 @@ def question_options_for(section_id: str, known_sections: set[str]) -> list[str]
             for q in bank.questions
         ):
             raise ValueError("Invalid question identity or source")
-        selected_source = None if section_id == "unknown" else section_id
-        options = [q.question for q in bank.questions if q.legal_source == selected_source]
-        if not options:
-            raise ValueError("No question options for selected domain")
-        return options
+        return bank
     except (OSError, ValueError):
-        raise ReviewFailure(
-            "question_bank_invalid",
-            "Question bank is missing or invalid. Check data/questions.json or reinstall the engine.",
-        ) from None
+        raise ReviewFailure("question_bank_invalid", "Question bank is missing or invalid. Check data/questions.json or reinstall the engine.") from None
+
+
+def question_options_for(section_id: str, known_sections: set[str]) -> list[str]:
+    selected = None if section_id == "unknown" else section_id
+    options = [q.question for q in load_question_bank(known_sections).questions if q.legal_source == selected]
+    if not options:
+        raise ReviewFailure("question_bank_invalid", "Question bank has no options for the selected legal topic.")
+    return options

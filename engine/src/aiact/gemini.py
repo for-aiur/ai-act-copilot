@@ -82,7 +82,7 @@ class Gemini:
             raise ReviewFailure("model_unavailable", "Selected Gemini model does not support content generation.")
 
     def generate_json(self, prompt: str, schema: dict, timeout: float) -> dict:
-        config = {"temperature": 0, "maxOutputTokens": 2048,
+        config = {"temperature": 0, "maxOutputTokens": 4096 if "findings" in schema.get("properties", {}) else 2048,
                   "responseFormat": {"text": {"mimeType": "APPLICATION_JSON", "schema": compatible_schema(schema)}}}
         if self.model.startswith("gemini-3.1-flash-lite"):
             config["thinkingConfig"] = {"thinkingLevel": "minimal"}

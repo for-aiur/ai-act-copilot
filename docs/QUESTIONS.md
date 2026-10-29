@@ -1,6 +1,6 @@
 # Question bank
 
-The engine ships ten reviewed question options in
+The engine ships 32 reviewed question options in
 [`questions.json`](../engine/src/aiact/data/questions.json). The bank version is
 1.0. Each record has a stable ID, question text, topic, missing-fact tag and an
 optional legal section ID:
@@ -29,9 +29,9 @@ or a domain with no questions produce an operational error.
 topic and asks_about are editorial metadata today. They do not automatically
 detect answered facts or suppress questions. With explicit user context, the
 existing follow-up path can still generate a question outside the initial bank.
-Initial titles/explanations remain pipeline templates.
+Titles and explanations are generated; each selected bank question must match a cited passage. Up to four distinct missing-fact topics are accepted.
 
 An editable engine install reads this source file on the next scan. A wheel
 contains its own copy, so distribute edits by rebuilding/reinstalling the engine.
 This bank moves content out of code; it does not add legal coverage or establish
-generalization to unseen domains. The public ScanResult format is unchanged.
+generalization to unseen domains. The matching 0.3.0 engine and extension accept up to four findings.

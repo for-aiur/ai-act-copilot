@@ -5,6 +5,15 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine and extension 0.3.0: expanded corpus and multi-topic preview.
+
+- Stored 114 source-verified passages from 15 official pages and 32 questions.
+- Added training, parameter documentation and sensitive bias-audit examples.
+- Support up to four distinct findings, all questions, matching legal citations
+  and multi-finding editor hover. Model output remains subject to manual review.
+- Kept lexical retrieval and bounded context; no embeddings or database added.
+
+
 Engine and extension 0.2.0 (Gemini preview).
 
 - Added opt-in Gemini with a configurable model, shared two-pass pipeline and

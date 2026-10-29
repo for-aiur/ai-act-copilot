@@ -138,8 +138,19 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('aiact.answerContext', async () => {
       const doc = await currentDocument();
       if (!doc || !vscode.workspace.isTrusted) { return; }
-      const answer = await vscode.window.showInputBox({title: 'AI Act Copilot: explicit context for this file', prompt: last?.result.findings.find(f => f.context_question)?.context_question || 'What decisions does this AI influence, where is it deployed, and what is your actor role?', value: explicitContext.get(doc.uri.toString()), validateInput: value => Buffer.byteLength(value) > 4000 ? 'Keep explicit context under 4 KB.' : undefined});
-      if (answer !== undefined) { explicitContext.set(doc.uri.toString(), answer); invalidate(doc); await review(doc); }
+      const questions = last?.result.findings.filter(f => f.context_question) || [];
+      let question = questions[0]?.context_question;
+      if (questions.length > 1) {
+        const selected = await vscode.window.showQuickPick(questions.map(f => ({label: f.title, description: f.context_question!, question: f.context_question!})), {title: 'Which review question do you want to answer?'});
+        if (!selected) { return; }
+        question = selected.question;
+      }
+      const previous = explicitContext.get(doc.uri.toString()) || '';
+      const answer = await vscode.window.showInputBox({title: 'AI Act Copilot: explicit context for this file', prompt: question || 'What decisions does this AI influence, where is it deployed, and what is your actor role?', value: explicitContext.get(doc.uri.toString()), validateInput: value => Buffer.byteLength(value) > 4000 ? 'Keep explicit context under 4 KB.' : undefined});
+      if (answer !== undefined) {
+        const combined = question ? `${previous}\nQuestion: ${question}\nAnswer: ${answer}`.trim() : answer;
+        if (Buffer.byteLength(combined) > 4000) { vscode.window.showWarningMessage('Combined session context exceeds 4 KB. Shorten the answer or reload to clear it.'); return; }
+        explicitContext.set(doc.uri.toString(), combined); invalidate(doc); await review(doc); }
     }),
     vscode.commands.registerCommand('aiact.revealFinding', async () => {
       if (!last?.result.findings.length) { return; }
@@ -154,14 +165,17 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.languages.registerHoverProvider('python', {provideHover(document, position) {
       if (!last || last.document.uri.toString() !== document.uri.toString()) { return; }
-      const finding = last.result.findings.find(f => position.line + 1 >= f.evidence.start_line && position.line + 1 <= f.evidence.end_line);
-      if (!finding) { return; }
+      const findings = last.result.findings.filter(f => position.line + 1 >= f.evidence.start_line && position.line + 1 <= f.evidence.end_line);
+      if (!findings.length) { return; }
       const markdown = new vscode.MarkdownString();
       markdown.isTrusted = false;
       markdown.supportHtml = false;
-      markdown.appendText(`${finding.kind === 'context_question' ? 'Needs context' : 'Potential concern'}: ${finding.title}\n\n${finding.explanation}\n\nNext: ${finding.suggested_next_action}`);
-      for (const citation of finding.citations) { markdown.appendMarkdown(`\n\n[${escapeText(citation.section_id)}](${citation.url})`); markdown.appendText(`\n${citation.quote}`); }
-      if (finding.context_question) { markdown.appendText(`\n\nQuestion: ${finding.context_question}`); }
+      for (const finding of findings) {
+        markdown.appendText(`${finding.kind === 'context_question' ? 'Needs context' : 'Potential concern'}: ${finding.title}\n\n${finding.explanation}\n\nNext: ${finding.suggested_next_action}`);
+        for (const citation of finding.citations) { markdown.appendMarkdown(`\n\n[${escapeText(citation.section_id)}](${citation.url})`); markdown.appendText(`\n${citation.quote}`); }
+        if (finding.context_question) { markdown.appendText(`\n\nQuestion: ${finding.context_question}`); }
+        markdown.appendMarkdown('\n\n---\n\n');
+      }
       return new vscode.Hover(markdown);
     }}),
     vscode.workspace.onDidChangeConfiguration(event => {

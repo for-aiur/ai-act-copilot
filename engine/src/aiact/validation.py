@@ -24,7 +24,7 @@ class DraftFinding(Contract):
 
 
 class DraftReview(Contract):
-    findings: list[DraftFinding] = Field(max_length=3)
+    findings: list[DraftFinding] = Field(max_length=4)
 
 
 def validate_evidence(evidence: Evidence, sources: dict[str, str]):
@@ -41,9 +41,11 @@ def validate_review(draft: DraftReview, evidence: dict[str, Evidence], sources: 
     for item in draft.findings:
         # Conservative rejection of especially misleading classifications, not a
         # claim to solve semantic legal validation. Fixture review is still required.
-        assertions = item.explanation + " " + item.context_question + " " + item.suggested_next_action
+        assertions = item.title + " " + item.explanation + " " + item.context_question + " " + item.suggested_next_action
         if re.search(r"\bGDPR\b|\b(?:is|are) (?:fully )?compliant\b|\b(?:is|are) (?:a )?high[- ]risk\b|\bnot\b[^.]{0,60}\bhigh[- ]risk\b", assertions, re.I):
             raise ReviewFailure("review_unsupported", "Model made an unsupported legal classification or referenced law outside the reviewed corpus.")
+        if re.search(r"\b(?:is|are|was|were)\s+(?:fully\s+)?(?:ethically trained|unbiased|free of (?:bias|personal data)|clean and compliant)\b", assertions, re.I):
+            raise ReviewFailure("review_unsupported", "Model asserted an unverified training or data-quality guarantee.")
         if item.evidence_id not in evidence:
             raise ReviewFailure("evidence_invalid", "Model referenced an unknown code evidence ID.")
         ev = evidence[item.evidence_id]
@@ -54,9 +56,9 @@ def validate_review(draft: DraftReview, evidence: dict[str, Evidence], sources: 
             if section is None or citation.quote not in section["text"] or not citation.quote.strip():
                 raise ReviewFailure("citation_invalid", "Legal section or exact supporting quote was not in the retrieved passages.")
             citations.append(Citation(section_id=section["id"], quote=citation.quote, url=section["url"]))
-        stable = f"{ev.path}:{ev.start_line}:{ev.end_line}:{','.join(sorted(c.section_id for c in citations))}:{item.kind}"
+        stable = f"{ev.path}:{ev.start_line}:{ev.end_line}:{','.join(sorted(c.section_id for c in citations))}:{item.kind}:{item.context_question}"
         findings.append(Finding(id=hashlib.sha256(stable.encode()).hexdigest()[:16], title=item.title,
             explanation=item.explanation, kind=item.kind, priority=item.priority, evidence=ev,
             citations=citations, suggested_next_action=item.suggested_next_action,
-            context_question=item.context_question if not findings else None))
+            context_question=item.context_question))
     return findings

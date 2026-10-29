@@ -1,11 +1,9 @@
+import {sectionPages} from './corpus-sections';
 import {createHash} from 'node:crypto';
 import * as path from 'node:path';
 import {ScanResult} from './contracts';
 
-const sectionPages: Record<string, string> = {
-  'annex-iii-4-a': 'annex-3', 'annex-iii-1-a': 'annex-3', 'article-6-2': 'article-6',
-  'article-6-3': 'article-6', 'article-50-1': 'article-50', 'article-50-2': 'article-50',
-};
+
 export const fingerprint = (text: string): string => createHash('sha256').update(text).digest('hex');
 export const isFresh = (version: number, hash: string, currentVersion: number, text: string): boolean => version === currentVersion && hash === fingerprint(text);
 export const escapeText = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\\`*_{}\[\]()#!|~]/g, '\\$&');
@@ -16,7 +14,7 @@ const code = (text: string): string => text.split('\n').map(line => `    ${line}
 export function parseResult(text: string, root: string, target: string, sourceText: string): ScanResult {
   const value: unknown = JSON.parse(text);
   if (!object(value) || value.schema_version !== '1.0' || !['complete', 'partial', 'failed'].includes(value.status) ||
-      !Array.isArray(value.findings) || value.findings.length > 3 || !Array.isArray(value.errors) ||
+      !Array.isArray(value.findings) || value.findings.length > 4 || !Array.isArray(value.errors) ||
       !object(value.coverage) || !object(value.metadata) || !strings(value.coverage.scanned_files) ||
       !Array.isArray(value.coverage.skipped_files) || typeof value.coverage.truncated !== 'boolean' ||
       !strings(value.coverage.limitations) || !strings(value.coverage.corpus_scope) || !strings(value.coverage.supported_languages)) {
@@ -73,7 +71,7 @@ export function report(result: ScanResult, sourceLink: (line: number) => string)
       `[${escapeText(f.evidence.path)}:${f.evidence.start_line}–${f.evidence.end_line}](${sourceLink(f.evidence.start_line)})`, code(f.evidence.quote), '### Official evidence');
     for (const c of f.citations) { sections.push(`[${escapeText(c.section_id)}](${c.url})`, `> ${escapeText(c.quote)}`); }
     sections.push('### Next action', escapeText(f.suggested_next_action));
-    if (f.context_question) { sections.push('### One context question', escapeText(f.context_question)); }
+    if (f.context_question) { sections.push('### Context question', escapeText(f.context_question)); }
   }
   if (!result.findings.length && result.status === 'complete') { sections.push('No supported concern identified in this reviewed scope.'); }
   sections.push('## Scope limits', ...result.coverage.limitations.map(limit => `- ${escapeText(limit)}`),

@@ -5,7 +5,7 @@
 *by Evros Labs*
 
 AI Act Copilot reads selected Python code, compares its intended use with saved
-AI Act passages, and returns code evidence, a legal quotation and a question
+AI Act passages, and returns code evidence, legal quotations and questions
 about missing context. It helps engineering review; it does not certify compliance.
 
 ## What legal text do we use?
@@ -13,25 +13,19 @@ about missing context. It helps engineering review; it does not certify complian
 The original English AI Act published in July 2024 is **144 pages**, including
 its recitals and annexes ([official PDF](https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng/pdf)).
 That page count describes the original publication, not later consolidated versions.
-Our POC stores **six selected passages, 526 words in total**, roughly one page.
-They were selected during POC development from the Commission's reproductions
-of Annex III, Article 6 and Article 50, then checked against those source pages.
-There has been no independent legal review of this selection.
-
-We chose passages relevant to the recruitment, biometric and chatbot examples
-so we could build and inspect a small end-to-end demo. This was a scope choice,
-not a storage limit: saving the full law on disk is feasible. Wider coverage
-would require importing the remaining provisions and checking how we select
-and interpret them. The current tool cannot review provisions it does not have.
+The engine stores **114 passages, 8,296 words**, from 15 official Commission
+pages: Articles 4a, 6, 8–16, 26 and 50, and Annexes III–IV. Source links and
+checksums are saved locally. These are selected provisions, not full coverage or
+an independent legal review. Stored coverage exceeds the evaluated use cases.
 
 ```mermaid
 flowchart LR
-    A[Official Commission web pages] -->|Selected during POC development| B[6 legal passages]
+    A[Official Commission web pages] -->|Selected during POC development| B[114 legal passages]
     B --> C[(corpus.json saved on disk)]
 ```
 
 “Corpus” just means **the legal text file the tool can search**. Our
-[`corpus.json`](engine/src/aiact/data/corpus.json) contains those six passages,
+[`corpus.json`](engine/src/aiact/data/corpus.json) contains the selected passages,
 their source links and verification details. It ships with the Python engine.
 During a scan, the file is read into memory. No legal website is called; inference uses the selected provider.
 
@@ -54,7 +48,7 @@ Both calls use your selected provider: **Ollama** runs the model locally;
 For example, the first call may identify that code ranks job applicants. The
 engine then uses keyword matching to select the saved recruitment passage.
 The second call gets the code evidence, extracted facts and that passage to
-produce a review. The model does not search the web or read the whole law.
+produce up to four distinct review topics, each with its own evidence and question. The model does not search the web or read the whole law.
 
 Question options live in
 [`questions.json`](engine/src/aiact/data/questions.json), separately from code.
@@ -63,15 +57,14 @@ scores affect real hiring decisions. Matching a topic selects the question
 options; the model chooses among them in the initial review. This makes the
 POC more predictable, but its five examples do not prove that it generalizes to
 unseen code or topics. Exact quotation checks also do not prove legal relevance.
-See [editing the question bank](docs/QUESTIONS.md) for the data format. Initial
-titles and explanations remain reviewed templates in the pipeline.
+See [editing the question bank](docs/QUESTIONS.md) for the data format. Titles and explanations are generated from the selected code and passages.
 
 ## What does update do?
 
 **It runs only when someone explicitly executes `aiact update`.** It does not
 run on startup, on save or during a scan. There is no automatic schedule.
 
-It downloads the same three official pages and asks: “Are our six saved passages
+It downloads the same 15 official pages and asks: “Are our saved passages
 still there?” If yes, it saves a verified copy to `~/.cache/aiact/corpus.json`.
 Subsequent scans use that cache instead of the packaged copy unless an explicit
 corpus path is configured. If a passage changed or a download fails, it keeps
@@ -144,7 +137,7 @@ Prepare the engine once with `uv run --project engine aiact --version`. Then:
    The [published POC](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.4)
    is an older Ollama-only snapshot.
 2. In VS Code, open **Extensions → … → Install from VSIX**, select
-   `extensions/vscode/ai-act-copilot-0.2.0.vsix`, then **Developer: Reload Window**.
+   `extensions/vscode/ai-act-copilot-0.3.0.vsix`, then **Developer: Reload Window**.
 3. Open the repository root and trust it. For Gemini, run
    **AI Act Copilot: Configure Gemini**, enter your key in the masked field and
    approve cloud review for this workspace. The key goes into VS Code's secure
@@ -161,3 +154,15 @@ service** if needed. Both providers use the same review pipeline and report.
 [GitHub Actions](https://github.com/for-aiur/ai-act-copilot/actions) runs engine
 and extension tests, builds wheel/VSIX packages and uploads release candidates
 on pushes and pull requests. See [CI details](docs/CI.md).
+
+## Multi-topic examples
+
+Review `examples/recruitment/training_review.py` for training/data governance,
+parameter choices, oversight and evaluation. `examples/recruitment/bias_audit.py`
+adds a special-category bias-audit retention/deletion scenario. Missing facts
+become questions, not proof of unethical training or dirty data. The engine
+returns at most four findings and retrieves at most six passages per scan.
+
+The corpus is searched locally with lexical ranking, topic gates and synonyms.
+No vector database or embeddings are required. Real Gemini output quality still
+needs manual review; fixture tests use test-only providers.
