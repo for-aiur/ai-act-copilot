@@ -114,9 +114,13 @@ class GitHub:
                 return raw
 
     def create_comment(self, repo, number, body, head=None, path=None, line=None):
-        if head and path and line:
-            return self.request('POST', f'/repos/{repo}/pulls/{number}/comments',
-                                {'body': body, 'commit_id': head, 'path': path, 'line': line, 'side': 'RIGHT'})
+        if head and path:
+            data = {'body': body, 'commit_id': head, 'path': path}
+            if line:
+                data.update(line=line, side='RIGHT')
+            else:
+                data['subject_type'] = 'file'
+            return self.request('POST', f'/repos/{repo}/pulls/{number}/comments', data)
         return self.request('POST', f'/repos/{repo}/issues/{number}/comments', {'body': body})
 
     def update_comment(self, repo, kind, github_id, body):

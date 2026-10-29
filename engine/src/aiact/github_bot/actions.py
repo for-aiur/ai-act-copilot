@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 
 from .config import BotConfig
@@ -15,13 +16,14 @@ class ActionsService(Service):
     def render(self, record):
         body = render_finding(record, self.config).split('Dismissal/resolution decisions require')[0]
         if self.config.acknowledgement_gate:
+            body = body.replace(f" · ID: `{record['id']}`", '')
             token = gate.token_for(self.snapshot, {'id': record['id'], 'payload': json.loads(record['payload'])})
-            command = record['id']+' '+token+' <reason>'
-            return body + ('**Decision required for this revision:**\n\n'
-                f'- `/aiact acknowledge {command}`\n'
-                f'- `/aiact false-positive {command}`\n'
-                f'- `/aiact reopen {command}`\n\n'
-                'Reply here or in the PR conversation. An assigned role holder or maintainer/admin must decide; '
+            return body + (f'<!-- aiact-review:{token} -->\n\n'
+                '**Reply in this finding thread:**\n\n'
+                '- `/aiact ack`: seen; keep open for follow-up\n'
+                '- `/aiact fp <reason>`\n'
+                '- `/aiact reopen`\n\n'
+                'The bot identifies the finding and revision from this thread. An assigned role holder or maintainer/admin must decide; '
                 'when no users are assigned for these roles, repository writers may decide. '
                 'Plain replies receive a receipt but do not unblock merging or go to the model. '
                 'Acknowledgement is a human review decision, not a compliance certificate.')
@@ -29,16 +31,42 @@ class ActionsService(Service):
                        'Replies are not automatically consumed. Use `/aiact rescan` in a PR '
                        'conversation comment to rerun. Decisions and automatic closure are deferred.')
 
+    def backfill(self, repo, number, client):
+        if not self.config.acknowledgement_gate:
+            return super().backfill(repo, number, client)
+        comments = client.comments(repo, number)
+        for kind, comment in comments:
+            marker = gate.MARKER.search(comment.get('body') or '') if gate.owned(comment, client) else None
+            record = self.store.finding(marker[1]) if marker else None
+            if record and record['repo'] == repo and record['pr'] == number:
+                token = gate.token_for(self.snapshot, {'id': record['id'], 'payload': json.loads(record['payload'])})
+                if f'<!-- aiact-review:{token} -->' in comment['body']:
+                    self.store.published(record['id'], comment['id'], kind, comment['body'])
+        return comments
+
     def publish(self, repo, number, client, expected_head=None, patches=None, expected_base=None):
         # Rows now exist: recover matching GitHub-owned comment IDs before posting.
         self.backfill(repo, number, client)
         return super().publish(repo, number, client, expected_head, patches, expected_base)
 
 
-def run_event(config, event, payload, client, directory, scanner=None, signing_key=None):
+def run_event(config, event, payload, client, directory, scanner=None, signing_key=None, review_mode='automatic'):
     repo = payload.get('repository', {}).get('full_name', '').lower()
     if repo not in config.repositories:
         raise BotError('repository_not_allowed')
+    if review_mode not in {'manual', 'automatic'}:
+        raise BotError('invalid_review_mode_use_manual_or_automatic')
+    if event == 'pull_request_target' and review_mode == 'manual':
+        return
+    if event == 'workflow_dispatch':
+        number = str(payload.get('inputs', {}).get('pull_request', ''))
+        if not re.fullmatch(r'[1-9][0-9]{0,8}', number):
+            raise BotError('manual_review_requires_positive_pr_number')
+        actor = payload.get('sender', {}).get('login', '')
+        if (not actor or client.permission(repo, actor) not in {'write', 'maintain', 'admin'}) and not config.actor_roles(actor):
+            raise BotError('manual_review_not_authorized')
+        payload = {**payload, 'number': int(number), 'action': 'opened'}
+        event = 'pull_request_target'
     if config.acknowledgement_gate:
         if not signing_key:
             raise BotError('github_app_signing_key_required')
@@ -88,7 +116,6 @@ def run_gated_event(config, event, payload, client, directory, scanner, signing_
     if pr.get('state') != 'open':
         return
     head, base = pr['head']['sha'], pr['base']['sha']
-    import re
     if not re.fullmatch('[a-f0-9]{40}', head) or not re.fullmatch('[a-f0-9]{40}', base):
         raise BotError('commit_invalid')
     check_id = client.create_gate(repo, number, head, gate.CHECK_NAME)
@@ -121,8 +148,12 @@ def run_gated_event(config, event, payload, client, directory, scanner, signing_
                     raise BotError('review_not_current')
                 saved = json.loads(runs[-1]['result'])
                 snapshot['status'] = saved['scan_result']['status']
-                snapshot['findings'] = [dict(id=r['id'], roles=r['roles'], token=gate.token_for(snapshot, r))
-                                        for r in saved['records']]
+                snapshot['findings'] = []
+                for record in saved['records']:
+                    published = store.finding(record['id'])
+                    snapshot['findings'].append(dict(id=record['id'], roles=record['roles'],
+                        token=gate.token_for(snapshot, record), thread_id=published['github_id'],
+                        thread_kind=published['github_kind']))
             else:
                 snapshot['status'] = 'complete'
             if not same_revision(client.pull(repo, number), head, base):
@@ -142,6 +173,9 @@ def main():
     try:
         config = BotConfig.load(Path('bot/actions.toml'))
         payload = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+        review_mode = os.environ.get('AIACT_PR_REVIEW_MODE', 'automatic') or 'automatic'
+        if review_mode not in {'manual', 'automatic'}:
+            raise BotError('invalid_review_mode_use_manual_or_automatic')
         signing_key = os.environ.get('AIACT_APP_PRIVATE_KEY', '').encode()
         app_id = os.environ.get('AIACT_APP_ID', '')
         if config.acknowledgement_gate or app_id:
@@ -155,7 +189,8 @@ def main():
         else:
             client = GitHub(os.environ['GH_TOKEN'], 'github-actions[bot]')
         with tempfile.TemporaryDirectory(prefix='aiact-actions-') as directory:
-            run_event(config, os.environ['GITHUB_EVENT_NAME'], payload, client, directory, signing_key=signing_key)
+            run_event(config, os.environ['GITHUB_EVENT_NAME'], payload, client, directory,
+                      signing_key=signing_key, review_mode=review_mode)
         return 0
     except (BotError, ValueError, KeyError, OSError) as exc:
         # Never print payloads, source, tokens or raw transport exceptions.
