@@ -27,6 +27,7 @@ def parser():
     result.add_argument("--version", action="version", version=__version__)
     sub = result.add_subparsers(dest="command", required=True)
     sub.add_parser("rag", help="Build, inspect and activate versioned full-corpus RAG artifacts")
+    sub.add_parser("corpus", help="Explicit official-source check, staging, diff and reviewed promotion")
     review = sub.add_parser("scan", help="Review explicitly selected Python input")
     review.add_argument("path", type=Path)
     review.add_argument("--json", action="store_true")
@@ -76,6 +77,9 @@ def main(argv=None):
     if argv and argv[0] == "rag":
         from .rag.cli import main as rag_main
         return rag_main(argv[1:])
+    if argv and argv[0] == "corpus":
+        from .rag.updates import main as corpus_main
+        return corpus_main(argv[1:])
     json_mode = bool(argv and argv[0] in {"scan", "doctor"} and "--json" in argv)
     doctor_mode = bool(argv and argv[0] == "doctor")
 
