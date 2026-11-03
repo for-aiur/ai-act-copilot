@@ -5,6 +5,11 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+EVR-35: import the full pinned Publications Office source pack (119 articles,
+14 annexes, 180 original and 47 amendment recitals), preserving source hashes,
+paragraph offsets, origin and binding/explanatory distinctions. Rebuild and
+explicit staging download commands reject incomplete or changed source inventories.
+
 M1 tooling foundation (EVR-50):
 
 - Add React + Vite corpus explorer and scenario studio backed by a local FastAPI
