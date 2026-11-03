@@ -9,7 +9,9 @@ independent; Git tags identify the complete repository snapshot.
   UTF-8 source upload/paste, 24 KB bounds, exact source-line evidence and retained
   templates. Save code with test fixtures; hide unrelated case/context fields.
   Explain incompatible historical candidates before activation and allow builds
-  after bookkeeping-only changes.
+  after bookkeeping-only changes. Remove run comparison, simplify screen labels,
+  compact evaluation details, and align upload/removal controls with their rows.
+  Keep five distinct sample cases and clear the extra cases from local SQLite.
 
 - EVR-52: reuse identical local candidates across Git-only changes, retain build
   provenance and legacy manifests, and add protected, recoverable removal.

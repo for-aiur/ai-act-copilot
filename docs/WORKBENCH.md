@@ -127,7 +127,7 @@ pin that ID when each review starts.
 
 ## Code-first testing
 
-In Retrieval studio, enter a scenario description and paste code or upload one
+In Code test, enter a scenario description and paste code or upload one
 UTF-8 source file, then choose Run. Code plus description are limited to 24 KB;
 archives, binary files and hidden configuration files are rejected. Nothing is
 executed. Uploaded Python uses AST ranges; other allowed source types use exact

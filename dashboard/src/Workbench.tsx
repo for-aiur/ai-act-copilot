@@ -12,7 +12,6 @@ import {
   ExternalLink,
   FileText,
   FlaskConical,
-  GitCompareArrows,
   Layers3,
   LoaderCircle,
   Play,
@@ -100,15 +99,13 @@ type View =
   | "studio"
   | "cases"
   | "versions"
-  | "compare"
   | "source-picker";
 const names: Record<View, string> = {
-  corpus: "Source explorer",
-  "source-picker": "Add required source",
-  studio: "Retrieval studio",
-  cases: "Evaluation cases",
+  corpus: "Sources",
+  "source-picker": "Add source",
+  studio: "Code test",
+  cases: "Test cases",
   versions: "RAG versions",
-  compare: "Compare runs",
 };
 const short = (v: string) => v.slice(0, 12);
 function download(name: string, value: unknown) {
@@ -137,7 +134,6 @@ export default function Workbench() {
   const [library, setLibrary] = useState<Library | null>(null);
   const [versions, setVersions] = useState<Versions | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
-  const [runs, setRuns] = useState<Run[]>([]);
   const [query, setQuery] = useState(""),
     [kind, setKind] = useState("");
   const [selected, setSelected] = useState<Doc | null>(null);
@@ -159,8 +155,6 @@ export default function Workbench() {
   const [reviewer, setReviewer] = useState("");
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [removeTarget, setRemoveTarget] = useState<Manifest | null>(null);
-  const [left, setLeft] = useState(""),
-    [right, setRight] = useState("");
   const sequence = useRef(0);
   const [targetChunk, setTargetChunk] = useState("");
   const openingCase = useRef<Case | null>(null);
@@ -195,16 +189,12 @@ export default function Workbench() {
     setTargetChunk("");
   }, [active?.id]);
   async function refresh() {
-    const [v, c, r] = await Promise.all([
+    const [v, c] = await Promise.all([
       request<Versions>("/api/rag/versions?domain=" + domain),
       request<Case[]>("/api/rag/cases?domain=" + domain),
-      request<{ id: string; payload: Result }[]>(
-        "/api/rag/runs?domain=" + domain,
-      ),
     ]);
     setVersions(v);
     setCases(c);
-    setRuns(r.map((row) => ({ id: row.id, result: row.payload })));
   }
   useEffect(() => {
     request<Domain[]>("/api/rag/domains")
@@ -229,16 +219,12 @@ export default function Workbench() {
       request<Library>("/api/rag/library?domain=" + domain),
       request<Versions>("/api/rag/versions?domain=" + domain),
       request<Case[]>("/api/rag/cases?domain=" + domain),
-      request<{ id: string; payload: Result }[]>(
-        "/api/rag/runs?domain=" + domain,
-      ),
     ])
-      .then(([lib, v, c, r]) => {
+      .then(([lib, v, c]) => {
         if (!cancelled) {
           setLibrary(lib);
           setVersions(v);
           setCases(c);
-          setRuns(r.map((row) => ({ id: row.id, result: row.payload })));
         }
       })
       .catch((e) => {
@@ -398,8 +384,6 @@ export default function Workbench() {
           document: library?.documents.find((d) => h.document_id === d.id),
           scores: { [stage]: h.score },
         }));
-  const a = runs.find((r) => r.id === left),
-    b = runs.find((r) => r.id === right);
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -411,14 +395,12 @@ export default function Workbench() {
             AI Act Copilot<small>EVROS LABS</small>
           </span>
         </a>
-        <div className="workspace-label">RETRIEVAL WORKSPACE</div>
         <nav aria-label="Workbench">
           {(
             [
               ["corpus", BookOpen],
               ["studio", FlaskConical],
               ["cases", FileText],
-              ["compare", GitCompareArrows],
               ["versions", Layers3],
             ] as const
           ).map(([v, Icon]) => (
@@ -434,27 +416,10 @@ export default function Workbench() {
             </button>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <span className="eyebrow">EVERY RESULT HAS A SOURCE</span>
-          <p>Inspect the path from scenario to evidence.</p>
-          <div>
-            <span className="tiny-dot" />
-            Local tooling · Quality under review
-          </div>
-        </div>
-        <div className="sidebar-bottom">
-          <span className="avatar">EL</span>
-          <div>
-            Retrieval workbench
-            <small>Local embeddings · Explicit cloud consent</small>
-          </div>
-        </div>
       </aside>
       <main>
         <header className="topbar">
           <div>
-            Workspace
-            <ChevronRight size={14} />
             <strong>{names[view]}</strong>
           </div>
         </header>
@@ -474,13 +439,11 @@ export default function Workbench() {
                       corpus:
                         "Browse the available documents, read their text, and open the original source.",
                       studio:
-                        "Describe the scenario, paste or upload code, and run a test. Label the sources it should find.",
+                        "Add a scenario and code, then run a test.",
                       cases:
-                        "Review saved test cases, approve their expected sources, and evaluate retrieval.",
-                      compare:
-                        "Select two saved runs to compare their context and retrieved sources.",
+                        "Check whether search finds the expected sources.",
                       versions:
-                        "Create a candidate from this checkout, test it, and choose the version used by new reviews.",
+                        "Create and choose a search version.",
                       "source-picker":
                         "Choose a document or passage that this test must retrieve.",
                     } as Record<View, string>
@@ -591,18 +554,14 @@ export default function Workbench() {
             <CircleHelp size={17} />
             <span>
               {library?.complete
-                ? "All expected source documents are present."
-                : "Checking source coverage."}{" "}
-              Search quality still needs expert testing.
+                ? "Sources loaded."
+                : "Loading sources."}{" "}
+              Search has not been reviewed yet.
               <Help
                 label="source coverage and search quality"
-                text="Having every expected document does not prove that search finds the right passages. Approved test cases measure that separately. This message does not assess legal compliance."
+                text="This confirms the source documents loaded. It does not check search quality."
               />
             </span>
-            <button onClick={() => setView("versions")}>
-              Versions & setup
-              <ArrowRight size={14} />
-            </button>
           </div>
           {(view === "corpus" || view === "source-picker") && (
             <section className="explorer">
@@ -1173,14 +1132,13 @@ export default function Workbench() {
               </section>
             </>
           )}
-          {view === "cases" && (
+                    {view === "cases" && (
             <section className="draft-panel">
               <div className="section-header">
                 <div>
-                  <h2>Versioned evaluation cases</h2>
+                  <h2>Saved test cases</h2>
                   <p>
-                    Approval is an explicit local reviewer decision.
-                    Model-authored drafts stay labelled.
+                    Check whether search finds the sources you expect.
                   </p>
                 </div>
                 <button
@@ -1214,10 +1172,7 @@ export default function Workbench() {
                     placeholder="Your name for an explicit approval"
                   />
                 </label>
-                <p>
-                  Approval records attribution. It does not establish
-                  professional qualifications or legal correctness.
-                </p>
+                <p>Your name is saved with the approval.</p>
               </div>
               {!cases.length ? (
                 <Empty
@@ -1238,10 +1193,7 @@ export default function Workbench() {
                         </span>
                       </h3>
                       <p>{c.request.scenario}</p>
-                      <small>
-                        {c.origin} · {c.author} · {c.labels.length} labelled
-                        sources · {c.split}
-                      </small>
+                      <small>{c.labels.length} source labels</small>
                       <div className="case-labels">
                         {c.labels.map((l) => (
                           <span key={targetOf(l)}>
@@ -1339,69 +1291,52 @@ export default function Workbench() {
                       <span>Missing required sources</span>
                     </div>
                   </div>
-                  <div className="metric-grid">
-                    <div>
-                      <strong>
-                        {evaluation.summary_at_5?.recall?.toFixed(3) ?? "n/a"}
-                      </strong>
-                      <span>Recall@5</span>
+                  <details className="evaluation-details">
+                    <summary>Details and per-case results</summary>
+                    <div className="metric-grid secondary-metrics">
+                      <div>
+                        <strong>
+                          {evaluation.summary_at_5?.recall?.toFixed(3) ?? "n/a"}
+                        </strong>
+                        <span>Recall at 5</span>
+                      </div>
+                      <div>
+                        <strong>
+                          {evaluation.summary.mean_precision?.toFixed(3) ?? "n/a"}
+                        </strong>
+                        <span>Precision at 10</span>
+                      </div>
+                      <div>
+                        <strong>{evaluation.summary.false_positives}</strong>
+                        <span>Unwanted sources</span>
+                      </div>
                     </div>
-                    <div>
-                      <strong>
-                        {evaluation.summary.mean_precision?.toFixed(3) ?? "n/a"}
-                      </strong>
-                      <span>Precision@10</span>
-                    </div>
-                    <div>
-                      <strong>
-                        {evaluation.summary.mean_mrr?.toFixed(3) ?? "n/a"}
-                      </strong>
-                      <span>MRR@10</span>
-                    </div>
-                    <div>
-                      <strong>
-                        {evaluation.summary.mean_ndcg?.toFixed(3) ?? "n/a"}
-                      </strong>
-                      <span>nDCG@10</span>
-                    </div>
-                    <div>
-                      <strong>{evaluation.summary.false_positives}</strong>
-                      <span>Labelled false positives</span>
-                    </div>
-                  </div>
-                  <ul>
-                    {evaluation.quality_gate.reasons.map((r) => (
-                      <li key={r}>{r}</li>
+                    {evaluation.quality_gate.reasons.length > 0 && (
+                      <ul>
+                        {evaluation.quality_gate.reasons.map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {evaluation.scores.map((s) => (
+                      <div className="score-row" key={s.case_id}>
+                        <span>
+                          {cases.find((c) => c.id === s.case_id)?.title || s.case_id}
+                        </span>
+                        <strong>
+                          {s.recall === null ? "n/a" : (s.recall * 100).toFixed(0) + "%"}
+                        </strong>
+                        <span>Missing: {s.missed_required.join(", ") || "none"}</span>
+                      </div>
                     ))}
-                  </ul>
-                  {evaluation.scores.map((s) => (
-                    <div className="score-row" key={s.case_id}>
-                      <span>
-                        {cases.find((c) => c.id === s.case_id)?.title ||
-                          s.case_id}
-                      </span>
-                      <strong>
-                        {s.recall === null
-                          ? "n/a"
-                          : (s.recall * 100).toFixed(0) + "%"}
-                      </strong>
-                      <span>
-                        Missing: {s.missed_required.join(", ") || "none"}
-                      </span>
-                    </div>
-                  ))}
-                  <button
-                    className="secondary"
-                    onClick={() =>
-                      download(
-                        "evaluation-" + evaluation.id + ".json",
-                        evaluation,
-                      )
-                    }
-                  >
-                    <ArrowDownToLine size={14} />
-                    Export report
-                  </button>
+                    <button
+                      className="secondary"
+                      onClick={() => download("evaluation-" + evaluation.id + ".json", evaluation)}
+                    >
+                      <ArrowDownToLine size={14} />
+                      Export report
+                    </button>
+                  </details>
                 </div>
               )}
             </section>
@@ -1445,40 +1380,6 @@ export default function Workbench() {
                   </p>
                 )}
               </div>
-              {removeTarget && (
-                <div className="remove-confirm" role="alert">
-                  <p>
-                    Remove candidate {short(removeTarget.rag_release_id)} from
-                    this workspace?
-                  </p>
-                  <button
-                    className="secondary"
-                    disabled={!!busy}
-                    onClick={() =>
-                      void act("remove", async () => {
-                        await request(
-                          "/api/rag/versions/" +
-                            removeTarget.rag_release_id +
-                            "?domain=" +
-                            domain,
-                          { method: "DELETE" },
-                        );
-                        setRemoveTarget(null);
-                        await refresh();
-                        setNotice("Candidate removed.");
-                      })
-                    }
-                  >
-                    Remove candidate
-                  </button>
-                  <button
-                    className="secondary"
-                    onClick={() => setRemoveTarget(null)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
               {versions?.releases.map((m) => (
                 <div className="version-row" key={m.rag_release_id}>
                   <div>
@@ -1498,8 +1399,7 @@ export default function Workbench() {
                       <p>Same inputs as RAG {short(m.equivalent_to)}.</p>
                     )}
                     <small>
-                      {m.source_version} · {m.embedding.model} · Quality:{" "}
-                      {m.quality_status}
+                      {m.source_version} · {m.embedding.model}
                     </small>
                     <details>
                       <summary>Technical details</summary>
@@ -1537,14 +1437,48 @@ export default function Workbench() {
                     Use this version
                     <ArrowRight size={13} />
                   </button>
-                  <div>
-                    <button
-                      className="secondary"
-                      disabled={!!busy || !!m.removal_blockers?.length}
-                      onClick={() => setRemoveTarget(m)}
-                    >
-                      Remove
-                    </button>
+                  <div className="version-actions">
+                    {removeTarget?.rag_release_id === m.rag_release_id ? (
+                      <div className="remove-confirm" role="alert">
+                        <p>Remove this candidate?</p>
+                        <div>
+                          <button
+                            className="secondary"
+                            disabled={!!busy}
+                            onClick={() =>
+                              void act("remove", async () => {
+                                await request(
+                                  "/api/rag/versions/" +
+                                    m.rag_release_id +
+                                    "?domain=" +
+                                    domain,
+                                  { method: "DELETE" },
+                                );
+                                setRemoveTarget(null);
+                                await refresh();
+                                setNotice("Candidate removed.");
+                              })
+                            }
+                          >
+                            Remove
+                          </button>
+                          <button
+                            className="secondary"
+                            onClick={() => setRemoveTarget(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="secondary"
+                        disabled={!!busy || !!m.removal_blockers?.length}
+                        onClick={() => setRemoveTarget(m)}
+                      >
+                        Remove
+                      </button>
+                    )}
                     {m.removal_blockers?.map((reason) => (
                       <p className="trace-note" key={reason}>
                         {reason}
@@ -1555,96 +1489,6 @@ export default function Workbench() {
               ))}
             </section>
           )}
-          {view === "compare" && (
-            <section className="draft-panel">
-              <div className="section-header">
-                <div>
-                  <h2>Compare saved retrieval runs</h2>
-                  <p>
-                    Different context and different RAG versions are visible,
-                    never silently merged.
-                  </p>
-                </div>
-              </div>
-              <div className="compare-pickers">
-                {[
-                  [left, setLeft],
-                  [right, setRight],
-                ].map(([value, setter], i) => (
-                  <label key={i}>
-                    {i === 0 ? "Before" : "After"}
-                    <select
-                      aria-label={i === 0 ? "Before run" : "After run"}
-                      value={value as string}
-                      onChange={(e) =>
-                        (setter as (v: string) => void)(e.target.value)
-                      }
-                    >
-                      <option value="">Select a run</option>
-                      {runs.map((r) => (
-                        <option value={r.id} key={r.id}>
-                          {short(r.id)} ·{" "}
-                          {r.result.request.scenario.slice(0, 55)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-              {a && b ? (
-                <div className="comparison">
-                  {[a, b].map((r, i) => (
-                    <article key={i}>
-                      <span className="eyebrow">
-                        {i === 0 ? "BEFORE" : "AFTER"}
-                      </span>
-                      <h3>{r.result.request.scenario}</h3>
-                      <p>
-                        {r.result.request.context.actor_role} ·{" "}
-                        {r.result.request.context.deployment}
-                      </p>
-                      <small>
-                        RAG {short(r.result.rag_release_id)} · Context{" "}
-                        {short(r.result.context_fingerprint)}
-                      </small>
-                      {[
-                        ...new Set(
-                          r.result.candidates.map((c) => c.document.id),
-                        ),
-                      ].map((id) => (
-                        <div className="compare-hit" key={id}>
-                          {id}
-                          <span className="draft-pill">
-                            {(i === 0 ? b : a).result.candidates.some(
-                              (c) => c.document.id === id,
-                            )
-                              ? "SHARED"
-                              : i === 0
-                                ? "REMOVED"
-                                : "ADDED"}
-                          </span>
-                        </div>
-                      ))}
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <Empty
-                  title="Choose two runs"
-                  text="Run different scenarios or versions, then inspect how their source selections change."
-                />
-              )}
-            </section>
-          )}
-          <footer>
-            <span>
-              <Layers3 size={14} />
-              AI Act Copilot
-              <i />
-              Grounded sources. Inspectable tools.
-            </span>
-            <span>Local development</span>
-          </footer>
         </div>
       </main>
     </div>

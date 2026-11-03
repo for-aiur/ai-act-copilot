@@ -43,6 +43,7 @@ export default function ReviewPanel({
   onResult: (result: Review) => void;
   onStart: () => void;
 }) {
+  const uploadInput = useRef<HTMLInputElement>(null);
   const [consent, setConsent] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -113,9 +114,19 @@ export default function ReviewPanel({
             placeholder="What does this code do, and how will it be used?"
           />
         </label>
-        <label>
-          Upload source file
+        <div className="upload-row">
+          <button
+            className="secondary"
+            type="button"
+            onClick={() => uploadInput.current?.click()}
+          >
+            Choose source file
+          </button>
+          <span>{filename}</span>
           <input
+            ref={uploadInput}
+            className="visually-hidden"
+            aria-label="Upload source file"
             type="file"
             accept=".py,.js,.jsx,.ts,.tsx,.java,.go,.rs,.cs,.c,.cpp,.h,.hpp,.rb,.php,.swift,.kt,.scala,.sql,.sh,.r,.m,.txt"
             onChange={async (e) => {
@@ -141,9 +152,8 @@ export default function ReviewPanel({
               }
             }}
           />
-        </label>
-        <p className="trace-note">
-          {filename} ·{" "}
+        </div>
+        <p className="source-size">
           {new TextEncoder().encode(code + context).length.toLocaleString()} /
           24,000 bytes
         </p>
@@ -162,11 +172,7 @@ export default function ReviewPanel({
             rows={14}
           />
         </label>
-        <p>
-          One UTF-8 source file per test. Code and description share a 24 KB
-          limit. Code is read, never executed. Saving a test retains the
-          uploaded code locally.
-        </p>
+        <p>Code is read, not run. Up to 24 KB per test.</p>
         {cloud && (
           <label className="cloud-consent">
             <input

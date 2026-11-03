@@ -4,10 +4,9 @@ A local retrieval workbench and Python review assistant by Evros Labs. Explore
 versioned official sources, inspect how retrieval works, and build evaluation
 cases with explicit context and reviewer feedback.
 
-The M1 source pack contains **119 articles, 14 annexes, 180 original recitals and
-47 amendment recitals** from the Publications Office of the EU. Complete source
-coverage does not establish review accuracy. The initial 54 legal evaluation
-cases are model-authored drafts, awaiting expert review.
+The source collection contains **119 articles, 14 annexes, 180 original recitals
+and 47 amendment recitals** from the Publications Office of the EU. Five sample
+test cases cover different topics. They are drafts, not expert-approved tests.
 
 ## Open the application
 
@@ -31,7 +30,8 @@ source/vector indexes. Allow several minutes on a CPU. No Gemini key is needed
 for source browsing, retrieval or annotation.
 
 The React build and Python API are served by one container. SQLite, embeddings,
-Qdrant and review history live in the persistent `rag-data` volume. There is one
+Qdrant and review history live in the persistent `rag-data` volume. Native
+SQLite stays in `.aiact-workbench/`, which Git ignores. There is one
 owner of the embedded vector index, with no separate Qdrant server.
 
 Stop with Ctrl+C, or `docker compose down` from another terminal. These retain
@@ -46,7 +46,7 @@ Add your key to the private `.env` file:
 GEMINI_API_KEY=your-key
 ```
 
-Restart the service after configuration changes. In Retrieval studio, enter
+Restart the service after configuration changes. In Code test, enter
 Python source and explicitly approve sending that code, context and retrieved
 passages to Google. Then choose **Review & save result locally**. Keys never go
 into browser settings, command arguments, reports or traces.
@@ -69,23 +69,22 @@ and API together, without a separate Vite process.
 
 ## Short screen guide
 
-The [minimal English presentation and screen guide](docs/presentation/README.md)
-introduces each screen, Langfuse usage, RAG versioning and extension points.
+The [short presentation and screen guide](docs/presentation/README.md)
+introduces the system, Langfuse, RAG versions and extension points.
 
 ## Use the workbench
 
-1. **Source explorer:** search source text or references, inspect exact wording
+1. **Sources:** search source text or references, inspect exact wording
    and provenance. This screen is for reading sources.
-2. **Retrieval studio:** describe the scenario, paste code or upload a source
+2. **Code test:** describe the scenario, paste code or upload a source
    file, then choose **Run**. Code and description share a 24 KB limit. Inspect
    matching sources and label expected results. Examples remain on the right.
    Model analysis requires a configured provider; Gemini requires explicit consent.
-3. **Evaluation cases:** label sources, give reasons, save drafts, explicitly
+3. **Test cases:** label sources, give reasons, save drafts, explicitly
    approve a new revision and export JSON. Use **Add required source** while
    preparing a scenario to select a source the test must find. Expectations and actual hits remain
    separate. A missing expected source is a false negative.
-4. **Compare runs:** compare contexts, RAG versions and added/removed documents.
-5. **RAG versions:** build a candidate, inspect its manifest and activate or
+4. **RAG versions:** build a candidate, inspect its manifest and activate or
    roll back for local tooling tests. This does not pass the final quality gate.
 
 Switch to **Workbench API guide** to exercise the same tools with a second,

@@ -114,16 +114,8 @@ select {
   color: #8fa297;
   font-weight: 500;
 }
-.workspace-label {
-  font-size: 9px;
-  letter-spacing: 1.6px;
-  display: flex;
-  justify-content: space-between;
-  padding: 49px 13px 14px;
-  color: #81958a;
-}
-.workspace-label span {
-  color: #708779;
+nav[aria-label="Workbench"] {
+  margin-top: 42px;
 }
 nav {
   display: grid;
@@ -158,68 +150,6 @@ nav {
   padding: 2px 5px;
   border-radius: 4px;
   color: #d4e4c8;
-}
-.sidebar-note {
-  margin-top: auto;
-  margin-bottom: 34px;
-  padding: 20px 15px 0;
-  border-top: 1px solid #314338;
-}
-.sidebar-note .eyebrow {
-  font-size: 8px;
-  color: #8da98d;
-}
-.sidebar-note p {
-  font-size: 13px;
-  line-height: 1.7;
-  color: #d7dfd9;
-  margin: 13px 0 22px;
-}
-.sidebar-note > div {
-  font-size: 10px;
-  color: #8ba18d;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.tiny-dot {
-  height: 6px;
-  width: 6px;
-  background: #729a6b;
-  display: inline-block;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.sidebar-bottom {
-  margin: 0 -18px;
-  padding: 19px 22px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #10201b;
-  border-top: 1px solid #2c3c31;
-  font-size: 11px;
-}
-.avatar {
-  border: 1px solid #4a604e;
-  background: #243e2c;
-  color: #c7d9b8;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  font-size: 10px;
-}
-.sidebar-bottom small {
-  display: block;
-  color: #7f9688;
-  font-size: 9px;
-  margin-top: 5px;
-}
-.sidebar-bottom > svg {
-  margin-left: auto;
-  color: #7b9682;
 }
 main {
   margin-left: 236px;
@@ -982,10 +912,6 @@ footer span {
   .brand {
     font-size: 15px;
   }
-  .sidebar-bottom {
-    margin-left: -12px;
-    margin-right: -12px;
-  }
   main {
     margin-left: 205px;
   }
@@ -1033,10 +959,7 @@ footer span {
     padding: 0 8px;
   }
   .brand > span:last-child,
-  .workspace-label,
-  .nav-item span,
-  .sidebar-note,
-  .sidebar-bottom {
+  .nav-item span {
     display: none;
   }
   .brand-mark {
@@ -1210,13 +1133,12 @@ footer span {
   }
 }
 
-/* M1 evaluation workbench */
+/* Evaluation workbench */
 .domain-select,
 .results-panel select,
 .annotation-panel select,
 .case-fields input,
-.case-fields select,
-.compare-pickers select {
+.case-fields select {
   border: 1px solid #dbe3d5;
   border-radius: 6px;
   background: #fff;
@@ -1382,8 +1304,7 @@ footer span {
   gap: 17px;
   border-top: 1px solid #e6ecdf;
 }
-.case-fields label,
-.compare-pickers label {
+.case-fields label {
   display: grid;
   gap: 9px;
   font-size: 11px;
@@ -1412,29 +1333,29 @@ footer span {
   font-size: 9px;
 }
 .evaluation {
-  padding: 25px;
+  padding: 16px 24px 20px;
   border-top: 1px solid #e1e9d6;
 }
 .evaluation h3 {
   text-transform: capitalize;
-  font-size: 16px;
+  font-size: 14px;
   color: #64794e;
 }
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  margin: 22px 0;
+  margin: 12px 0;
   border: 1px solid #dfe8d5;
   border-radius: 6px;
 }
 .metric-grid > div {
-  padding: 20px;
+  padding: 12px 15px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 .metric-grid strong {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   color: #577540;
 }
@@ -1462,6 +1383,20 @@ footer span {
 }
 .evaluation > .secondary {
   margin-top: 20px;
+}
+.evaluation-details {
+  color: #728264;
+  font-size: 11px;
+}
+.evaluation-details summary {
+  display: inline-block;
+  padding: 7px 0;
+}
+.evaluation-details .secondary {
+  margin-top: 12px;
+}
+.secondary-metrics {
+  max-width: 720px;
 }
 .build-controls {
   padding: 0 24px 25px;
@@ -1519,6 +1454,33 @@ footer span {
   color: #8b9d79;
   max-width: 100%;
 }
+.version-actions {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 148px !important;
+}
+.remove-confirm {
+  width: min(250px, 100%);
+  padding: 12px;
+  border: 1px solid #e5cfc7;
+  border-radius: 6px;
+  background: #fffaf8;
+  color: #654d46;
+}
+.remove-confirm p {
+  margin: 0 0 10px;
+  color: #654d46;
+  font-size: 12px;
+}
+.remove-confirm > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.remove-confirm button {
+  padding: 8px 10px;
+  white-space: nowrap;
+}
 summary {
   cursor: pointer;
 }
@@ -1538,49 +1500,6 @@ pre {
   border-top: 1px solid #e4ebdb;
   margin: 0;
   border-radius: 0;
-}
-.compare-pickers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  padding: 0 24px 24px;
-}
-.comparison {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-top: 1px solid #e4ebdb;
-}
-.comparison article {
-  padding: 25px;
-  min-width: 0;
-}
-.comparison article + article {
-  border-left: 1px solid #e4ebdb;
-}
-.comparison h3 {
-  font-size: 14px;
-  color: #5e7850;
-  line-height: 1.8;
-  margin: 10px 0;
-}
-.comparison p {
-  font-size: 11px;
-  color: #8b9b7c;
-  margin: 10px 0;
-}
-.comparison small {
-  font-size: 9px;
-  color: #9aaa8a;
-}
-.compare-hit {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #e6ecdf;
-  color: #738c5b;
-  font-size: 12px;
-  gap: 8px;
 }
 .date-rules {
   margin-top: 20px;
@@ -1617,6 +1536,9 @@ pre {
   .version-row {
     flex-direction: column;
   }
+  .version-actions {
+    justify-content: flex-start;
+  }
   .candidate {
     padding: 20px;
   }
@@ -1652,14 +1574,6 @@ pre {
   .metric-grid > div {
     border-bottom: 1px solid #e7eddd;
   }
-  .compare-pickers,
-  .comparison {
-    grid-template-columns: 1fr;
-  }
-  .comparison article + article {
-    border-left: 0;
-    border-top: 1px solid #e4ebdb;
-  }
   .candidate {
     padding: 18px 13px;
     gap: 10px;
@@ -1681,6 +1595,10 @@ pre {
   .annotation-panel > .form-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .upload-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 .approval-controls {
@@ -1711,6 +1629,32 @@ pre {
   font-size: 12px;
   color: #6a8055;
 }
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  min-height: 40px;
+}
+.upload-row > span {
+  min-width: 0;
+  overflow: hidden;
+  color: #7d8978;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .review-input textarea {
   width: 100%;
   display: block;
@@ -1730,6 +1674,14 @@ pre {
   line-height: 1.8;
   color: #91a07f;
   margin: 14px 0;
+}
+.review-input > .source-size {
+  margin: 6px 0;
+  padding: 0;
+  color: #899584;
+  font-size: 10px;
+  line-height: 1.4;
+  background: transparent;
 }
 .review-input .cloud-consent {
   display: flex;
