@@ -5,6 +5,10 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- Clarify source and active RAG identifiers with keyboard-accessible help popups.
+  Explain publisher references, applicability and publication in plain language;
+  remove the language badge.
+
 - Keep source exploration read-only. Required-source selection now opens only
   from a test scenario, with explicit add-to-test and return actions.
 

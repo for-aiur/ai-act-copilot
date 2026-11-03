@@ -1,5 +1,5 @@
 import ReviewPanel from "./ReviewPanel";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -35,6 +35,15 @@ import type {
   Run,
   Versions,
 } from "./rag";
+
+function Help({ label, text }: { label: string; text: string }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return <span className="field-help" onKeyDown={e=>{if(e.key==='Escape')setOpen(false)}}>
+    <button type="button" className="help-button" aria-label={'About '+label} aria-expanded={open} aria-describedby={open?id:undefined} onClick={()=>setOpen(!open)}>?</button>
+    {open && <span id={id} role="tooltip" className="help-popup">{text}</span>}
+  </span>;
+}
 
 const targetOf = (label: Label) => label.chunk_id || label.document_id;
 
@@ -433,7 +442,7 @@ export default function Workbench() {
                 <Database size={19} />
               </span>
               <div>
-                <span>Source documents</span>
+                <span>Source documents <Help label="source documents" text="The number of documents in the selected collection. A document can be an article, annex or recital." /></span>
                 <strong>
                   {library?.total ?? "…"}
                   <small>{selectedDomain?.name}</small>
@@ -445,10 +454,10 @@ export default function Workbench() {
                 <Layers3 size={19} />
               </span>
               <div>
-                <span>Indexable passages</span>
+                <span>Searchable passages <Help label="searchable passages" text="The documents are split into smaller passages for searching. One document can contain many passages." /></span>
                 <strong>
                   {library?.chunk_count ?? "…"}
-                  <small>Exact source offsets</small>
+                  <small>Parts of the source documents</small>
                 </strong>
               </div>
             </div>
@@ -457,14 +466,13 @@ export default function Workbench() {
                 <ShieldCheck size={19} />
               </span>
               <div>
-                <span>Source snapshot</span>
+                <span>Source snapshot ID <Help label="source snapshot ID" text="We generate this fingerprint from the source package, including its text, passages and metadata. It identifies the exact input to a search build. It is not a Git commit or an ID supplied by the publisher. Only the first 12 characters are shown." /></span>
                 <strong className="status-text">
                   {library ? short(library.snapshot_id) : "Loading…"}
                 </strong>
                 <small>
-                  {versions?.active
-                    ? "Active " + short(versions.active)
-                    : "Build not activated"}
+                  Active RAG ID: {versions?.active ? short(versions.active) : "None selected"}
+                  <Help label="active RAG ID" text="The search build currently used for retrieval. We generate its ID from the source snapshot, embedding model, search settings and implementation. Select a different build in RAG versions. This is not a Git commit. Only the first 12 characters are shown." />
                 </small>
               </div>
             </div>
@@ -473,9 +481,10 @@ export default function Workbench() {
             <CircleHelp size={17} />
             <span>
               {library?.complete
-                ? "Pinned source inventory is complete."
+                ? "All expected source documents are present."
                 : "Checking source coverage."}{" "}
-              Retrieval quality is not yet expert-approved.
+              Search quality still needs expert testing.
+              <Help label="source coverage and search quality" text="Having every expected document does not prove that search finds the right passages. Approved test cases measure that separately. This message does not assess legal compliance." />
             </span>
             <button onClick={() => setView("versions")}>
               Versions & setup
@@ -493,7 +502,7 @@ export default function Workbench() {
                     {view === "source-picker" ? "Choose a passage this test must find." : "Browse the text and open its original source."}
                   </p>
                 </div>
-                <span className="quiet-label">PINNED · ENGLISH</span>
+
               </div>
               <div className="library-toolbar">
                 <label className="search">
@@ -579,14 +588,14 @@ export default function Workbench() {
                             {active.kind.toUpperCase()}
                           </span>
                           <span className="quiet-label">
-                            EXACT NORMALIZED WORDING
+                            SOURCE TEXT
                           </span>
                         </div>
                         <h2>{active.title}</h2>
                         <div className="detail-meta">
-                          {active.metadata.origin} ·{" "}
-                          {active.metadata.celex ||
-                            "Authored technical fixture"}
+                          {active.metadata.origin === "consolidated" ? "Combined legal text" : active.metadata.origin === "authored_technical_fixture" ? "Technical guide" : active.metadata.origin === "amendment" ? "Amending legal act" : "Original legal act"}
+                          {active.metadata.celex && <> · Official reference: {active.metadata.celex}</>}
+                          <Help label="official reference" text="The publisher's CELEX reference identifies the official legal text. Combined text incorporates amendments into one reading copy; the original and amending acts remain the authentic legal sources." />
                         </div>
                         <select
                           aria-label="Target passage"
@@ -620,21 +629,21 @@ export default function Workbench() {
                         </a>
                         <div className="detail-facts">
                           <div>
-                            <span>Applicability</span>
+                            <span>When this applies <Help label="when this applies" text="Some provisions apply only to particular roles or uses and can have different starting points or exceptions. We show verified rules when available; missing information is not a finding that the provision does not apply." /></span>
                             <strong>
                               {active.metadata.applicability_date ||
-                                "Conditional or unknown"}
+                                "Depends on the use case"}
                             </strong>
                           </div>
                           <div>
-                            <span>Publication</span>
+                            <span>Published on <Help label="published on" text="When this legal act appeared in the Official Journal. This may differ from when a particular requirement starts applying. A combined reading copy may not have this value recorded." /></span>
                             <strong>
                               {active.metadata.publication_date ||
-                                "Not specified"}
+                                "Not recorded for this source"}
                             </strong>
                           </div>
                           <div>
-                            <span>Source ID</span>
+                            <span>Document ID <Help label="document ID" text="Our internal reference for this document, such as article-5. Tests and search results use it to point to the same document. It is separate from the publisher’s CELEX reference." /></span>
                             <strong className="mono">{active.id}</strong>
                           </div>
                         </div>
