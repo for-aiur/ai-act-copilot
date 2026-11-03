@@ -5,6 +5,9 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- Reuse the existing Copilot logo in the dashboard and favicon. Remove internal
+  milestone labels from the user interface.
+
 - Add a minimal English M1 presentation with actual screen images, Langfuse
   usage, versioning rationale and extension points.
 - Preserve sibling conditions and exceptions inside their numbered official

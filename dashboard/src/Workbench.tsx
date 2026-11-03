@@ -314,14 +314,14 @@ export default function Workbench() {
       <aside className="sidebar">
         <a className="brand" href="/" aria-label="AI Act Copilot home">
           <span className="brand-mark">
-            <Layers3 size={24} />
+            <img src="/copilot-logo.png" alt="" width="42" height="42" />
           </span>
           <span>
             AI Act Copilot<small>EVROS LABS</small>
           </span>
         </a>
         <div className="workspace-label">
-          RETRIEVAL WORKSPACE<span>M1</span>
+          RETRIEVAL WORKSPACE
         </div>
         <nav aria-label="Workbench">
           {(
@@ -1512,7 +1512,7 @@ export default function Workbench() {
               <i />
               Grounded sources. Inspectable tools.
             </span>
-            <span>M1 · Local development</span>
+            <span>Local development</span>
           </footer>
         </div>
       </main>
