@@ -1,5 +1,7 @@
 # Question bank
 
+> Legacy CLI/editor/Actions subset only. The full-corpus M1 workbench uses grounded generated questions and separate evaluation cases.
+
 The engine ships **164 authored questions** in
 [questions.json](../engine/src/aiact/data/questions.json), bank format 1.1.
 All 114 stored passages have at least one evidence-oriented question.
@@ -41,5 +43,4 @@ exceptional bias-audit processing as a general personal-data erasure rule.
 
 People or an offline model can prepare drafts; review them before adding them.
 No question generator runs during a scan. An editable engine reads changes on
-the next scan; a wheel needs rebuilding. This follow-up needs engine 0.3.2; the
-0.3.0 extension remains compatible. Result fields and finding limits are unchanged.
+the next scan; a wheel needs rebuilding. The legacy adapters retain their existing result fields and finding limits.

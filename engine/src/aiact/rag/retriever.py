@@ -1,5 +1,6 @@
 """Bounded lexical + local semantic retrieval with inspectable fusion and expansion."""
 import re
+import importlib.metadata
 import threading
 import time
 from typing import Protocol
@@ -76,6 +77,8 @@ class HybridRetriever:
         self.embedder = None
         self.lock = threading.RLock()
         if self.manifest["mode"] == "hybrid":
+            if self.manifest.get("vector_client_version") != importlib.metadata.version("qdrant-client"):
+                raise ValueError("Vector client version changed; rebuild the candidate index explicitly")
             self.embedder = embedder or LocalEmbedder(settings.embedding_model, settings.models_path)
             if self.embedder.manifest != self.manifest["embedding"]:
                 raise ValueError("Embedding model/version mismatch; do not mix RAG builds")
@@ -91,8 +94,8 @@ class HybridRetriever:
                 rows = db.execute(text("SELECT chunk_id, bm25(rag_fts,0,0,2,1) AS score FROM rag_fts WHERE rag_fts MATCH :q AND snapshot_id=:s ORDER BY score,chunk_id LIMIT :k"),
                     {"q": " OR ".join('"' + t + '"' for t in terms), "s": self.snapshot.snapshot_id, "k": limit})
                 return [(r[0], -float(r[1])) for r in rows]
-            rows = db.execute(text("SELECT id, ts_rank_cd(to_tsvector('english', CAST(payload AS jsonb)->>'text'), plainto_tsquery('english', :q)) AS score FROM rag_chunks WHERE snapshot_id=:s AND to_tsvector('english',CAST(payload AS jsonb)->>'text') @@ plainto_tsquery('english',:q) ORDER BY score DESC,id LIMIT :k"),
-                {"q": " ".join(terms), "s": self.snapshot.snapshot_id, "k": limit})
+            rows = db.execute(text("SELECT id, ts_rank_cd(to_tsvector('english', CAST(payload AS jsonb)->>'text'), websearch_to_tsquery('english', :q)) AS score FROM rag_chunks WHERE snapshot_id=:s AND to_tsvector('english',CAST(payload AS jsonb)->>'text') @@ websearch_to_tsquery('english',:q) ORDER BY score DESC,id LIMIT :k"),
+                {"q": " OR ".join(terms), "s": self.snapshot.snapshot_id, "k": limit})
             return [(r[0], float(r[1])) for r in rows]
 
     def search(self, request):

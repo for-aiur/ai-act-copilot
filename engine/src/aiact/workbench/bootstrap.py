@@ -16,8 +16,10 @@ def main():
         store = Store(settings.database_url.get_secret_value())
         try:
             current = store.pointer(domain)
-            if current != manifest["rag_release_id"]:
+            if current is None:
                 store.activate(domain, manifest["rag_release_id"])
+            elif current != manifest["rag_release_id"]:
+                print(f"{domain}: new candidate staged. Existing active release preserved; activate explicitly in Versions.", flush=True)
         finally:
             store.close()
         seed_fixtures(settings, domain, manifest["rag_release_id"])

@@ -1,5 +1,7 @@
 # Question catalogue
 
+> Legacy CLI/editor/Actions subset only. The full-corpus M1 workbench uses grounded generated questions and separate evaluation cases.
+
 164 authored questions covering 114 stored passages. These are engineering review prompts, not legal determinations or proof of evaluated domain coverage.
 
 The model receives a bounded subset. Editorial ordering chooses up to four detailed options and two context options per retrieved passage; not every bank question is offered on every scan. See [selection and limits](QUESTIONS.md).

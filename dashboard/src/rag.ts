@@ -38,6 +38,7 @@ export type Library = {
   scope_limits: string[];
   kinds: string[];
   documents: Doc[];
+  chunks: { id: string; document_id: string; title: string; text: string }[];
 };
 export type RRequest = {
   domain_id: string;
@@ -86,6 +87,7 @@ export type Result = {
 export type Run = { id: string; result: Result };
 export type Label = {
   document_id: string;
+  chunk_id?: string | null;
   label: "must_retrieve" | "relevant" | "not_relevant" | "uncertain";
   rationale: string;
 };

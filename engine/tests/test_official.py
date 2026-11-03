@@ -23,6 +23,8 @@ def test_full_official_inventory_and_rebuild():
     assert all(d["checksum"] == checksum(d["text"].encode()) for d in docs.values())
     assert all(docs[c["document_id"]]["text"][c["start"]:c["end"]] == c["text"] for c in snapshot["chunks"])
     assert any(c["id"] == "article-6-1a" for c in snapshot["chunks"])
+    assert any(c["id"] == "annex-iii-4-a" for c in snapshot["chunks"])
+    assert any(c["id"] == "article-5-1-ba" for c in snapshot["chunks"])
 
 
 def test_missing_provision_fails_even_with_updated_download_hash(tmp_path):

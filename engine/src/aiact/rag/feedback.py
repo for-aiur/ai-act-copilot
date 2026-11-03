@@ -9,6 +9,9 @@ def save_case(store, case: GoldenCase):
         raise ValueError("Case domain does not match source snapshot")
     if not {label.document_id for label in case.labels} <= {d.id for d in snapshot.documents}:
         raise ValueError("Labels must reference documents in the pinned source snapshot")
+    chunks = {c.id: c for c in snapshot.chunks}
+    if any(label.chunk_id and (label.chunk_id not in chunks or chunks[label.chunk_id].document_id != label.document_id) for label in case.labels):
+        raise ValueError("Paragraph labels must reference a chunk of their pinned parent document")
     manifest = store.release(case.rag_release_id)
     if manifest["snapshot_id"] != case.snapshot_id:
         raise ValueError("Case release/source versions differ")

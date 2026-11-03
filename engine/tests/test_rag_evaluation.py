@@ -35,3 +35,22 @@ def test_missing_source_is_false_negative_and_draft_cannot_pass_quality_gate(tmp
         save_case(store, case.model_copy(update={"id": "bad", "labels": (GoldLabel(document_id="made-up", label="relevant", rationale="No source"),)}))
     retriever.close()
     store.close()
+
+
+def test_parent_hit_cannot_satisfy_missing_required_paragraph(tmp_path):
+    settings = Settings(data_dir=tmp_path, database_url="sqlite:///" + str(tmp_path / "db.sqlite"))
+    manifest = build_release(settings, "workbench-api", lexical_only=True)
+    retriever = HybridRetriever(settings, manifest["rag_release_id"])
+    try:
+        result = retriever.search(RetrievalRequest(domain_id="workbench-api", scenario="health readiness", limit=1))
+        parent = result.candidates[0].document.id
+        case = GoldenCase(id="paragraph", title="Exact passage", request=result.request,
+            snapshot_id=result.snapshot_id, rag_release_id=result.rag_release_id, author="test",
+            labels=(GoldLabel(document_id=parent, chunk_id="absent-paragraph", label="must_retrieve", rationale="Exact required passage"),))
+        score = score_case(case, result)
+        assert parent in score["hits"]
+        assert score["recall"] == 0
+        assert score["missed_required"] == ["absent-paragraph"]
+        assert score["miss_classification"] == {"absent-paragraph": "candidate_generation_miss"}
+    finally:
+        retriever.close()

@@ -31,6 +31,9 @@ def test_activation_and_rollback_are_explicit_and_domain_scoped(tmp_path):
     store.activate("one", "old")
     store.activate("one", "new")
     assert store.pointer("one", "previous") == "old"
+    store.activate("one", "new", promotion={"approval_note": "Reviewed candidate"})
+    assert store.pointer("one", "previous") == "old"
+    assert store.list_records("promotion", "one")[0]["payload"]["approval_note"] == "Reviewed candidate"
     store.activate("one", store.pointer("one", "previous"))
     assert store.pointer("one") == "old"
     with pytest.raises(ValueError, match="different domain"):

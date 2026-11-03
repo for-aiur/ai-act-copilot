@@ -33,8 +33,8 @@ In **Repository > Settings > Secrets and variables > Actions**:
 | Variable | `AIACT_PR_REVIEW_ENABLED` | `true` |
 | Variable | `AIACT_PR_REVIEW_MODE` | `manual` for demos, `automatic` for PR/push scans |
 
-Merge the reviewed YIL-18 implementation into the default branch. Its workflow
-and role configuration run from that trusted branch. Tokens are scoped to this
+The review workflow and role configuration must run from the trusted default
+branch. Tokens are scoped to this
 repository and revoked at job end when possible; otherwise they expire. Key
 rotation requires a rescan to replace old snapshot signatures.
 

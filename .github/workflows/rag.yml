@@ -1,0 +1,117 @@
+name: RAG integrity and regression
+
+on:
+  pull_request:
+    paths: ['engine/**', 'dashboard/**', 'scripts/**', 'Dockerfile', 'compose.yaml', '.github/workflows/rag.yml']
+  push:
+    branches: ['**']
+    tags: ['rag-v*', 'v*']
+    paths: ['engine/**', 'dashboard/**', 'scripts/**', 'Dockerfile', 'compose.yaml', '.github/workflows/rag.yml']
+  workflow_dispatch:
+    inputs:
+      release_candidate:
+        type: boolean
+        default: false
+        description: Run the protected paid-model and expert-gold release gate
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rag-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with: {version: '0.13.6'}
+      - run: uv sync --project engine --python 3.12 --extra dev --extra workbench --extra workbench-test --extra rag --locked
+      - name: Verify source, index, feedback and artifact contracts
+        run: uv run --project engine --extra dev --extra workbench --extra workbench-test --extra rag --locked python -m pytest engine/tests/test_official.py engine/tests/test_rag_contracts.py engine/tests/test_rag_releases.py engine/tests/test_rag_retriever.py engine/tests/test_rag_store.py engine/tests/test_rag_api.py engine/tests/test_rag_evaluation.py engine/tests/test_rag_updates.py engine/tests/test_full_review.py engine/tests/test_telemetry.py
+      - name: Generate versioned retrieval reports
+        run: uv run --project engine --extra rag --locked python scripts/ci-rag.py --output .aiact-results/ci
+      - name: Prove the gate rejects a designated failure
+        shell: bash
+        run: |
+          set +e
+          uv run --project engine --extra rag --locked python scripts/ci-rag.py --output .aiact-results/negative --force-failure
+          result=$?
+          set -e
+          test "$result" -eq 3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: rag-reports-${{ github.sha }}
+          path: .aiact-results/
+          include-hidden-files: true
+          retention-days: 7
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_DB: aiact_test, POSTGRES_USER: aiact, POSTGRES_PASSWORD: ephemeral-ci-only}
+        ports: ['5432:5432']
+        options: --health-cmd="pg_isready -U aiact -d aiact_test" --health-interval=5s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with: {version: '0.13.6'}
+      - run: uv run --project engine --python 3.12 --extra dev --extra rag --extra postgres --locked python -m pytest engine/tests/test_postgres_parity.py
+        env:
+          AIACT_TEST_POSTGRES_URL: postgresql+psycopg://aiact:ephemeral-ci-only@localhost:5432/aiact_test
+  compose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - name: Build and start actual packaged runtime
+        run: docker compose up --build -d --wait --wait-timeout 900
+      - name: Exercise the same single-owner API from the evaluator
+        run: docker compose run --rm -e AIACT_EVAL_DOMAIN=workbench-api rag-eval
+      - name: Prove source and active release survive restart
+        run: |
+          curl --fail http://127.0.0.1:8000/api/rag/health > /tmp/before.json
+          docker compose restart rag
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8000/api/rag/health > /tmp/after.json; then break; fi
+            sleep 3
+          done
+          python -c 'import json; a=json.load(open("/tmp/before.json")); b=json.load(open("/tmp/after.json")); assert a["rag_release_id"] == b["rag_release_id"]'
+          docker compose run --rm -e AIACT_EVAL_DOMAIN=workbench-api rag-eval
+      - name: Logs and teardown
+        if: always()
+        run: |
+          docker compose logs --no-color
+          docker compose down
+  release:
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_candidate)
+    needs: [fast, postgres, compose]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: rag-release
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with: {version: '0.13.6'}
+      - name: Protected expert-gold and live Gemini gate
+        run: uv run --project engine --python 3.12 --extra workbench --extra rag --locked python scripts/release-rag.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AIACT_CLOUD_CONSENT: 'true'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: rag-release-evidence-${{ github.sha }}
+          path: .aiact-results/release/
+          include-hidden-files: true
+          retention-days: 7

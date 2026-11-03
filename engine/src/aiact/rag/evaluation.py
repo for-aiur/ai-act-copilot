@@ -10,22 +10,29 @@ def score_case(case: GoldenCase, result: RetrievalResult, k=10):
         raise ValueError("Golden case and retrieval run use different domain/source snapshots")
     if case.request.fingerprint() != result.context_fingerprint:
         raise ValueError("Golden case and retrieval run use different scenario contexts")
-    hits = list(dict.fromkeys(c.document.id for c in result.candidates))[:k]
-    required = {label.document_id for label in case.labels if label.label == "must_retrieve"}
-    relevant = {label.document_id for label in case.labels if label.label in {"must_retrieve", "relevant"}}
-    negative = {label.document_id for label in case.labels if label.label == "not_relevant"}
-    found = required & set(hits)
-    ranks = [index + 1 for index, identity in enumerate(hits) if identity in relevant]
+    candidates = result.candidates[:k]
+    hits = list(dict.fromkeys(c.document.id for c in candidates))
+    chunk_hits = [c.chunk.id for c in candidates]
+    actual = set(hits + chunk_hits)
+    required = {label.chunk_id or label.document_id for label in case.labels if label.label == "must_retrieve"}
+    relevant = {label.chunk_id or label.document_id for label in case.labels if label.label in {"must_retrieve", "relevant"}}
+    negative = {label.chunk_id or label.document_id for label in case.labels if label.label == "not_relevant"}
+    found = required & actual
+    ranks = sorted(next(index + 1 for index, c in enumerate(candidates) if c.chunk.id == target or c.document.id == target)
+                   for target in relevant & actual)
+    relevant_hits = sum(c.chunk.id in relevant or c.document.id in relevant for c in candidates)
+    generated = {identity for stage in result.stages.values() for hit in stage for identity in (hit.chunk_id, hit.document_id)}
     dcg = sum(1 / math.log2(rank + 1) for rank in ranks)
     ideal = sum(1 / math.log2(rank + 1) for rank in range(1, min(k, len(relevant)) + 1))
     return {
         "case_id": case.id, "revision": case.revision, "status": case.status,
         "split": case.split, "context_fingerprint": result.context_fingerprint,
         "snapshot_id": result.snapshot_id, "rag_release_id": result.rag_release_id,
-        "k": k, "hits": hits, "missed_required": sorted(required - set(hits)),
-        "false_positives": sorted(negative & set(hits)), "required_count": len(required), "required_found": len(found),
+        "k": k, "hits": hits, "chunk_hits": chunk_hits, "missed_required": sorted(required - actual),
+        "miss_classification": {identity: "ranking_miss" if identity in generated else "candidate_generation_miss" for identity in required - actual},
+        "false_positives": sorted(negative & actual), "required_count": len(required), "required_found": len(found),
         "recall": len(found) / len(required) if required else None,
-        "precision": len(relevant & set(hits)) / len(hits) if hits else 0,
+        "precision": relevant_hits / len(candidates) if candidates else 0,
         "mrr": 1 / ranks[0] if ranks else 0, "ndcg": dcg / ideal if ideal else None,
         "elapsed_ms": result.elapsed_ms,
     }
@@ -49,6 +56,7 @@ def summarize(scores):
         "recall": found / total if total else None, "recall_wilson_95": wilson(found, total),
         "mean_precision": mean(s["precision"] for s in scores) if scores else None,
         "mean_mrr": mean(s["mrr"] for s in scores) if scores else None,
+        "mean_ndcg": mean(s["ndcg"] for s in scores if s["ndcg"] is not None) if any(s["ndcg"] is not None for s in scores) else None,
         "false_positives": sum(len(s["false_positives"]) for s in scores),
         "missing_required": sum(len(s["missed_required"]) for s in scores),
         "uncertainty_note": "Label-level Wilson interval; related labels and small scenario samples limit generalization."}

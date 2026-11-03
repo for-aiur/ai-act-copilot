@@ -24,6 +24,7 @@ class LocalEmbedder:
                          "files": files, "dimension": self.model.model.model_description.dim, "normalization": "l2",
                          "source_revision": model_dir.name,
                          "runtime": importlib.metadata.version("fastembed"), "max_input_tokens": 512,
+                         "onnxruntime": importlib.metadata.version("onnxruntime"), "numpy": importlib.metadata.version("numpy"),
                          "privacy": "CPU only; query/source text is never sent to an embedding service"}
 
     def passages(self, texts):

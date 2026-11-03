@@ -140,13 +140,14 @@ class RetrievalResult(Record):
 
 class GoldLabel(Record):
     document_id: str
+    chunk_id: str | None = None
     label: Literal["must_retrieve", "relevant", "not_relevant", "uncertain"]
     rationale: str = Field(min_length=1, max_length=2000)
 
 
 class GoldenCase(Record):
     schema_version: Literal["1"] = "1"
-    id: str
+    id: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$")
     title: str = Field(min_length=1, max_length=160)
     request: RetrievalRequest
     snapshot_id: str
@@ -163,8 +164,12 @@ class GoldenCase(Record):
 
     @model_validator(mode="after")
     def validate_labels(self):
-        if len({l.document_id for l in self.labels}) != len(self.labels):
+        if len({l.chunk_id or l.document_id for l in self.labels}) != len(self.labels):
             raise ValueError("Conflicting or duplicate source labels")
+        for parent in {label.document_id for label in self.labels}:
+            related = [label for label in self.labels if label.document_id == parent]
+            if any(label.chunk_id for label in related) and any(label.chunk_id is None for label in related):
+                raise ValueError("Parent and paragraph labels overlap; choose one granularity per document")
         if self.status == "approved" and (not self.approved_by or not self.labels):
             raise ValueError("Approval requires explicit reviewer attribution and source labels")
         return self

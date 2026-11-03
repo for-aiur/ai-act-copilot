@@ -23,3 +23,6 @@ def test_cloud_requires_consent_and_key_and_storage_is_explicit():
         load_settings(env={"DATABASE_URL": "mysql://local/db"}, dotenv=None)
     with pytest.raises(ValueError):
         load_settings(env={"LANGFUSE_HOST": "https://untrusted.example"}, dotenv=None)
+    with pytest.raises(ValueError) as error:
+        load_settings(env={"DATABASE_URL": "mysql://user:private-db-password@host/db"}, dotenv=None)
+    assert "private-db-password" not in str(error.value)

@@ -36,6 +36,8 @@ import type {
   Versions,
 } from "./rag";
 
+const targetOf = (label: Label) => label.chunk_id || label.document_id;
+
 type View = "corpus" | "studio" | "cases" | "versions" | "compare";
 const names: Record<View, string> = {
   corpus: "Source explorer",
@@ -95,6 +97,7 @@ export default function Workbench() {
   const [left, setLeft] = useState(""),
     [right, setRight] = useState("");
   const sequence = useRef(0);
+  const [targetChunk, setTargetChunk] = useState("");
   const openingCase = useRef<Case | null>(null);
   const selectedDomain = domains.find((d) => d.id === domain);
   const docs = (library?.documents || []).filter(
@@ -122,6 +125,9 @@ export default function Workbench() {
     kinds: [],
     limit: 10,
   };
+  useEffect(() => {
+    setTargetChunk("");
+  }, [active?.id]);
   async function refresh() {
     const [v, c, r] = await Promise.all([
       request<Versions>("/api/rag/versions?domain=" + domain),
@@ -181,7 +187,7 @@ export default function Workbench() {
     const c = openingCase.current;
     openingCase.current = null;
     if (c) {
-      setLabels(Object.fromEntries(c.labels.map((l) => [l.document_id, l])));
+      setLabels(Object.fromEntries(c.labels.map((l) => [targetOf(l), l])));
       setEditing(c);
     } else {
       setLabels({});
@@ -204,12 +210,31 @@ export default function Workbench() {
       setBusy("");
     }
   }
-  function addLabel(doc: Doc, label: Label["label"] = "must_retrieve") {
-    setLabels((old) => ({
-      ...old,
-      [doc.id]: old[doc.id] || { document_id: doc.id, label, rationale: "" },
-    }));
-    setNotice(doc.title + " added to source expectations.");
+  function addLabel(
+    doc: Doc,
+    label: Label["label"] = "must_retrieve",
+    chunkId?: string,
+  ) {
+    const key = chunkId || doc.id;
+    setLabels((old) => {
+      const next = Object.fromEntries(
+        Object.entries(old).filter(
+          ([, item]) =>
+            item.document_id !== doc.id ||
+            Boolean(item.chunk_id) === Boolean(chunkId),
+        ),
+      );
+      return {
+        ...next,
+        [key]: old[key] || {
+          document_id: doc.id,
+          chunk_id: chunkId || null,
+          label,
+          rationale: "",
+        },
+      };
+    });
+    setNotice((chunkId || doc.title) + " added to source expectations.");
     setView("studio");
   }
   async function retrieve() {
@@ -268,7 +293,7 @@ export default function Workbench() {
     setArea(c.area);
     setSplit(c.split);
     setRun(null);
-    setLabels(Object.fromEntries(c.labels.map((l) => [l.document_id, l])));
+    setLabels(Object.fromEntries(c.labels.map((l) => [targetOf(l), l])));
     setEditing(c);
     setView("studio");
     setNotice("Case opened. Run retrieval again before saving a new revision.");
@@ -566,7 +591,27 @@ export default function Workbench() {
                           {active.metadata.celex ||
                             "Authored technical fixture"}
                         </div>
-                        <div className="source-text">{active.text}</div>
+                        <select
+                          aria-label="Target passage"
+                          className="passage-select"
+                          value={targetChunk}
+                          onChange={(e) => setTargetChunk(e.target.value)}
+                        >
+                          <option value="">Entire source document</option>
+                          {library?.chunks
+                            .filter((c) => c.document_id === active.id)
+                            .map((c) => (
+                              <option value={c.id} key={c.id}>
+                                {c.id}
+                              </option>
+                            ))}
+                        </select>
+                        <div className="source-text">
+                          {targetChunk
+                            ? library?.chunks.find((c) => c.id === targetChunk)
+                                ?.text
+                            : active.text}
+                        </div>
                         <a
                           className="official-link"
                           href={active.source_url}
@@ -618,7 +663,13 @@ export default function Workbench() {
                           </div>
                           <button
                             className="secondary"
-                            onClick={() => addLabel(active)}
+                            onClick={() =>
+                              addLabel(
+                                active,
+                                "must_retrieve",
+                                targetChunk || undefined,
+                              )
+                            }
                           >
                             <Plus size={15} />
                             Expect source
@@ -830,7 +881,9 @@ export default function Workbench() {
                               <ExternalLink size={12} />
                             </a>
                             <button
-                              onClick={() => addLabel(c.document!, "relevant")}
+                              onClick={() =>
+                                addLabel(c.document!, "relevant", c.chunk.id)
+                              }
                             >
                               Label source
                               <Plus size={12} />
@@ -866,7 +919,7 @@ export default function Workbench() {
                   </button>
                 </div>
                 {Object.values(labels).map((l) => (
-                  <div className="annotation" key={l.document_id}>
+                  <div className="annotation" key={targetOf(l)}>
                     <div>
                       <strong>
                         {library?.documents.find((d) => d.id === l.document_id)
@@ -874,18 +927,20 @@ export default function Workbench() {
                       </strong>
                       <span className="draft-pill">
                         {run?.result.candidates.some(
-                          (c) => c.document.id === l.document_id,
+                          (c) =>
+                            c.document.id === l.document_id &&
+                            (!l.chunk_id || c.chunk.id === l.chunk_id),
                         )
                           ? "RETRIEVED"
                           : "NOT RETRIEVED"}
                       </span>
                       <button
                         className="icon-button"
-                        aria-label={"Remove " + l.document_id}
+                        aria-label={"Remove " + targetOf(l)}
                         onClick={() =>
                           setLabels((old) => {
                             const next = { ...old };
-                            delete next[l.document_id];
+                            delete next[targetOf(l)];
                             return next;
                           })
                         }
@@ -894,12 +949,12 @@ export default function Workbench() {
                       </button>
                     </div>
                     <select
-                      aria-label={"Label " + l.document_id}
+                      aria-label={"Label " + targetOf(l)}
                       value={l.label}
                       onChange={(e) =>
                         setLabels((old) => ({
                           ...old,
-                          [l.document_id]: {
+                          [targetOf(l)]: {
                             ...l,
                             label: e.target.value as Label["label"],
                           },
@@ -916,12 +971,12 @@ export default function Workbench() {
                       ))}
                     </select>
                     <input
-                      aria-label={"Reason " + l.document_id}
+                      aria-label={"Reason " + targetOf(l)}
                       value={l.rationale}
                       onChange={(e) =>
                         setLabels((old) => ({
                           ...old,
-                          [l.document_id]: { ...l, rationale: e.target.value },
+                          [targetOf(l)]: { ...l, rationale: e.target.value },
                         }))
                       }
                       maxLength={2000}
@@ -998,8 +1053,15 @@ export default function Workbench() {
                   </button>
                 </div>
               </section>
-              {domain === "ai-act" && <ReviewPanel versions={versions} context={[scenario, actor, deployment, constraints].filter(Boolean).join("\n")} />}
-          </>
+              {domain === "ai-act" && (
+                <ReviewPanel
+                  versions={versions}
+                  context={[scenario, actor, deployment, constraints]
+                    .filter(Boolean)
+                    .join("\n")}
+                />
+              )}
+            </>
           )}
           {view === "cases" && (
             <section className="draft-panel">
@@ -1072,8 +1134,8 @@ export default function Workbench() {
                       </small>
                       <div className="case-labels">
                         {c.labels.map((l) => (
-                          <span key={l.document_id}>
-                            {l.document_id}: {l.label}
+                          <span key={targetOf(l)}>
+                            {targetOf(l)}: {l.label}
                           </span>
                         ))}
                       </div>

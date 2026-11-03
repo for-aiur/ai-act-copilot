@@ -9,6 +9,10 @@ services:
       AIACT_DOWNLOAD_MODEL: ${AIACT_DOWNLOAD_MODEL:-true}
       AIACT_PROVIDER: ${AIACT_PROVIDER:-gemini}
       AIACT_MODEL: ${AIACT_MODEL:-gemini-3.1-flash-lite}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+      EMBEDDING_REVISION: ${EMBEDDING_REVISION:-file-sha256-pinned-at-build}
+      VECTOR_BACKEND: qdrant-local
+      VECTOR_PATH: /data/qdrant
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-false}
       LANGFUSE_HOST: https://cloud.langfuse.com

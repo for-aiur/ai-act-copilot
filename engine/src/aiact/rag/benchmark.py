@@ -55,12 +55,15 @@ def benchmark(settings, domain, release_id, dataset=None, include_holdout=False)
             dataset_version = checksum([c.model_dump(mode="json") for c in cases])
         selected = [c for c in cases if include_holdout or c.split != "holdout"]
         scores = []
+        scores_at_5 = []
         for case in selected:
             result = retriever.search(case.request)
             scores.append(score_case(case, result))
+            scores_at_5.append(score_case(case, result, k=5))
         return {"schema_version": "1", "domain_id": domain, "dataset_version": dataset_version,
             "rag_release_id": release_id, "snapshot_id": retriever.snapshot.snapshot_id,
             "scores": scores, "summary": summarize(scores), "quality_gate": quality_gate(cases, scores),
+            "scores_at_5": scores_at_5, "summary_at_5": summarize(scores_at_5),
             "draft_count": sum(c.status == "draft" for c in cases),
             "approved_count": sum(c.status == "approved" for c in cases),
             "holdout_included": include_holdout}

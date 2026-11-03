@@ -8,13 +8,14 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 
 class Settings(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
     provider: Literal["gemini", "ollama"] = "gemini"
     model: str = "gemini-3.1-flash-lite"
     ollama_url: str = "http://127.0.0.1:11434"
     database_url: SecretStr = SecretStr("sqlite:///.aiact-workbench/aiact.db")
     data_dir: Path = Path(".aiact-workbench")
     vector_backend: Literal["qdrant-local"] = "qdrant-local"
+    vector_path_override: Path | None = None
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_revision: str = "file-sha256-pinned-at-build"
     langfuse_enabled: bool = False
@@ -37,7 +38,7 @@ class Settings(BaseModel):
 
     @property
     def vector_path(self):
-        return self.data_dir / "qdrant"
+        return self.vector_path_override or self.data_dir / "qdrant"
 
     @property
     def models_path(self):
@@ -54,6 +55,7 @@ class Settings(BaseModel):
 ENV_KEYS = {
     "AIACT_PROVIDER": "provider", "AIACT_MODEL": "model", "AIACT_OLLAMA_URL": "ollama_url",
     "DATABASE_URL": "database_url", "AIACT_DATA_DIR": "data_dir", "VECTOR_BACKEND": "vector_backend",
+    "VECTOR_PATH": "vector_path_override",
     "EMBEDDING_MODEL": "embedding_model", "EMBEDDING_REVISION": "embedding_revision",
     "LANGFUSE_ENABLED": "langfuse_enabled", "LANGFUSE_HOST": "langfuse_host",
     "LANGFUSE_PUBLIC_KEY": "langfuse_public_key", "LANGFUSE_SECRET_KEY": "langfuse_secret_key",

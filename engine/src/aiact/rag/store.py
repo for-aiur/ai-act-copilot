@@ -34,6 +34,9 @@ class Store:
         if url.get_backend_name() == "sqlite" and url.database and url.database != ":memory:":
             Path(url.database).parent.mkdir(parents=True, exist_ok=True)
         self.engine = create_engine(url, connect_args={"timeout": 15} if url.get_backend_name() == "sqlite" else {}, echo=False)
+        if self.sqlite:
+            with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
+                connection.execute(text("PRAGMA journal_mode=WAL"))
         metadata.create_all(self.engine)
         with self.engine.begin() as connection:
             version = connection.execute(select(schema.c.version)).scalar()
@@ -46,6 +49,7 @@ class Store:
                 connection.execute(text("CREATE VIRTUAL TABLE IF NOT EXISTS rag_fts USING fts5(snapshot_id UNINDEXED, chunk_id UNINDEXED, title, body, tokenize='unicode61')"))
             else:
                 connection.execute(text("CREATE INDEX IF NOT EXISTS rag_documents_domain_index ON rag_documents(snapshot_id)"))
+                connection.execute(text("CREATE INDEX IF NOT EXISTS rag_chunks_fts_index ON rag_chunks USING GIN (to_tsvector('english', CAST(payload AS jsonb)->>'text'))"))
 
     @property
     def sqlite(self):
@@ -95,12 +99,18 @@ class Store:
         with self.engine.connect() as db:
             return [json.loads(row[0]) for row in db.execute(select(releases.c.payload).where(releases.c.domain == domain))]
 
-    def activate(self, domain: str, identity: str):
+    def activate(self, domain: str, identity: str, *, promotion: dict | None = None):
         manifest = self.release(identity)
         if manifest["domain_id"] != domain:
             raise ValueError("Release belongs to a different domain")
         with self.engine.begin() as db:
+            if promotion is not None:
+                from uuid import uuid4
+                db.execute(insert(records).values(category="promotion", id=uuid4().hex, revision=1, domain=domain,
+                    created_at=datetime.now(timezone.utc).isoformat(), payload=encode(promotion)))
             active = db.execute(select(pointers.c.release_id).where(pointers.c.domain == domain, pointers.c.name == "active")).scalar()
+            if active == identity:
+                return
             for name, value in [("previous", active), ("active", identity)]:
                 if value:
                     db.execute(pointers.delete().where(pointers.c.domain == domain, pointers.c.name == name))

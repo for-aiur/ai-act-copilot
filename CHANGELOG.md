@@ -5,6 +5,20 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+Engine 0.5.0, dashboard 0.2.0 and extension 0.4.0 (M1 tooling):
+
+- Add a full-source, domain-independent hybrid retrieval runtime with immutable
+  manifests, local CPU embeddings, versioned storage and explicit promotion.
+- Add React source exploration, paragraph-level labels, revisioned scenario
+  approval, retrieval traces, run comparisons and evaluation exports.
+- Add bounded full-corpus review and opt-in metadata-only Langfuse tracing.
+  New editor installs use Gemini with explicit cloud consent.
+- Add 54 legal development drafts, two technical fixtures, reproducible CI
+  reports, PostgreSQL checks and a single-owner Docker Compose runtime.
+- Consolidate installation and operations documentation. Retire superseded POC
+  plans. Expert-approved gold and live cloud acceptance remain required before
+  claiming final M1 quality.
+
 EVR-35: import the full pinned Publications Office source pack (119 articles,
 14 annexes, 180 original and 47 amendment recitals), preserving source hashes,
 paragraph offsets, origin and binding/explanatory distinctions. Rebuild and

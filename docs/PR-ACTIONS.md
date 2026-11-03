@@ -64,7 +64,7 @@ A branch rule must require this App's check to enforce merging. The current
 private-repository plan reports that its saved ruleset is not enforced. The bot
 still reports checks; it cannot technically prevent merging on that plan.
 
-Comments remain on GitHub; there is no immutable audit trail or dashboard yet.
+Comments remain on GitHub; there is no immutable PR audit trail or application-level bot dashboard.
 Scratch SQLite is discarded and never cached/uploaded. Actions serializes reply
 jobs with `queue: max` (up to 100 pending runs). Keep existing PR branches updated
 with workflow changes before using inline commands. Fork PRs and merge queues are

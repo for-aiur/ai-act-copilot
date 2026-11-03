@@ -102,7 +102,8 @@ def router(settings=None):
         return {"domain_id": domain, "snapshot_id": snapshot.snapshot_id, "source_version": snapshot.source_version,
             "complete": snapshot.complete, "total": len(snapshot.documents), "chunk_count": len(snapshot.chunks),
             "source_count": len(snapshot.source_hashes), "scope_limits": snapshot.scope_limits,
-            "kinds": sorted({d.kind for d in snapshot.documents}), "documents": docs}
+            "kinds": sorted({d.kind for d in snapshot.documents}), "documents": docs,
+            "chunks": [c.model_dump(mode="json") for c in snapshot.chunks]}
 
     @routes.get("/versions")
     def versions(domain="ai-act"):

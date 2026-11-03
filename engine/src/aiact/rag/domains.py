@@ -13,6 +13,11 @@ DOMAINS = (
 )
 
 
+def seal(snapshot: Snapshot) -> Snapshot:
+    # Adapter metadata is part of snapshot identity, not an in-place annotation.
+    return snapshot.model_copy(update={"snapshot_id": checksum(snapshot.model_dump(mode="json", exclude={"snapshot_id"}))})
+
+
 def load_snapshot(domain_id="ai-act") -> Snapshot:
     if domain_id == "ai-act":
         raw = json.loads(gzip.decompress(files("aiact").joinpath("data/full-act.json.gz").read_bytes()))
@@ -26,14 +31,14 @@ def load_snapshot(domain_id="ai-act") -> Snapshot:
         )
         if any(rule.quote not in timing for rule in rules):
             raise ValueError("Reviewed date rule no longer matches the official source")
-        return Snapshot(domain_id=domain_id, snapshot_id=identity, source_version=CELEX, parser_version=raw["parser_version"],
+        return seal(Snapshot(domain_id=domain_id, snapshot_id=identity, source_version=CELEX, parser_version=raw["parser_version"],
             documents=tuple(Document(id=d["id"], title=d["title"], text=d["text"], source_url=d["source_url"], kind=d["kind"], checksum=d["checksum"],
                 metadata=SourceMetadata(origin=d["origin"], binding=d["binding"], chapter=d["chapter"], celex=d["source_celex"],
                     publication_date=d["publication_date"], consolidated_date=d["consolidated_date"],
                     entry_into_force="2024-08-01" if d["origin"] == "original" else "2026-07-27" if d["origin"] == "amendment" else None,
                     applicability_rules=rules if d["kind"] == "article" and d["id"].split("-")[1].isdigit() and 6 <= int(d["id"].split("-")[1]) <= 27 else (),
                     applicability_status=d["applicability"]["status"], applicability_sources=tuple(d["applicability"]["source_ids"]))) for d in raw["documents"]),
-            chunks=tuple(Chunk(**c) for c in raw["chunks"]), source_hashes=tuple(s["sha256"] for s in raw["sources"]), scope_limits=tuple(raw["scope_limits"]), complete=raw["coverage"]["complete"])
+            chunks=tuple(Chunk(**c) for c in raw["chunks"]), source_hashes=tuple(s["sha256"] for s in raw["sources"]), scope_limits=tuple(raw["scope_limits"]), complete=raw["coverage"]["complete"]))
     if domain_id != "workbench-api":
         raise ValueError("Unknown knowledge domain")
     contents = [
@@ -44,9 +49,9 @@ def load_snapshot(domain_id="ai-act") -> Snapshot:
     docs = tuple(Document(id=i, title=t, text=body, source_url="https://github.com/for-aiur/ai-act-copilot/blob/main/docs/WORKBENCH.md",
         kind="guide", checksum=checksum(body.encode()), metadata=SourceMetadata(origin="authored_technical_fixture")) for i, t, body in contents)
     chunks = tuple(Chunk(id=d.id + "-1", document_id=d.id, title=d.title, text=d.text, start=0, end=len(d.text), checksum=d.checksum) for d in docs)
-    return Snapshot(domain_id=domain_id, snapshot_id=checksum([d.model_dump(mode="json") for d in docs]), source_version="api-guide-1",
+    return seal(Snapshot(domain_id=domain_id, snapshot_id=checksum([d.model_dump(mode="json") for d in docs]), source_version="api-guide-1",
         parser_version="authored-1", documents=docs, chunks=chunks, source_hashes=tuple(d.checksum for d in docs),
-        scope_limits=("Authored technical fixture, not legal content.",), complete=True)
+        scope_limits=("Authored technical fixture, not legal content.",), complete=True))
 
 
 def resolve_reference(domain_id: str, query: str) -> tuple[str, ...]:

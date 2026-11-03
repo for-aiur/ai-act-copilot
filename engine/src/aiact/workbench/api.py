@@ -67,7 +67,8 @@ def create_app(db_path: Path | None = None, settings=None) -> FastAPI:
 
     @app.exception_handler(ReviewFailure)
     async def corpus_error(request, exc):
-        return JSONResponse({"detail": "Packaged corpus failed validation. Reinstall the engine."}, status_code=503)
+        message = "Packaged corpus failed validation. Reinstall the engine." if exc.code.startswith("corpus_") else str(exc)
+        return JSONResponse({"detail": message, "code": exc.code}, status_code=503)
 
     @app.get("/api/health")
     def health():

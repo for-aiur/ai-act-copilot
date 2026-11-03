@@ -20,6 +20,9 @@ def main():
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report))
+    if domain == "workbench-api":
+        if report["summary"]["cases"] < 2 or report["summary"]["recall"] != 1 or report["summary"]["missing_required"]:
+            raise ValueError("Packaged runtime failed its approved engineering retrieval smoke fixtures")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """Content-addressed RAG bundles, explicit activation, and integrity verification."""
 import gzip
+import importlib.metadata
 import json
 import os
 import re
@@ -67,7 +68,7 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
                 vectors = embedder.passages([c.title + "\n" + c.text for c in snapshot.chunks])
             cache.parent.mkdir(parents=True, exist_ok=True)
             cache.write_bytes(gzip.compress(json.dumps(vectors).encode(), mtime=0))
-    source_files = ["contracts.py", "domains.py", "embeddings.py", "releases.py", "retriever.py"]
+    source_files = ["contracts.py", "domains.py", "embeddings.py", "releases.py", "retriever.py", "store.py", "official.py", "evaluation.py"]
     implementation = {name: checksum(Path(__file__).with_name(name).read_bytes()) for name in source_files if Path(__file__).with_name(name).exists()}
     try:
         revision = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=3).stdout.strip() or "unavailable"
@@ -82,7 +83,9 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
         "git_revision": revision, "implementation": implementation,
         "mode": "lexical" if lexical_only else "hybrid", "embedding": embedding,
         "vector_backend": settings.vector_backend, "vector_index_fingerprint": checksum(vector_bytes),
-        "lexical_index": "sqlite-fts5-bm25-or-postgres-tsvector-1",
+        "vector_client_version": importlib.metadata.version("qdrant-client") if not lexical_only else "not-used",
+        "lexical_index": {"backend": "sqlite-fts5-bm25" if settings.database_url.get_secret_value().startswith("sqlite:") else "postgresql-tsvector",
+                          "version": "1", "term_combination": "OR"},
         "query_planner": "explicit-context-intents-1", "fusion": {"algorithm": "rrf", "k": 60},
         "reranker": {"version": PIPELINE_VERSION, "exact_boost": 1.0, "lexical_overlap_weight": 0.01},
         "expansion_policy": "bounded-parent-cross-reference-1",

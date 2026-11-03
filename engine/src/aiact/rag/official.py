@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from importlib.resources import files
 from pathlib import Path
 
-PARSER_VERSION = "cellar-xhtml-1"
+PARSER_VERSION = "cellar-xhtml-2"
 CELEX = "02024R1689-20260727"
 NS = "{http://www.w3.org/1999/xhtml}"
 
@@ -29,10 +29,37 @@ def text(element) -> str:
     return " ".join(walk(element).split())
 
 
+def subdivisions(root):
+    """Map numbered/lettered DOM subdivisions to exact parent offsets."""
+    found = []
+    def walk(node, path, offset):
+        body = text(node)
+        marker = next((child for child in node if child.get("class") == "no-parag"), None)
+        column = next((child for child in node if child.get("class") == "list grid-list-column-1"), None)
+        label = text(marker) if marker is not None else text(column) if column is not None else ""
+        label = label.strip("(). ").lower()
+        if re.fullmatch(r"[0-9]+[a-z]?|[a-z]+", label):
+            path = [*path, label]
+            found.append(("-".join(path), body, offset))
+        cursor = 0
+        for child in node:
+            child_text = text(child)
+            if not child_text:
+                continue
+            position = body.find(child_text, cursor)
+            if position < 0:
+                raise ValueError("Nested official source block lost its parent offset")
+            cursor = position + len(child_text)
+            walk(child, path, offset + position)
+    walk(root, [], 0)
+    return found
+
+
 def import_official(source_dir: Path | None = None) -> dict:
     directory = source_dir or files("aiact").joinpath("data/official")
     sources = json.loads(directory.joinpath("sources.json").read_text())
     documents = []
+    fine_blocks = {}
     for source in sources:
         raw = gzip.decompress(directory.joinpath(source["file"]).read_bytes())
         if checksum(raw) != source["sha256"]:
@@ -69,6 +96,7 @@ def import_official(source_dir: Path | None = None) -> dict:
                 "applicability": {"status": "conditional_or_unknown", "date": None, "source_ids": ["article-111", "article-113"]},
                 "blocks": [text(child) for child in node if text(child)],
             })
+            fine_blocks[document_id] = subdivisions(node)
     actual = {d["id"] for d in documents}
     expected_articles = {"article-" + str(n) for n in range(1, 114)} | {"article-4a", "article-60a", "article-75a", "article-75b", "article-75c", "article-75d"}
     expected_annexes = {"annex-" + n for n in ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii", "xiii", "xiv"]}
@@ -88,7 +116,7 @@ def import_official(source_dir: Path | None = None) -> dict:
             if start < 0:
                 raise ValueError("Source block cannot be mapped to parent: " + document["id"])
             cursor = start + len(block)
-            match = re.match(r"^(\d+[a-z]?)\.\s", block)
+            match = re.match(r"^(?:\()?([0-9]+[a-z]?)[.)]\s", block)
             suffix = match[1] if match else "block-" + str(index)
             chunk_id = document["id"] + "-" + suffix
             if chunk_id in seen:
@@ -98,6 +126,16 @@ def import_official(source_dir: Path | None = None) -> dict:
             references |= {"annex-" + n.lower() for n in re.findall(r"Annex\s+([IVX]+)\b", block)}
             chunks.append({"id": chunk_id, "document_id": document["id"], "title": document["title"] + " / " + suffix,
                            "text": block, "start": start, "end": cursor, "checksum": checksum(block.encode()),
+                           "references": sorted(references & actual)})
+        for suffix, body, start in fine_blocks[document["id"]]:
+            identity = document["id"] + "-" + suffix
+            if identity in seen:
+                continue
+            seen.add(identity)
+            references = {"article-" + n.lower() for n in re.findall(r"Article\s+(\d+[a-z]?)", body)}
+            references |= {"annex-" + n.lower() for n in re.findall(r"Annex\s+([IVX]+)\b", body)}
+            chunks.append({"id": identity, "document_id": document["id"], "title": document["title"] + " / " + suffix,
+                           "text": body, "start": start, "end": start + len(body), "checksum": checksum(body.encode()),
                            "references": sorted(references & actual)})
         if not document["blocks"]:
             raise ValueError("Document has no indexable source blocks: " + document["id"])

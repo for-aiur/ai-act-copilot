@@ -100,8 +100,8 @@ def main(argv=None):
                     evaluation = benchmark(settings, after.domain_id, args.after, include_holdout=True)
                     if evaluation["quality_gate"]["status"] != "pass":
                         raise ValueError("Promotion blocked by the expert-gold quality gate. Local tooling activation is a separate explicit command.")
-                    store.activate(after.domain_id, args.after)
-                    store.append("promotion", args.after, after.domain_id, {"approval_note": args.approval_note, "evaluation": evaluation})
+                    store.activate(after.domain_id, args.after, promotion={"rag_release_id": args.after,
+                        "approval_note": args.approval_note, "evaluation": evaluation})
                     report = {"status": "promoted", "rag_release_id": args.after}
             finally:
                 store.close()

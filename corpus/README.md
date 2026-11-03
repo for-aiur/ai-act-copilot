@@ -1,31 +1,30 @@
-# Reviewed demo corpus
+# Official source packs
 
-The single packaged corpus and manifest lives in
-`engine/src/aiact/data/corpus.json`. It includes six reviewed passages, source
-URLs, source HTML and passage checksums, retrieval date, source identity, selected
-exact supporting quotations, and explicit scope limits. Scans read it locally.
+The M1 corpus comes from the Publications Office of the European Union:
 
-Sources are the European Commission's AI Act Service Desk reproductions:
+- Consolidation: CELEX `02024R1689-20260727`.
+- Authentic original act: `32024R1689`.
+- Authentic 2026 amendment: `32026R1744`.
 
-- [Annex III](https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3)
-- [Article 6](https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6)
-- [Article 50](https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50)
+Pinned raw XHTML, canonical URLs, retrieval date and SHA256 values live in
+`engine/src/aiact/data/official/`. The deterministic normalized pack is
+`engine/src/aiact/data/full-act.json.gz`. It contains 119 articles, 14 annexes,
+180 original recitals and 47 amendment recitals, with exact normalized text and
+paragraph/block offsets. Recital origins remain distinct. Consolidated text is
+informational; the original Official Journal acts are the authentic instruments.
 
-Retrieved 29 October 2026. The article pages identify their basis as the EUR-Lex
-consolidation as at 27 July 2026. EUR-Lex itself returned a bot challenge/empty
-response during setup, so this is explicitly a Commission reproduction rather
-than an independently verified EUR-Lex download. Summaries and guidance are
-excluded. No applicability dates are encoded or inferred.
+Rebuild without network:
 
-`aiact update` downloads only these official pages, verifies that every reviewed
-passage still occurs there, and atomically writes a single user cache file. A
-changed passage or failed download preserves the existing file and requires
-manual legal review. Refresh does not discover or silently import new law.
+```sh
+uv run --project engine python -m aiact.rag.official --output /tmp/full-act.json.gz
+```
 
-The reproduction script `scripts/build_reviewed_corpus.py` expects explicitly
-downloaded official HTML in `/tmp/ai-act-{annex3,article6,article50}.html`. It
-asserts paragraph matches and supporting quotation membership before writing.
+`uv run --project engine python scripts/fetch-official.py --output NEW_EMPTY_DIRECTORY` explicitly redownloads
+and verifies the pinned raw files. `aiact corpus check` discovers official versions;
+`aiact corpus sync --staging` rechecks without activating. Source changes require
+review. See [workbench operations](../docs/WORKBENCH.md).
 
-This subset does not cover all AI Act provisions, prohibitions, exceptions,
-definitions, related legislation, actor roles, or applicability dates. Its
-citations identify engineering review questions; they do not certify compliance.
+`engine/src/aiact/data/corpus.json` is the **legacy 114-passage subset**, retained
+for existing CLI/editor/Actions adapters and regression fixtures. Its matching
+question bank and `aiact update` re-verification flow remain separate from M1
+full-corpus indexing. They do not discover or activate new consolidated editions.
