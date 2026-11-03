@@ -5,6 +5,9 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- Keep source exploration read-only. Required-source selection now opens only
+  from a test scenario, with explicit add-to-test and return actions.
+
 - Reuse the existing Copilot logo in the dashboard and favicon. Remove internal
   milestone labels from the user interface.
 

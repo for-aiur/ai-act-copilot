@@ -38,9 +38,10 @@ import type {
 
 const targetOf = (label: Label) => label.chunk_id || label.document_id;
 
-type View = "corpus" | "studio" | "cases" | "versions" | "compare";
+type View = "corpus" | "studio" | "cases" | "versions" | "compare" | "source-picker";
 const names: Record<View, string> = {
   corpus: "Source explorer",
+  "source-picker": "Add required source",
   studio: "Retrieval studio",
   cases: "Evaluation cases",
   versions: "RAG versions",
@@ -234,7 +235,7 @@ export default function Workbench() {
         },
       };
     });
-    setNotice((chunkId || doc.title) + " added to source expectations.");
+    setNotice((chunkId || doc.title) + " added to the test.");
     setView("studio");
   }
   async function retrieve() {
@@ -374,7 +375,7 @@ export default function Workbench() {
             <div>
               <div className="eyebrow green">RETRIEVAL WORKBENCH</div>
               <h1>
-                {view === "corpus"
+                {view === "source-picker" ? "Add a source to this test." : view === "corpus"
                   ? "Start with the source."
                   : view === "studio"
                     ? "Make retrieval visible."
@@ -384,6 +385,7 @@ export default function Workbench() {
                         ? "Know exactly what changed."
                         : "Compare the evidence."}
               </h1>
+              {view === "source-picker" && <button className="secondary" onClick={()=>setView("studio")}>Back to test</button>}
               <p>
                 Versioned sources. Inspectable retrieval. Context that stays
                 attached.
@@ -480,7 +482,7 @@ export default function Workbench() {
               <ArrowRight size={14} />
             </button>
           </div>
-          {view === "corpus" && (
+          {(view === "corpus" || view === "source-picker") && (
             <section className="explorer">
               <div className="section-header">
                 <div>
@@ -488,8 +490,7 @@ export default function Workbench() {
                     Source library <span>{selectedDomain?.name}</span>
                   </h2>
                   <p>
-                    Find a source, inspect its wording, or add an expected
-                    retrieval target.
+                    {view === "source-picker" ? "Choose a passage this test must find." : "Browse the text and open its original source."}
                   </p>
                 </div>
                 <span className="quiet-label">PINNED · ENGLISH</span>
@@ -649,12 +650,11 @@ export default function Workbench() {
                             ))}
                           </details>
                         )}
-                        <div className="source-action">
+                        {view === "source-picker" && <div className="source-action">
                           <div>
-                            <h3>Missing from a retrieval run?</h3>
+                            <h3>Required for this test</h3>
                             <p>
-                              Add it as an expected source, even if it was not
-                              found.
+                              {scenario}
                             </p>
                           </div>
                           <button
@@ -668,9 +668,9 @@ export default function Workbench() {
                             }
                           >
                             <Plus size={15} />
-                            Expect source
+                            Add to test
                           </button>
-                        </div>
+                        </div>}
                       </>
                     ) : (
                       <Empty
@@ -908,10 +908,12 @@ export default function Workbench() {
                   </div>
                   <button
                     className="secondary"
-                    onClick={() => setView("corpus")}
+                    disabled={!scenario.trim()}
+                    title={!scenario.trim() ? "Describe the test scenario first" : "Choose a required source for this test"}
+                    onClick={() => setView("source-picker")}
                   >
                     <Plus size={14} />
-                    Add missing source
+                    Add required source
                   </button>
                 </div>
                 {Object.values(labels).map((l) => (

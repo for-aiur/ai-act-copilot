@@ -75,12 +75,13 @@ introduces each screen, Langfuse usage, RAG versioning and extension points.
 ## Use the workbench
 
 1. **Source explorer:** search source text or references, inspect exact wording
-   and provenance, and add an expected source that retrieval might have missed.
+   and provenance. This screen is for reading sources.
 2. **Retrieval studio:** describe intended use, actor role and deployment context.
    Run retrieval and inspect lexical, dense, exact, fusion, rerank and expansion
    stages. Changing context clears the displayed run.
 3. **Evaluation cases:** label sources, give reasons, save drafts, explicitly
-   approve a new revision and export JSON. Expectations and actual hits remain
+   approve a new revision and export JSON. Use **Add required source** while
+   preparing a scenario to select a source the test must find. Expectations and actual hits remain
    separate. A missing expected source is a false negative.
 4. **Compare runs:** compare contexts, RAG versions and added/removed documents.
 5. **RAG versions:** build a candidate, inspect its manifest and activate or
