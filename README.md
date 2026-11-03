@@ -50,6 +50,11 @@ Ollama instead, select `AIACT_PROVIDER=ollama`, configure its model and loopback
 endpoint in native mode. Container-to-host Ollama networking is not enabled by
 default. There is no automatic provider fallback.
 
+## Short screen guide
+
+The [minimal Turkish presentation and screen guide](docs/presentation/README.md)
+introduces each screen, Langfuse usage, RAG versioning and extension points.
+
 ## Use the workbench
 
 1. **Source explorer:** search source text or references, inspect exact wording

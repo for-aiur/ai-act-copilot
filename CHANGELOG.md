@@ -5,6 +5,11 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- Add a minimal Turkish M1 presentation with actual screen images, Langfuse
+  usage, versioning rationale and extension points.
+- Preserve sibling conditions and exceptions inside their numbered official
+  source paragraphs, with exact subdivision addresses and offset tests.
+
 Engine 0.5.0, dashboard 0.2.0 and extension 0.4.0 (M1 tooling):
 
 - Add a full-source, domain-independent hybrid retrieval runtime with immutable
