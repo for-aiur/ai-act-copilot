@@ -18,12 +18,19 @@ from .store import Store
 PIPELINE_VERSION = "hybrid-1"
 
 
+def release_identity(manifest):
+    content = {k: v for k, v in manifest.items() if k != "rag_release_id"}
+    if content.get("schema_version") == "2":
+        content.pop("git_revision", None)
+    return checksum(content)
+
+
 def verify_bundle(directory: Path, allow_staging=False) -> tuple[dict, Snapshot, list]:
     if not allow_staging and not re.fullmatch(r"[a-f0-9]{64}", directory.name):
         raise ValueError("Invalid content-addressed release ID")
     manifest = json.loads((directory / "manifest.json").read_text())
     identity = manifest.pop("rag_release_id")
-    if checksum(manifest) != identity:
+    if (not allow_staging and directory.name != identity) or release_identity(manifest) != identity:
         raise ValueError("RAG manifest identity mismatch")
     manifest["rag_release_id"] = identity
     if set(manifest["file_hashes"]) != {"snapshot.json", "vectors.json.gz"}:
@@ -77,7 +84,7 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
     snapshot_bytes = snapshot.model_dump_json().encode()
     vector_bytes = gzip.compress(json.dumps(vectors, separators=(",", ":")).encode(), mtime=0)
     manifest = {
-        "schema_version": "1", "domain_id": domain_id, "snapshot_id": snapshot.snapshot_id,
+        "schema_version": "2", "domain_id": domain_id, "snapshot_id": snapshot.snapshot_id,
         "source_version": snapshot.source_version, "parser_version": snapshot.parser_version,
         "domain_adapter_version": "1", "chunker": "official-block-offsets-1",
         "git_revision": revision, "implementation": implementation,
@@ -93,13 +100,13 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
         "gold_dataset_version": None, "evaluation_run_id": None, "quality_status": "not_evaluated",
         "file_hashes": {"snapshot.json": checksum(snapshot_bytes), "vectors.json.gz": checksum(vector_bytes)},
     }
-    identity = checksum(manifest)
+    identity = release_identity(manifest)
     manifest["rag_release_id"] = identity
     root = settings.data_dir / "releases"
     root.mkdir(parents=True, exist_ok=True)
     destination = root / identity
     if destination.exists():
-        verify_bundle(destination)
+        manifest, _, _ = verify_bundle(destination)
     else:
         staging = Path(tempfile.mkdtemp(prefix=".candidate-", dir=root))
         try:
@@ -115,6 +122,7 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
     try:
         store.put_snapshot(snapshot)
         store.put_release(manifest)
+        store.restore_release(identity)
     finally:
         store.close()
     return manifest

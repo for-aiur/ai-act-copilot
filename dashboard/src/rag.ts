@@ -116,6 +116,8 @@ export type Manifest = {
   embedding: { model: string; revision: string; dimension: number };
   quality_status: string;
   git_revision: string;
+  removal_blockers?: string[];
+  equivalent_to?: string | null;
 };
 export type Versions = {
   active: string | null;

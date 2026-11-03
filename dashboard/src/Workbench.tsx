@@ -112,8 +112,7 @@ export default function Workbench() {
   const [editing, setEditing] = useState<Case | null>(null);
   const [reviewer, setReviewer] = useState("");
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
-  const [downloadModel, setDownloadModel] = useState(false),
-    [lexicalOnly, setLexicalOnly] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<Manifest | null>(null);
   const [left, setLeft] = useState(""),
     [right, setRight] = useState("");
   const sequence = useRef(0);
@@ -167,6 +166,7 @@ export default function Workbench() {
   }, []);
   useEffect(() => {
     let cancelled = false;
+    setRemoveTarget(null);
     setLibrary(null);
     setSelected(null);
     setQuery("");
@@ -392,23 +392,9 @@ export default function Workbench() {
         <div className="page">
           <div className="page-heading">
             <div>
-              <div className="eyebrow green">RETRIEVAL WORKBENCH</div>
-              <h1>
-                {view === "source-picker" ? "Add a source to this test." : view === "corpus"
-                  ? "Start with the source."
-                  : view === "studio"
-                    ? "Make retrieval visible."
-                    : view === "cases"
-                      ? "Turn questions into tests."
-                      : view === "versions"
-                        ? "Know exactly what changed."
-                        : "Compare the evidence."}
-              </h1>
+              <h1>{names[view]}</h1>
               {view === "source-picker" && <button className="secondary" onClick={()=>setView("studio")}>Back to test</button>}
-              <p>
-                Versioned sources. Inspectable retrieval. Context that stays
-                attached.
-              </p>
+              <p>{({corpus:"Browse the available documents, read their text, and open the original source.",studio:"Describe a test scenario, run retrieval, and label the sources it should find.",cases:"Review saved test cases, approve their expected sources, and evaluate retrieval.",compare:"Select two saved runs to compare their context and retrieved sources.",versions:"Create a candidate from this checkout, test it, and choose the version used by new reviews.","source-picker":"Choose a document or passage that this test must retrieve."} as Record<View,string>)[view]}</p>
             </div>
             <select
               className="domain-select"
@@ -1323,57 +1309,15 @@ export default function Workbench() {
                   </p>
                 </div>
               </div>
-              <details className="technical-settings">
-                <summary>Technical setup</summary>
               <div className="build-controls">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={downloadModel}
-                    onChange={(e) => setDownloadModel(e.target.checked)}
-                  />
-                  Download the embedding model if needed
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={lexicalOnly}
-                    onChange={(e) => setLexicalOnly(e.target.checked)}
-                  />
-                  Use text-only search (developer comparison)
-                </label>
-                <button
-                  className="primary"
-                  disabled={!!busy}
-                  onClick={() =>
-                    void act("build", async () => {
-                      await post<Manifest>("/api/rag/build", {
-                        domain_id: domain,
-                        download_model: downloadModel,
-                        lexical_only: lexicalOnly,
-                      });
-                      await refresh();
-                      setNotice(
-                        "Search version ready. Select it below.",
-                      );
-                    })
-                  }
-                >
-                  {busy === "build" ? (
-                    <LoaderCircle className="spin" size={16} />
-                  ) : (
-                    <Plus size={16} />
-                  )}
-                  Build search version
-                </button>
-                {busy === "build" && (
-                  <p role="status">
-                    Building source and vector artifacts. The first CPU build
-                    can take several minutes.
-                  </p>
-                )}
+                <button className="primary" disabled={!!busy} onClick={()=>void act("build",async()=>{
+                  const created=await post<Manifest & {already_exists:boolean}>("/api/rag/build",{domain_id:domain});
+                  await refresh();
+                  setNotice(created.already_exists?"This candidate already exists. No duplicate was created.":"Candidate created from this checkout. Test it before selecting it.");
+                })}>{busy==='build'?<LoaderCircle className="spin" size={16}/>:<Plus size={16}/>}Create candidate</button>
+                {busy==='build'&&<p role="status">Preparing the candidate. This may take several minutes.</p>}
               </div>
-              </details>
+              {removeTarget && <div className="remove-confirm" role="alert"><p>Remove candidate {short(removeTarget.rag_release_id)} from this workspace?</p><button className="secondary" disabled={!!busy} onClick={()=>void act('remove',async()=>{await request('/api/rag/versions/'+removeTarget.rag_release_id+'?domain='+domain,{method:'DELETE'});setRemoveTarget(null);await refresh();setNotice('Candidate removed.');})}>Remove candidate</button><button className="secondary" onClick={()=>setRemoveTarget(null)}>Cancel</button></div>}
               {versions?.releases.map((m) => (
                 <div className="version-row" key={m.rag_release_id}>
                   <div>
@@ -1387,7 +1331,9 @@ export default function Workbench() {
                             : "CANDIDATE"}
                       </span>
                     </h3>
-                    <p className="mono">{m.rag_release_id}</p>
+                    <p className="mono">RAG ID: {short(m.rag_release_id)}</p>
+                    <p>Built from commit: {short(m.git_revision)}</p>
+                    {m.equivalent_to && <p>Same inputs as RAG {short(m.equivalent_to)}.</p>}
                     <small>
                       {m.source_version} · {m.embedding.model} · Quality:{" "}
                       {m.quality_status}
@@ -1418,6 +1364,7 @@ export default function Workbench() {
                     Use this version
                     <ArrowRight size={13} />
                   </button>
+                  <div><button className="secondary" disabled={!!busy || !!m.removal_blockers?.length} onClick={()=>setRemoveTarget(m)}>Remove</button>{m.removal_blockers?.map(reason=><p className="trace-note" key={reason}>{reason}</p>)}</div>
                 </div>
               ))}
 

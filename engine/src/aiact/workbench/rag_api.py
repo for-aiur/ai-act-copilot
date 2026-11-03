@@ -108,7 +108,16 @@ def router(settings=None):
     @routes.get("/versions")
     def versions(domain="ai-act"):
         rt = runtime()
-        return {"active": rt.store.pointer(domain), "previous": rt.store.pointer(domain, "previous"), "releases": rt.store.list_releases(domain),
+        from aiact.rag.official import checksum
+        items = rt.store.list_releases(domain)
+        first = {}
+        releases = []
+        for manifest in items:
+            effective = checksum({k:v for k,v in manifest.items() if k not in {"git_revision", "rag_release_id", "schema_version"}})
+            equivalent = first.setdefault(effective, manifest["rag_release_id"])
+            releases.append(manifest | {"removal_blockers": rt.store.removal_blockers(manifest["rag_release_id"]),
+                "equivalent_to": equivalent if equivalent != manifest["rag_release_id"] else None})
+        return {"active": rt.store.pointer(domain), "previous": rt.store.pointer(domain, "previous"), "releases": releases,
                 "provider": rt.settings.provider, "model": rt.settings.model, "cloud_key_configured": bool(rt.settings.gemini_api_key.get_secret_value()),
                 "tracing_enabled": rt.settings.langfuse_enabled}
 
@@ -118,7 +127,22 @@ def router(settings=None):
         if body.domain_id not in {d.id for d in DOMAINS}:
             raise HTTPException(422, "Unknown domain")
         with rt.lock:
-            return build_release(rt.settings, body.domain_id, body.download_model, body.lexical_only)
+            before = {m["rag_release_id"] for m in rt.store.list_releases(body.domain_id)}
+            manifest = build_release(rt.settings, body.domain_id, body.download_model, body.lexical_only)
+            return manifest | {"already_exists": manifest["rag_release_id"] in before}
+
+    @routes.delete("/versions/{identity}")
+    def remove_version(identity: str, domain="ai-act"):
+        rt = runtime()
+        with rt.lock:
+            try:
+                rt.store.remove_release(identity, domain)
+            except ValueError as exc:
+                raise HTTPException(409, str(exc)) from None
+            if rt.retriever and rt.retriever.manifest["rag_release_id"] == identity:
+                rt.retriever.close()
+                rt.retriever = None
+            return {"removed": identity}
 
     @routes.post("/activate/{identity}")
     def activate(identity: str, domain="ai-act"):

@@ -19,6 +19,8 @@ releases = Table("rag_releases", metadata, Column("id", String(64), primary_key=
 pointers = Table("rag_pointers", metadata, Column("domain", String(80), primary_key=True), Column("name", String(20), primary_key=True), Column("release_id", String(64), nullable=False))
 records = Table("rag_records", metadata, Column("category", String(40), primary_key=True), Column("id", String(80), primary_key=True), Column("revision", Integer, primary_key=True), Column("domain", String(80), nullable=False), Column("created_at", String(40), nullable=False), Column("payload", Text, nullable=False))
 
+removed = Table("rag_removed_releases", metadata, Column("release_id", String(64), primary_key=True))
+
 
 def encode(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
@@ -97,10 +99,13 @@ class Store:
 
     def list_releases(self, domain: str):
         with self.engine.connect() as db:
-            return [json.loads(row[0]) for row in db.execute(select(releases.c.payload).where(releases.c.domain == domain))]
+            return [json.loads(row[0]) for row in db.execute(select(releases.c.payload).where(releases.c.domain == domain, ~releases.c.id.in_(select(removed.c.release_id))))]
 
     def activate(self, domain: str, identity: str, *, promotion: dict | None = None):
         manifest = self.release(identity)
+        with self.engine.connect() as db:
+            if db.execute(select(removed.c.release_id).where(removed.c.release_id == identity)).scalar():
+                raise ValueError("Candidate was removed. Rebuild it before activating.")
         if manifest["domain_id"] != domain:
             raise ValueError("Release belongs to a different domain")
         with self.engine.begin() as db:
@@ -115,6 +120,40 @@ class Store:
                 if value:
                     db.execute(pointers.delete().where(pointers.c.domain == domain, pointers.c.name == name))
                     db.execute(insert(pointers).values(domain=domain, name=name, release_id=value))
+
+    def removal_blockers(self, identity, db=None):
+        if db is None:
+            with self.engine.connect() as connection:
+                return self.removal_blockers(identity, connection)
+        blockers = []
+        if db.execute(select(pointers.c.domain).where(pointers.c.release_id == identity, pointers.c.name == "active")).first():
+            blockers.append("Active RAG: select another version first.")
+        def refers(value):
+            if isinstance(value, dict):
+                return value.get("rag_release_id") == identity or any(refers(v) for v in value.values())
+            return isinstance(value, list) and any(refers(v) for v in value)
+        counts = {}
+        for category, payload in db.execute(select(records.c.category, records.c.payload)):
+            if refers(json.loads(payload)):
+                counts[category] = counts.get(category, 0) + 1
+        blockers.extend(f"Used by {count} saved {category} record(s)." for category, count in sorted(counts.items()))
+        return blockers
+
+    def remove_release(self, identity, domain):
+        with self.engine.begin() as db:
+            actual_domain = db.execute(select(releases.c.domain).where(releases.c.id == identity)).scalar()
+            if actual_domain != domain:
+                raise ValueError("Candidate not found in this collection.")
+            blockers = self.removal_blockers(identity, db)
+            if blockers:
+                raise ValueError(" ".join(blockers))
+            if not db.execute(select(removed.c.release_id).where(removed.c.release_id == identity)).scalar():
+                db.execute(insert(removed).values(release_id=identity))
+            db.execute(pointers.delete().where(pointers.c.release_id == identity, pointers.c.name == "previous"))
+
+    def restore_release(self, identity):
+        with self.engine.begin() as db:
+            db.execute(removed.delete().where(removed.c.release_id == identity))
 
     def pointer(self, domain: str, name="active"):
         with self.engine.connect() as db:

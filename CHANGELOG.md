@@ -5,6 +5,10 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-52: reuse identical local candidates across Git-only changes, retain build
+  provenance and legacy manifests, and add protected, recoverable removal.
+  Restore Create candidate and replace page slogans with task instructions.
+
 - Simplify RAG version selection and collapse developer build controls. Remove
   unrelated setup/provenance warnings from that screen. Help popups use the
   browser top layer and dismiss on outside click or Escape.

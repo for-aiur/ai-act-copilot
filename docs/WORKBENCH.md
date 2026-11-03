@@ -107,3 +107,20 @@ project ID is configured. No cost estimate is invented when pricing is unknown.
 
 For older consumers, `/api/corpus` and `/api/drafts` retain their initial legacy
 subset/draft behavior. The current workbench uses `/api/rag/*` endpoints.
+
+## Local candidate lifecycle
+
+Choose **Create candidate** after changing sources, embedding configuration or
+retrieval code in your checkout. Identical effective inputs reuse the existing
+candidate, even after an unrelated Git commit. The manifest retains the original
+build commit. Legacy manifests remain readable and immutable; equivalent legacy
+entries are labelled so unused ones can be removed deliberately.
+
+**Remove** removes an unused candidate from the workspace catalogue. It never
+removes the active version or one referenced by any saved case revision,
+retrieval run, review or evaluation. The screen explains blockers. Removal is
+recoverable: immutable bundle files and source snapshots are retained, and an
+explicit rebuild restores the entry. It is not a disk-cleanup command.
+Model downloads remain an explicit CLI/setup operation; the Create action uses
+the configured cached model. New reviews use the active local version; M2 will
+pin that ID when each review starts.
