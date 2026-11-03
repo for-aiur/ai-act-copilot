@@ -70,6 +70,9 @@ def present(result: ScanResult, json_mode: bool):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "rag":
+        from .rag.cli import main as rag_main
+        return rag_main(argv[1:])
     json_mode = bool(argv and argv[0] in {"scan", "doctor"} and "--json" in argv)
     doctor_mode = bool(argv and argv[0] == "doctor")
 
