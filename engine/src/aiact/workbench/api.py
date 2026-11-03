@@ -26,10 +26,16 @@ class DraftInput(BaseModel):
     corpus_checksum: str = Field(min_length=64, max_length=64)
 
 
-def create_app(db_path: Path | None = None) -> FastAPI:
+def create_app(db_path: Path | None = None, settings=None) -> FastAPI:
     app = FastAPI(title="AI Act Copilot Workbench", version="0.1.0")
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"])
     database = db_path or Path(os.environ.get("AIACT_WORKBENCH_DB", ".aiact-workbench/drafts.sqlite3"))
+    from .rag_api import router
+    app.include_router(router(settings))
+
+    @app.exception_handler(ValueError)
+    async def invalid_rag(request, exc):
+        return JSONResponse({"detail": str(exc)}, status_code=422)
 
     @contextmanager
     def connect():

@@ -51,7 +51,7 @@ def load_snapshot(domain_id="ai-act") -> Snapshot:
 
 def resolve_reference(domain_id: str, query: str) -> tuple[str, ...]:
     if domain_id == "workbench-api":
-        return tuple(i for i in ("health", "drafts", "corpus") if re.search(r"\b" + i + r"\b", query, re.I))
+        return tuple(i for i in ("health", "drafts", "corpus") if re.search(r"(?:/api/|\breference\s+|\bdocument\s+)" + i + r"\b", query, re.I))
     found = ["article-" + n.lower() for n in re.findall(r"\barticle\s+(\d+[a-z]?)\b", query, re.I)]
     found += ["annex-" + n.lower() for n in re.findall(r"\bannex\s+([ivx]+)\b", query, re.I)]
     found += ["recital-" + n for n in re.findall(r"\brecital\s+(\d+)\b", query, re.I)]

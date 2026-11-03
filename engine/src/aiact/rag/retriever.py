@@ -12,6 +12,8 @@ from .domains import resolve_reference
 from .embeddings import LocalEmbedder
 from .releases import verify_bundle
 from .store import Store
+from .official import checksum
+from pathlib import Path
 
 STOPWORDS = frozenset("a an the and or of to for in on is are be with this that from as it at by".split())
 
@@ -62,6 +64,8 @@ class HybridRetriever:
     def __init__(self, settings, release_id, store=None, embedder=None, vector_factory=QdrantVectorRetriever):
         self.settings = settings
         self.manifest, self.snapshot, vectors = verify_bundle(settings.data_dir / "releases" / release_id)
+        if any(checksum(Path(__file__).with_name(name).read_bytes()) != digest for name, digest in self.manifest["implementation"].items()):
+            raise ValueError("Runtime implementation changed. Build a new RAG candidate; historical releases are preserved.")
         self.store = store or Store(settings.database_url.get_secret_value())
         self.owns_store = store is None
         if self.store.release(release_id) != self.manifest:
@@ -161,7 +165,7 @@ class HybridRetriever:
             warnings.append("No matching sources found. This is not legal clearance.")
         return RetrievalResult(request=request, context_fingerprint=request.fingerprint(), snapshot_id=self.snapshot.snapshot_id,
             rag_release_id=self.manifest["rag_release_id"], candidates=candidates,
-            stages={key: tuple(value) for key, value in stage_lists.items()}, elapsed_ms=int((time.monotonic() - start) * 1000), warnings=tuple(warnings))
+            stages={key: tuple(hit.model_copy(update={"document_id": self.chunks[hit.chunk_id].document_id, "text": self.chunks[hit.chunk_id].text}) for hit in value) for key, value in stage_lists.items()}, elapsed_ms=int((time.monotonic() - start) * 1000), warnings=tuple(warnings))
 
     def close(self):
         if self.vector:

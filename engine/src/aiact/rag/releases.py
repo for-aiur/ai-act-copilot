@@ -2,6 +2,7 @@
 import gzip
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -16,7 +17,9 @@ from .store import Store
 PIPELINE_VERSION = "hybrid-1"
 
 
-def verify_bundle(directory: Path) -> tuple[dict, Snapshot, list]:
+def verify_bundle(directory: Path, allow_staging=False) -> tuple[dict, Snapshot, list]:
+    if not allow_staging and not re.fullmatch(r"[a-f0-9]{64}", directory.name):
+        raise ValueError("Invalid content-addressed release ID")
     manifest = json.loads((directory / "manifest.json").read_text())
     identity = manifest.pop("rag_release_id")
     if checksum(manifest) != identity:
@@ -100,7 +103,7 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
             (staging / "snapshot.json").write_bytes(snapshot_bytes)
             (staging / "vectors.json.gz").write_bytes(vector_bytes)
             (staging / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-            verify_bundle(staging)
+            verify_bundle(staging, allow_staging=True)
             os.rename(staging, destination)
         finally:
             if staging.exists():

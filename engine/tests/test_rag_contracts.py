@@ -9,7 +9,7 @@ def test_domains_are_separate_and_source_offsets_validated():
     assert legal.complete and technical.complete
     assert not {d.id for d in legal.documents} & {d.id for d in technical.documents}
     assert resolve_reference("ai-act", "Article 75a and Annex XIV") == ("article-75a", "annex-xiv")
-    assert resolve_reference("workbench-api", "check health") == ("health",)
+    assert resolve_reference("workbench-api", "check /api/health") == ("health",)
     chunk = technical.chunks[0].model_dump()
     with pytest.raises(ValidationError, match="offset"):
         type(technical).model_validate(technical.model_dump() | {"chunks": [chunk | {"start": 1}]})

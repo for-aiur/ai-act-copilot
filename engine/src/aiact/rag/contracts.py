@@ -115,6 +115,8 @@ class StageHit(Record):
     rank: int
     score: float
     reason: str
+    document_id: str = ""
+    text: str = ""
 
 
 class Candidate(Record):

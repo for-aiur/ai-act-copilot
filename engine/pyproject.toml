@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = ["pydantic>=2.7,<3"]
 
 [project.optional-dependencies]
-workbench = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
+workbench = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "sqlalchemy>=2.0,<3"]
 workbench-test = ["httpx>=0.27,<1"]
 rag = ["sqlalchemy>=2.0,<3", "qdrant-client>=1.15,<2", "fastembed>=0.7,<1; sys_platform != 'darwin' or platform_machine != 'x86_64' or python_version < '3.13'"]
 postgres = ["psycopg[binary]>=3.2,<4"]
