@@ -25,6 +25,15 @@ def release_identity(manifest):
     return checksum(content)
 
 
+def compatibility(manifest):
+    # Build bookkeeping, evaluation and persistence changes do not change search.
+    relevant = {"retriever.py", "domains.py", "embeddings.py"}
+    changed = [name for name, digest in manifest.get("implementation", {}).items()
+               if name in relevant and checksum(Path(__file__).with_name(name).read_bytes()) != digest]
+    return {"compatible": not changed, "compatibility_reason":
+        "This candidate uses older search code. Create a candidate from this checkout to test it here." if changed else None}
+
+
 def verify_bundle(directory: Path, allow_staging=False) -> tuple[dict, Snapshot, list]:
     if not allow_staging and not re.fullmatch(r"[a-f0-9]{64}", directory.name):
         raise ValueError("Invalid content-addressed release ID")

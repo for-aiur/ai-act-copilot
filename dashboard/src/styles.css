@@ -1834,13 +1834,75 @@ pre {
   padding: 12px 0;
 }
 
-.brand-mark img { display: block; width: 42px; height: 42px; object-fit: contain; flex-shrink: 0; }
+.brand-mark img {
+  display: block;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 
-.field-help { position: relative; display: inline-flex; vertical-align: middle; margin-left: 5px; font-size: 12px; letter-spacing: normal; text-transform: none; }
-.help-button { display: inline-grid; place-items: center; width: 19px; height: 19px; border: 1px solid #8c9e90; border-radius: 50%; background: transparent; color: #3c5947; cursor: pointer; padding: 0; font-size: 12px; }
-.help-button:focus-visible { outline: 2px solid #385d43; outline-offset: 3px; }
-.help-popup { position: fixed; inset: auto; margin: 0; width: min(290px, 70vw); z-index: 30; padding: 14px; border: 1px solid #d4ddd4; border-radius: 8px; background: #fff; color: #253d2e; box-shadow: 0 6px 24px #162d2226; font-size: 13px; line-height: 1.6; font-weight: 400; white-space: normal; }
+.field-help {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 5px;
+  font-size: 12px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.help-button {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid #8c9e90;
+  border-radius: 50%;
+  background: transparent;
+  color: #3c5947;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+}
+.help-button:focus-visible {
+  outline: 2px solid #385d43;
+  outline-offset: 3px;
+}
+.help-popup {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: min(290px, 70vw);
+  z-index: 30;
+  padding: 14px;
+  border: 1px solid #d4ddd4;
+  border-radius: 8px;
+  background: #fff;
+  color: #253d2e;
+  box-shadow: 0 6px 24px #162d2226;
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 400;
+  white-space: normal;
+}
 
-.help-popup::backdrop { background: transparent; }
-.technical-settings { margin: 0 24px 20px; }
-.technical-settings > summary { cursor: pointer; padding: 12px 0; font-size: 13px; color: #455d4b; }
+.help-popup::backdrop {
+  background: transparent;
+}
+.technical-settings {
+  margin: 0 24px 20px;
+}
+.technical-settings > summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 13px;
+  color: #455d4b;
+}
+
+.review-input .code-editor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  tab-size: 4;
+  min-height: 280px;
+}

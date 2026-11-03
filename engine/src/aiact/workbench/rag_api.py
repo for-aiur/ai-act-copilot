@@ -31,7 +31,7 @@ class ApprovalInput(BaseModel):
 class ReviewInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     code: str = Field(min_length=1, max_length=24000)
-    filename: str = Field(default="review.py", pattern=r"^[a-zA-Z0-9_-]+\.py$")
+    filename: str = Field(default="review.py", pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_. -]{0,119}$")
     context: str = Field(default="", max_length=2000)
     cloud_consent: bool = False
 
@@ -115,11 +115,13 @@ def router(settings=None):
         for manifest in items:
             effective = checksum({k:v for k,v in manifest.items() if k not in {"git_revision", "rag_release_id", "schema_version"}})
             equivalent = first.setdefault(effective, manifest["rag_release_id"])
-            releases.append(manifest | {"removal_blockers": rt.store.removal_blockers(manifest["rag_release_id"]),
+            from aiact.rag.releases import compatibility
+            releases.append(manifest | compatibility(manifest) | {"removal_blockers": rt.store.removal_blockers(manifest["rag_release_id"]),
                 "equivalent_to": equivalent if equivalent != manifest["rag_release_id"] else None})
         return {"active": rt.store.pointer(domain), "previous": rt.store.pointer(domain, "previous"), "releases": releases,
                 "provider": rt.settings.provider, "model": rt.settings.model, "cloud_key_configured": bool(rt.settings.gemini_api_key.get_secret_value()),
-                "tracing_enabled": rt.settings.langfuse_enabled}
+                "tracing_enabled": rt.settings.langfuse_enabled,
+                "active_compatible": next((m["compatible"] for m in releases if m["rag_release_id"] == rt.store.pointer(domain)), False)}
 
     @routes.post("/build")
     def build(body: BuildInput):
@@ -152,14 +154,17 @@ def router(settings=None):
             manifest, _, _ = verify_bundle(rt.settings.data_dir / "releases" / identity)
             if manifest["domain_id"] != domain:
                 raise HTTPException(409, "Release belongs to a different domain.")
+            from aiact.rag.releases import compatibility
+            if not compatibility(manifest)["compatible"]:
+                raise HTTPException(409, compatibility(manifest)["compatibility_reason"])
             rt.store.activate(domain, identity)
             return {"active": identity, "quality_status": manifest["quality_status"], "scope": "local_tooling_candidate"}
 
     @routes.post("/retrieve")
-    def retrieve(body: RetrievalRequest):
+    def retrieve(body: RetrievalRequest, release: str | None = None):
         rt = runtime()
         with rt.lock:
-            result = rt.get_retriever(body.domain_id).search(body)
+            result = rt.get_retriever(body.domain_id, release).search(body)
             identity = save_run(rt.store, result)
         return {"id": identity, "result": result.model_dump(mode="json")}
 
@@ -175,12 +180,14 @@ def router(settings=None):
         from aiact.providers import Ollama
         from aiact.rag.review import review_python
         rt = runtime()
+        from aiact.rag.uploaded import validate_upload
+        validate_upload(body.filename, body.code, body.context)
         rt.settings.require_cloud(body.cloud_consent)
         provider = Gemini(rt.settings.model, api_key=rt.settings.gemini_api_key.get_secret_value()) if rt.settings.provider == "gemini" else Ollama(rt.settings.model, rt.settings.ollama_url)
         with rt.lock, tempfile.TemporaryDirectory(prefix="aiact-review-") as temporary:
             source = Path(temporary) / body.filename
             source.write_text(body.code)
-            payload = review_python(source, provider, rt.get_retriever("ai-act"), body.context)
+            payload = review_python(source, provider, rt.get_retriever("ai-act"), body.context, uploaded=True)
             from aiact.telemetry import Trace
             from aiact.contracts import ScanResult
             trace = Trace(rt.settings)
@@ -191,6 +198,8 @@ def router(settings=None):
             trace.finish(ScanResult.model_validate(payload["scan_result"]), payload["rag_release_id"])
             payload["trace_id"] = trace.id
             payload["trace_url"] = ("https://cloud.langfuse.com/project/" + rt.settings.langfuse_project_id + "/traces/" + trace.id) if rt.settings.langfuse_enabled and rt.settings.langfuse_project_id else None
+            if payload.get("retrieval"):
+                payload["retrieval_run_id"] = save_run(rt.store, RetrievalResult.model_validate(payload["retrieval"]))
             identity = str(uuid4())
             rt.store.append("review", identity, "ai-act", payload)
         return {"id": identity, **payload}

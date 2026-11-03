@@ -65,8 +65,10 @@ class HybridRetriever:
     def __init__(self, settings, release_id, store=None, embedder=None, vector_factory=QdrantVectorRetriever):
         self.settings = settings
         self.manifest, self.snapshot, vectors = verify_bundle(settings.data_dir / "releases" / release_id)
-        if any(checksum(Path(__file__).with_name(name).read_bytes()) != digest for name, digest in self.manifest["implementation"].items()):
-            raise ValueError("Runtime implementation changed. Build a new RAG candidate; historical releases are preserved.")
+        from .releases import compatibility
+        state = compatibility(self.manifest)
+        if not state["compatible"]:
+            raise ValueError(state["compatibility_reason"])
         self.store = store or Store(settings.database_url.get_secret_value())
         self.owns_store = store is None
         if self.store.release(release_id) != self.manifest:

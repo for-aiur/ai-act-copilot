@@ -76,9 +76,10 @@ introduces each screen, Langfuse usage, RAG versioning and extension points.
 
 1. **Source explorer:** search source text or references, inspect exact wording
    and provenance. This screen is for reading sources.
-2. **Retrieval studio:** describe intended use, actor role and deployment context.
-   Run retrieval and inspect lexical, dense, exact, fusion, rerank and expansion
-   stages. Changing context clears the displayed run.
+2. **Retrieval studio:** describe the scenario, paste code or upload a source
+   file, then choose **Run**. Code and description share a 24 KB limit. Inspect
+   matching sources and label expected results. Examples remain on the right.
+   Model analysis requires a configured provider; Gemini requires explicit consent.
 3. **Evaluation cases:** label sources, give reasons, save drafts, explicitly
    approve a new revision and export JSON. Use **Add required source** while
    preparing a scenario to select a source the test must find. Expectations and actual hits remain

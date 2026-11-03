@@ -5,6 +5,12 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-53: make code testing the primary studio flow with scenario description,
+  UTF-8 source upload/paste, 24 KB bounds, exact source-line evidence and retained
+  templates. Save code with test fixtures; hide unrelated case/context fields.
+  Explain incompatible historical candidates before activation and allow builds
+  after bookkeeping-only changes.
+
 - EVR-52: reuse identical local candidates across Git-only changes, retain build
   provenance and legacy manifests, and add protected, recoverable removal.
   Restore Create candidate and replace page slogans with task instructions.

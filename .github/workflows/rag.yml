@@ -32,7 +32,7 @@ jobs:
         with: {version: '0.13.6'}
       - run: uv sync --project engine --python 3.12 --extra dev --extra workbench --extra workbench-test --extra rag --locked
       - name: Verify source, index, feedback and artifact contracts
-        run: uv run --project engine --extra dev --extra workbench --extra workbench-test --extra rag --locked python -m pytest engine/tests/test_official.py engine/tests/test_rag_contracts.py engine/tests/test_rag_releases.py engine/tests/test_rag_lifecycle.py engine/tests/test_rag_retriever.py engine/tests/test_rag_store.py engine/tests/test_rag_api.py engine/tests/test_rag_evaluation.py engine/tests/test_rag_updates.py engine/tests/test_full_review.py engine/tests/test_telemetry.py
+        run: uv run --project engine --extra dev --extra workbench --extra workbench-test --extra rag --locked python -m pytest engine/tests/test_official.py engine/tests/test_rag_contracts.py engine/tests/test_rag_releases.py engine/tests/test_rag_lifecycle.py engine/tests/test_rag_retriever.py engine/tests/test_rag_store.py engine/tests/test_rag_api.py engine/tests/test_rag_evaluation.py engine/tests/test_rag_updates.py engine/tests/test_full_review.py engine/tests/test_uploaded_review.py engine/tests/test_telemetry.py
       - name: Generate versioned retrieval reports
         run: uv run --project engine --extra rag --locked python scripts/ci-rag.py --output .aiact-results/ci
       - name: Prove the gate rejects a designated failure

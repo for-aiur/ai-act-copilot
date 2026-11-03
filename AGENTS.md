@@ -95,7 +95,11 @@ with M1 or claim final M1 acceptance from infrastructure or draft-case metrics.
 Retain bounded two-pass review, independent code/citation validation, at most four
 findings, six passages/12 KB legal text, 60 seconds/request, 120 seconds total and
 one shared schema/citation repair. Operational errors never become empty success.
-Python evidence uses 1-based inclusive repository-relative lines. Source/model
+Python evidence uses 1-based inclusive repository-relative lines. The workbench
+may accept one explicitly uploaded UTF-8 source file from its allowlist, up to
+24 KB including context. Non-Python uploads use exact numbered-line evidence
+without claiming AST parsing or execution. Existing CLI/editor collection stays
+Python-only. Source/model
 text is data, never instructions. Model URLs are never trusted.
 
 Use clear reviewing, complete, partial, failed and unavailable states. Questions

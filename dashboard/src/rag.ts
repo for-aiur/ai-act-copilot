@@ -104,6 +104,7 @@ export type Case = {
   approved_by: string | null;
   split: "development" | "holdout" | "critical";
   area: string;
+  code_fixture?: { filename: string; text: string } | null;
   holdout_sealed: boolean;
   revision: number;
 };
@@ -118,6 +119,8 @@ export type Manifest = {
   git_revision: string;
   removal_blockers?: string[];
   equivalent_to?: string | null;
+  compatible?: boolean;
+  compatibility_reason?: string | null;
 };
 export type Versions = {
   active: string | null;
@@ -127,6 +130,7 @@ export type Versions = {
   model: string;
   cloud_key_configured: boolean;
   tracing_enabled: boolean;
+  active_compatible?: boolean;
 };
 export type Evaluation = {
   id: string;

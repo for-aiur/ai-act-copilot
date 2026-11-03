@@ -124,3 +124,23 @@ explicit rebuild restores the entry. It is not a disk-cleanup command.
 Model downloads remain an explicit CLI/setup operation; the Create action uses
 the configured cached model. New reviews use the active local version; M2 will
 pin that ID when each review starts.
+
+## Code-first testing
+
+In Retrieval studio, enter a scenario description and paste code or upload one
+UTF-8 source file, then choose Run. Code plus description are limited to 24 KB;
+archives, binary files and hidden configuration files are rejected. Nothing is
+executed. Uploaded Python uses AST ranges; other allowed source types use exact
+numbered lines without claiming parser-based understanding. Semantic results
+still depend on the configured model. Examples remain on the right.
+
+Gemini needs its private runtime key and explicit per-input cloud consent.
+Model-derived retrieval results populate the same source labels and expected
+sources below the editor. Save test retains the code fixture locally alongside
+its extracted retrieval request. Retrieval evaluation replays that request; it
+is separate from a full model-quality evaluation. Source explorer's Add to test
+starts an expected-source draft without forcing a case title or subject area.
+
+Historical candidates whose search code differs are labelled before selection.
+Create a candidate from the running checkout and select it; current code never
+silently impersonates an incompatible historical search implementation.

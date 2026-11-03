@@ -145,8 +145,20 @@ class GoldLabel(Record):
     rationale: str = Field(min_length=1, max_length=2000)
 
 
+class CodeFixture(Record):
+    filename: str
+    text: str = Field(max_length=24000)
+
+    @model_validator(mode="after")
+    def validate_source(self):
+        from .uploaded import validate_upload
+        validate_upload(self.filename, self.text)
+        return self
+
+
 class GoldenCase(Record):
     schema_version: Literal["1"] = "1"
+    code_fixture: CodeFixture | None = None
     id: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$")
     title: str = Field(min_length=1, max_length=160)
     request: RetrievalRequest
