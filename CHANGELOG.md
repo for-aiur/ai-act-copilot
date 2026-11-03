@@ -5,6 +5,10 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- Simplify RAG version selection and collapse developer build controls. Remove
+  unrelated setup/provenance warnings from that screen. Help popups use the
+  browser top layer and dismiss on outside click or Escape.
+
 - Clarify source and active RAG identifiers with keyboard-accessible help popups.
   Explain publisher references, applicability and publication in plain language;
   remove the language badge.

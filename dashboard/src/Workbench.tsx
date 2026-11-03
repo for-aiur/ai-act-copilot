@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import ReviewPanel from "./ReviewPanel";
 import { useEffect, useId, useRef, useState } from "react";
 import {
@@ -39,9 +40,18 @@ import type {
 function Help({ label, text }: { label: string; text: string }) {
   const [open, setOpen] = useState(false);
   const id = useId();
-  return <span className="field-help" onKeyDown={e=>{if(e.key==='Escape')setOpen(false)}}>
-    <button type="button" className="help-button" aria-label={'About '+label} aria-expanded={open} aria-describedby={open?id:undefined} onClick={()=>setOpen(!open)}>?</button>
-    {open && <span id={id} role="tooltip" className="help-popup">{text}</span>}
+  const popup = useRef<HTMLDivElement>(null);
+  return <span className="field-help">
+    <button type="button" className="help-button" aria-label={'About '+label} aria-expanded={open} aria-describedby={open?id:undefined} onClick={e=>{
+      const rect=e.currentTarget.getBoundingClientRect();
+      const element=popup.current;
+      if(element){
+        element.style.left=Math.max(12,Math.min(rect.left,window.innerWidth-Math.min(290,window.innerWidth*.7)-40))+'px';
+        element.style.top=Math.max(12,Math.min(rect.bottom+8,window.innerHeight-220))+'px';
+        element.togglePopover();
+      }
+    }}>?</button>
+    {createPortal(<div id={id} ref={popup} popover="auto" role="tooltip" className="help-popup" onToggle={e=>setOpen((e.nativeEvent as ToggleEvent).newState==='open')}>{text}</div>,document.body)}
   </span>;
 }
 
@@ -1307,13 +1317,14 @@ export default function Workbench() {
             <section className="draft-panel">
               <div className="section-header">
                 <div>
-                  <h2>Build & activate a local candidate</h2>
+                  <h2>RAG versions</h2>
                   <p>
-                    Models download only when explicitly selected. Activation
-                    does not pass the quality gate.
+                    Choose which search version to use.
                   </p>
                 </div>
               </div>
+              <details className="technical-settings">
+                <summary>Technical setup</summary>
               <div className="build-controls">
                 <label>
                   <input
@@ -1321,7 +1332,7 @@ export default function Workbench() {
                     checked={downloadModel}
                     onChange={(e) => setDownloadModel(e.target.checked)}
                   />
-                  Allow embedding model download (setup only, about 64 MB)
+                  Download the embedding model if needed
                 </label>
                 <label>
                   <input
@@ -1329,7 +1340,7 @@ export default function Workbench() {
                     checked={lexicalOnly}
                     onChange={(e) => setLexicalOnly(e.target.checked)}
                   />
-                  Build an explicit lexical baseline instead of hybrid retrieval
+                  Use text-only search (developer comparison)
                 </label>
                 <button
                   className="primary"
@@ -1343,7 +1354,7 @@ export default function Workbench() {
                       });
                       await refresh();
                       setNotice(
-                        "Immutable candidate built. Activate it for local tooling tests below.",
+                        "Search version ready. Select it below.",
                       );
                     })
                   }
@@ -1353,7 +1364,7 @@ export default function Workbench() {
                   ) : (
                     <Plus size={16} />
                   )}
-                  Build RAG candidate
+                  Build search version
                 </button>
                 {busy === "build" && (
                   <p role="status">
@@ -1362,6 +1373,7 @@ export default function Workbench() {
                   </p>
                 )}
               </div>
+              </details>
               {versions?.releases.map((m) => (
                 <div className="version-row" key={m.rag_release_id}>
                   <div>
@@ -1381,7 +1393,7 @@ export default function Workbench() {
                       {m.quality_status}
                     </small>
                     <details>
-                      <summary>Manifest</summary>
+                      <summary>Technical details</summary>
                       <pre>{JSON.stringify(m, null, 2)}</pre>
                     </details>
                   </div>
@@ -1398,37 +1410,17 @@ export default function Workbench() {
                         );
                         await refresh();
                         setNotice(
-                          "Active local candidate changed. Existing runs keep their original release IDs.",
+                          "Active RAG version changed. Saved runs keep their original version.",
                         );
                       })
                     }
                   >
-                    Use for local tests
+                    Use this version
                     <ArrowRight size={13} />
                   </button>
                 </div>
               ))}
-              <div className="provenance">
-                <h3>Runtime configuration</h3>
-                <p>
-                  Review provider: {versions?.provider} · Model:{" "}
-                  {versions?.model}
-                  <br />
-                  Cloud key:{" "}
-                  {versions?.cloud_key_configured
-                    ? "configured"
-                    : "not configured"}{" "}
-                  · Tracing:{" "}
-                  {versions?.tracing_enabled ? "enabled" : "disabled"}
-                </p>
-                <p>
-                  Retrieval uses local embeddings. Gemini review is a separate
-                  explicit action with cloud consent.
-                </p>
-                {library?.scope_limits.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-              </div>
+
             </section>
           )}
           {view === "compare" && (
