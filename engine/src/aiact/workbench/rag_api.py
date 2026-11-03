@@ -28,6 +28,14 @@ class ApprovalInput(BaseModel):
     reviewer: str = Field(min_length=1, max_length=120)
 
 
+class ReviewInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(min_length=1, max_length=24000)
+    filename: str = Field(default="review.py", pattern=r"^[a-zA-Z0-9_-]+\.py$")
+    context: str = Field(default="", max_length=2000)
+    cloud_consent: bool = False
+
+
 class Runtime:
     def __init__(self, settings):
         self.settings = settings
@@ -122,6 +130,28 @@ def router(settings=None):
     @routes.get("/runs")
     def runs(domain="ai-act"):
         return runtime().store.list_records("retrieval", domain, limit=30)
+
+    @routes.post("/review")
+    def review(body: ReviewInput):
+        import tempfile
+        from pathlib import Path
+        from aiact.gemini import Gemini
+        from aiact.providers import Ollama
+        from aiact.rag.review import review_python
+        rt = runtime()
+        rt.settings.require_cloud(body.cloud_consent)
+        provider = Gemini(rt.settings.model, api_key=rt.settings.gemini_api_key.get_secret_value()) if rt.settings.provider == "gemini" else Ollama(rt.settings.model, rt.settings.ollama_url)
+        with rt.lock, tempfile.TemporaryDirectory(prefix="aiact-review-") as temporary:
+            source = Path(temporary) / body.filename
+            source.write_text(body.code)
+            payload = review_python(source, provider, rt.get_retriever("ai-act"), body.context)
+            identity = str(uuid4())
+            rt.store.append("review", identity, "ai-act", payload)
+        return {"id": identity, **payload}
+
+    @routes.get("/reviews")
+    def reviews():
+        return runtime().store.list_records("review", "ai-act", limit=30)
 
     @routes.get("/cases")
     def cases(domain="ai-act"):

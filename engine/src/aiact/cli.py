@@ -26,9 +26,12 @@ def parser():
     result = Parser(prog="aiact", description="AI Act engineering review; choose local Ollama or opt-in Gemini")
     result.add_argument("--version", action="version", version=__version__)
     sub = result.add_subparsers(dest="command", required=True)
+    sub.add_parser("rag", help="Build, inspect and activate versioned full-corpus RAG artifacts")
     review = sub.add_parser("scan", help="Review explicitly selected Python input")
     review.add_argument("path", type=Path)
     review.add_argument("--json", action="store_true")
+    review.add_argument("--rag-release", help="Explicit full-corpus RAG release ID (requires rag extra)")
+    review.add_argument("--cloud-consent", action="store_true", help="Allow full-corpus review to send selected source/context to Gemini")
     review.add_argument("--context", default="", help="Explicit purpose/deployment facts; no automatic README ingestion")
     review.add_argument("--max-files", type=int, default=10)
     review.add_argument("--max-source-bytes", type=int, default=24_000)
@@ -99,10 +102,27 @@ def main(argv=None):
                 for check in health.checks:
                     print(f"{check.id}: {check.status} · {check.detail}")
             return 2 if any(e.code == "configuration" for e in health.errors) else 0 if health.status == "ready" else 1
-        provider = create_provider(args.provider, model, args.endpoint)
         budgets = Budgets(files=args.max_files, source_bytes=args.max_source_bytes,
                           request_seconds=min(args.timeout, 60), total_seconds=args.deadline)
-        result = scan(args.path, provider, args.corpus, args.context, budgets)
+        if args.rag_release:
+            from .settings import load_settings
+            from .rag.retriever import HybridRetriever
+            from .rag.review import review_python
+            settings = load_settings({"provider": args.provider, "model": model})
+            settings.require_cloud(args.cloud_consent or ("--provider" in argv and args.provider == "gemini"))
+            if args.provider == "gemini":
+                from .gemini import Gemini
+                provider = Gemini(model, api_key=settings.gemini_api_key.get_secret_value())
+            else:
+                provider = create_provider(args.provider, model, args.endpoint)
+            retriever = HybridRetriever(settings, args.rag_release)
+            try:
+                result = ScanResult.model_validate(review_python(args.path, provider, retriever, args.context, budgets)["scan_result"])
+            finally:
+                retriever.close()
+        else:
+            provider = create_provider(args.provider, model, args.endpoint)
+            result = scan(args.path, provider, args.corpus, args.context, budgets)
         present(result, args.json)
         return 2 if any(e.code == "configuration" for e in result.errors) else 0 if result.status == "complete" else 1
     except (UsageError, ValueError) as exc:
