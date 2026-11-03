@@ -9,6 +9,12 @@ The M1 source pack contains **119 articles, 14 annexes, 180 original recitals an
 coverage does not establish review accuracy. The initial 54 legal evaluation
 cases are model-authored drafts, awaiting expert review.
 
+## Open the application
+
+Dashboard: **[http://localhost:8000](http://localhost:8000)**.
+The dashboard and API share this address when using Docker or the built frontend.
+Keep the application process running while using it.
+
 ## Start with Docker (recommended)
 
 Requirements: a running Docker engine with Docker Compose v2.20 or newer.
@@ -49,6 +55,17 @@ Local retrieval uses CPU embeddings regardless of the review provider. To use
 Ollama instead, select `AIACT_PROVIDER=ollama`, configure its model and loopback
 endpoint in native mode. Container-to-host Ollama networking is not enabled by
 default. There is no automatic provider fallback.
+
+## Run the built frontend without Docker
+
+After native setup and `npm run build --prefix dashboard`, run from the repository root:
+
+```sh
+AIACT_STATIC_DIR="$PWD/dashboard/dist" uv run --project engine --extra workbench --extra rag python -m uvicorn aiact.workbench.api:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Open **[http://localhost:8000](http://localhost:8000)**. This serves the dashboard
+and API together, without a separate Vite process.
 
 ## Short screen guide
 
