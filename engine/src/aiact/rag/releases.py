@@ -48,8 +48,22 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
         embedder = embedder or LocalEmbedder(settings.embedding_model, settings.models_path, download)
         if settings.embedding_revision not in {"file-sha256-pinned-at-build", embedder.manifest["revision"]}:
             raise ValueError("Embedding files differ from the configured revision")
-        vectors = embedder.passages([c.title + "\n" + c.text for c in snapshot.chunks])
         embedding = embedder.manifest
+        cache_key = checksum({"chunks": [(c.id, c.title, c.checksum) for c in snapshot.chunks], "embedding": embedding})
+        cache = settings.data_dir / "embedding-cache" / (cache_key + ".json.gz")
+        if cache.exists():
+            vectors = json.loads(gzip.decompress(cache.read_bytes()))
+        else:
+            # Reuse only checksum-verified vectors with the identical input/model.
+            for existing in (settings.data_dir / "releases").glob("*/manifest.json"):
+                previous, previous_snapshot, previous_vectors = verify_bundle(existing.parent)
+                if previous["embedding"] == embedding and [(c.id, c.title, c.checksum) for c in previous_snapshot.chunks] == [(c.id, c.title, c.checksum) for c in snapshot.chunks]:
+                    vectors = previous_vectors
+                    break
+            if not vectors:
+                vectors = embedder.passages([c.title + "\n" + c.text for c in snapshot.chunks])
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_bytes(gzip.compress(json.dumps(vectors).encode(), mtime=0))
     source_files = ["contracts.py", "domains.py", "embeddings.py", "releases.py", "retriever.py"]
     implementation = {name: checksum(Path(__file__).with_name(name).read_bytes()) for name in source_files if Path(__file__).with_name(name).exists()}
     try:

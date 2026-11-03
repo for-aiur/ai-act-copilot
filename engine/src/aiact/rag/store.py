@@ -91,6 +91,10 @@ class Store:
         with self.engine.connect() as db:
             return json.loads(db.execute(select(releases.c.payload).where(releases.c.id == identity)).scalar_one())
 
+    def list_releases(self, domain: str):
+        with self.engine.connect() as db:
+            return [json.loads(row[0]) for row in db.execute(select(releases.c.payload).where(releases.c.domain == domain))]
+
     def activate(self, domain: str, identity: str):
         manifest = self.release(identity)
         if manifest["domain_id"] != domain:

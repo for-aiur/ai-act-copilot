@@ -155,6 +155,8 @@ class GoldenCase(Record):
     status: Literal["draft", "approved"] = "draft"
     approved_by: str | None = None
     split: Literal["development", "holdout", "critical"] = "development"
+    area: str = Field(default="unspecified", max_length=80)
+    holdout_sealed: bool = False
     revision: int = Field(default=1, ge=1)
 
     @model_validator(mode="after")
