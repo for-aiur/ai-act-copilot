@@ -59,7 +59,7 @@ acceptance. Do not mark the milestone complete using draft-case metrics.
 Final source/exception and UI refinements passed software, fast retrieval,
 PostgreSQL and actual Compose/restart CI on bded14f.
 See https://github.com/for-aiur/ai-act-copilot/actions/runs/41649718489.
-The 12-slide Turkish presentation and screen guide are in docs/presentation/. Gemini and Langfuse live credentials are absent from this session:
+The 12-slide English presentation and screen guide are in docs/presentation/. Gemini and Langfuse live credentials are absent from this session:
 live cloud review/trace acceptance remains unverified. Expert-approved legal gold,
 sealed holdout, semantic review and measured final M1 quality targets remain open.
 Protected release CI intentionally fails when these prerequisites are absent.

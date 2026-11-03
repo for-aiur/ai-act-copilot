@@ -1,164 +1,165 @@
-# M1 kısa kullanım sunumu
+# M1 short user guide
 
-[Sunumu indir](AI-Act-Copilot-M1.pptx). 12 slayt, düzenlenebilir metinler ve ayrıntılı konuşmacı notları. Ekran örnekleri aynı araçları kullanan teknik belge alanından alınmıştır.
+[Download the presentation](AI-Act-Copilot-M1.pptx). Twelve slides with editable text and detailed speaker notes. Actual screen examples use the technical-document domain, which shares the same tools as the AI Act domain.
 
-Langfuse kullanım adımları anlatılır. Bu ortamda anahtar bulunmadığı için canlı Langfuse ekranı veya doğrulanmış bir canlı model sonucu iddiası yoktur.
+Langfuse setup and usage are explained. Live Langfuse verification remains pending configured credentials.
 
 ## 1. AI Act Copilot
 
-Kaynağı görün. Kullanım amacını anlatın.
-İncelemeyi birlikte geliştirin.
+Explore the sources. Describe the intended use.
+Improve the review together.
 
-<details><summary>Sunucu notları</summary>
+<details><summary>Speaker notes</summary>
 
-M1 kullanım rehberi. İç ekip ve ürün tanıtımı. Hukuki uygunluk belgesi üretmez.
-
-</details>
-
-## 2. Sistem ne yapıyor?
-
-Bir kullanım senaryosu için ilgili resmi metinleri bulur.
-Hangi kaynakları seçtiğini gösterir.
-İnsan geri bildirimiyle tekrar kullanılabilir testler oluşturur.
-
-<details><summary>Sunucu notları</summary>
-
-Tam resmi kaynak paketi, yerel arama, isteğe bağlı Python incelemesi. Kaynak kapsamı kalite garantisi değildir.
+M1 user guide for internal teams and product demonstrations. The tool supports engineering review and does not issue a compliance certificate.
 
 </details>
 
-## 3. Basit kullanım akışı
+## 2. What the system does
 
-1  Kaynağı seçin
-2  Kullanım amacını ve koşulları yazın
-3  Bulunan metinleri inceleyin
-4  Eksikleri işaretleyip test olarak kaydedin
+Finds official passages for a specific use case.
+Shows why those sources appeared.
+Turns human feedback into repeatable tests.
 
-<details><summary>Sunucu notları</summary>
+<details><summary>Speaker notes</summary>
 
-Source explorer, Retrieval studio, Evaluation cases. Kod incelemesi isteğe bağlıdır. Gemini seçiliyse ayrı açık veri aktarımı onayı gerekir.
+The runtime combines a complete pinned official source pack, local retrieval and optional Python review. Complete source coverage does not establish review accuracy.
 
 </details>
 
-## 4. Kaynak ekranı
+## 3. The basic workflow
+
+1  Choose a source collection
+2  Describe the use and its context
+3  Inspect the selected passages
+4  Mark gaps and save a test
+
+<details><summary>Speaker notes</summary>
+
+The main screens are Source explorer, Retrieval studio and Evaluation cases. Code review is optional. Gemini requires separate explicit consent before transferring selected source and context.
+
+</details>
+
+## 4. The source screen
 
 Source explorer
 
-Resmi metinde arama yapın.
-Paragrafı ve resmi bağlantısını açın.
-Eksik kalmasını istemediğiniz kaynağı ekleyin.
+Search the official text.
+Open a passage and its source.
+Add a source that must appear.
 
-<details><summary>Sunucu notları</summary>
+<details><summary>Speaker notes</summary>
 
-Tüm kaynaklar sürüm ve özet değerleriyle sabittir. Koşullu uygulama tarihleri kesin sınıflandırma olarak gösterilmez. Hedef pasaj seçimi paragraf düzeyinde etiketlemeyi destekler.
+Sources have pinned versions and checksums. Conditional application dates remain qualified. The Target passage selector supports paragraph-level expectations. Screen examples use the small technical-document domain, which shares the same interface with AI Act sources.
 
 </details>
 
-## 5. Arama ve inceleme ekranı
+## 5. The search and review screen
 
 Retrieval studio
 
-Sistem ne yapıyor, kim kullanıyor?
-Bulunan metinleri ve seçim adımlarını görün.
-İsterseniz Python kodunu ayrıca inceletin.
+What does the system do?
+Who uses it, and where?
+Inspect the selected sources.
+Optionally review Python code.
 
-<details><summary>Sunucu notları</summary>
+<details><summary>Speaker notes</summary>
 
-Yerel FTS/BM25 ve CPU FastEmbed araması, Qdrant Local, RRF birleştirme, yeniden sıralama ve bağlantılı pasaj genişletme. Amaç/faktör çıkarımı ve kaynaklı inceleme iki sınırlı model geçişidir. Detaylar bölümünde gerçek amaç, niyetler, adaylar ve modele gönderilen pasajlar görünür.
+Retrieval combines FTS/BM25, CPU FastEmbed and Qdrant Local. RRF merges candidates before reranking and bounded related-passage expansion. Two bounded model passes extract purpose and review retrieved evidence. Expand the review details to inspect purpose, search intents, candidates and the exact passages sent to the model.
 
 </details>
 
-## 6. Test ve geri bildirim ekranı
+## 6. The test and feedback screen
 
 Evaluation cases
 
-Gerekli, ilgili veya ilgisiz kaynakları işaretleyin.
-Gerekçeyi yazın, taslağı kaydedin.
-Onaylayın ve testi yeniden çalıştırın.
+Mark required or irrelevant sources.
+Explain your labels and save a draft.
+Approve a revision and rerun the test.
 
-<details><summary>Sunucu notları</summary>
+<details><summary>Speaker notes</summary>
 
-Onay yeni ve değiştirilemez bir revizyon oluşturur. Önceki taslak korunur. JSON dışa aktarma Git incelemesi içindir. Aynı bağlamdaki çelişen onaylı etiketler reddedilir. Tek vaka veya tüm geliştirme seti çalıştırılabilir. Recall@5/10, Precision, MRR, nDCG ve eksikler raporlanır.
+Approval creates an immutable revision and retains the earlier draft. JSON exports support review through Git. Conflicting approved labels for the same exact context are rejected. Run an individual case or the development suite. Reports include Recall@5/10, labelled precision, MRR, nDCG and missed sources. Local approval records attribution, not professional qualifications or legal correctness.
 
 </details>
 
-## 7. Karşılaştırma ekranı
+## 7. The comparison screen
 
 Compare runs
 
-İki denemeyi yan yana açın.
-Kullanım koşulları ve seçilen kaynaklar nasıl değişmiş?
-Eklenen ve çıkan kaynakları görün.
+Open two runs side by side.
+Compare their context and sources.
+See what appeared or disappeared.
 
-<details><summary>Sunucu notları</summary>
+<details><summary>Speaker notes</summary>
 
-Bağlamın kimliği ve RAG sürümü her koşuda saklanır. Bağlam değişince eski sonuç ve etiketler temizlenir. Aynı kaynak farklı kullanımda farklı değerlendirme gerektirebilir.
+Each run records its context fingerprint and RAG release. Changing context clears the displayed old result and labels. A source can have different relevance under a different intended use or deployment.
 
 </details>
 
-## 8. Kaynak ve arama sürümleri
+## 8. Source and search versions
 
 RAG versions
 
-Hangi metin ve arama ayarı bu sonucu üretti?
-Yeni sürümü ayrı hazırlayın ve seçin.
-Gerekirse önceki sürüme dönün.
+Which sources and settings produced this result?
+Build and select a new version.
+Return to the previous version if needed.
 
-<details><summary>Sunucu notları</summary>
+<details><summary>Speaker notes</summary>
 
-Neden: resmi metin, paragraf ayrımı, gömme modeli veya arama mantığı değişebilir. Her yapı içerik adresli manifest ve doğrulanan kaynak/vektör dosyaları içerir. Uygulama sürümü, kaynak sürümü, arama sürümü ve test revizyonu ayrıdır. Yerel etkinleştirme nihai kalite onayı değildir.
-
-</details>
-
-## 9. Langfuse ile incelemeyi izleme
-
-Bir inceleme ne kadar sürdü? Nerede hata oldu?
-
-Kod toplama, amaç çıkarma, arama, inceleme ve doğrulama.
-Gerçekte mevcutsa kullanım miktarı.
-İnceleme ekranından ilgili kayda bağlantı.
-
-<details><summary>Sunucu notları</summary>
-
-Kullanım: özel .env içinde LANGFUSE_ENABLED=true, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY ve LANGFUSE_PROJECT_ID ayarlayın. API’ı yeniden başlatın. İzinli bir inceleme çalıştırın, sonuçtaki Open metadata-only Langfuse trace bağlantısını açın. Langfuse EU sabit adreslidir. Ham kod, istem, yanıt ve anahtar aktarılmaz. Erişilemezse incelemeyi bozmaz. Bu ortamda anahtar bulunmadığından canlı Langfuse kaydı doğrulanmamıştır. Slayt canlı ekran görüntüsü iddiası taşımaz.
+Versioning matters because official text, paragraph boundaries, embedding models and retrieval logic can change. Every build has a content-addressed manifest and verified source/vector files. Application version, source snapshot, RAG release and test revision are separate. Local activation does not pass the final quality gate.
 
 </details>
 
-## 10. Langfuse kullanım adımları
+## 9. Following a review in Langfuse
 
-1  Özel .env dosyasında bağlantıyı açın
-2  İzinli bir kod incelemesi çalıştırın
-3  Sonuçtaki Langfuse bağlantısını açın
-4  Süreyi, adımları ve hatayı kontrol edin
+How long did a review take? Where did it fail?
 
-<details><summary>Sunucu notları</summary>
+Follow collection, understanding, search, review and validation.
+Inspect usage when the provider supplies it.
+Open the trace from the review result.
 
-360 resmi kaynak, 119 madde, 14 ek, 180 ilk düzenleme ve 47 değişiklik gerekçesi. SQLite yerel saklama, PostgreSQL eşlik testleri. Docker Compose gerçek kurulum/restart ve paketleme CI’da doğrulandı. Güncelleme kontrolü resmi metadata okur; staging son iyi sürümü değiştirmez. Yeni hukuk sürümü için kaynak politikası/parser incelemesi gerekir.
+<details><summary>Speaker notes</summary>
 
-</details>
-
-## 11. Platform nasıl genişler?
-
-Yeni belge alanı aynı ekranları kullanabilir.
-Model değişirken inceleme akışı korunur.
-Daha büyük kurulumda saklama katmanı değişebilir.
-
-<details><summary>Sunucu notları</summary>
-
-İkinci teknik belge alanı aynı API, etiketleme ve değerlendirme yolunu kullanır. Python modülleri: kaynak, sözleşme, saklama, gömme, arama, inceleme ve değerlendirme. React + Vite inceleme arayüzüdür. Gemini ve Ollama ayrı sağlayıcılardır, otomatik geçiş yoktur. DATABASE_URL seçimi veri taşımaz. Qdrant Local tek süreç sahibidir. Çok kullanıcılı ürün ve bulut dağıtımı sonraki aşamadır.
+Configure LANGFUSE_ENABLED=true, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_PROJECT_ID in private .env configuration. Restart the API, run an authorized review and choose Open metadata-only Langfuse trace. Export uses the fixed EU endpoint. Raw code, prompts, answers and keys are excluded. An unavailable tracing service does not change the review outcome. Live Langfuse verification remains pending because credentials are not configured. No live Langfuse screenshot is claimed.
 
 </details>
 
-## 12. İlk deneme ve kalan kabul
+## 10. Using Langfuse
 
-Kurulum: docker compose up --build
-Tarayıcı: 127.0.0.1:8000
-Önce kaynak ve arama ekranlarını deneyin.
+1  Enable the connection in your private .env
+2  Run a review with explicit consent
+3  Open its Langfuse trace link
+4  Inspect the steps, duration and errors
 
-Canlı model doğrulaması ve uzman test onayı açık.
+<details><summary>Speaker notes</summary>
 
-<details><summary>Sunucu notları</summary>
+Keep credentials out of the browser, reports and Git. The tool exports only permitted metadata and actual available usage. M1 also includes 360 official documents, SQLite persistence, PostgreSQL parity tests, explicit update checks, staging/diffs and guarded promotion. Actual Compose startup, evaluation and restart were verified in CI. A new legal edition requires reviewed source and parser policy.
 
-İlk kurulum yerel gömme modelini indirir. Arama için Gemini anahtarı gerekmez. Gemini isteğe bağlıdır ve kaynak aktarımı onayı ister. 54 yasal senaryo model taslağıdır; uzman gold değildir. 50+ uzman onaylı vaka, ayrı holdout ve kritik set nihai M1 kabul koşuludur. Teknik hazır olma tam yasal kalite kabulü değildir. README ve docs/M1-STATUS.md güncel sınırları kaydeder.
+</details>
+
+## 11. How the platform can grow
+
+A new document domain can use the same screens.
+A different model can keep the same review flow.
+Larger installations can change the storage layer.
+
+<details><summary>Speaker notes</summary>
+
+A second technical-document domain already uses the same API, labels and evaluation path. Python modules separate sources, contracts, storage, embeddings, retrieval, review and evaluation. React + Vite provides the interface. Gemini and Ollama are explicit providers without automatic fallback. Changing DATABASE_URL does not migrate data. Qdrant Local has one owning process. Multi-user product workflows and cloud deployment belong to later milestones.
+
+</details>
+
+## 12. First use and remaining acceptance
+
+Start: docker compose up --build
+Open: 127.0.0.1:8000
+Try source browsing and retrieval first.
+
+Live checks and expert test approval remain open.
+
+<details><summary>Speaker notes</summary>
+
+First setup downloads the local embedding model. Browsing, retrieval and annotation need no Gemini key. Gemini review is optional and requires explicit source-transfer consent. The 54 legal scenarios are model-authored drafts, not expert gold. Final M1 acceptance requires 50+ expert-approved cases, a sealed holdout and a separate critical suite, plus live model and tracing verification. Technical readiness is separate from final quality acceptance. See README.md and docs/M1-STATUS.md.
 
 </details>

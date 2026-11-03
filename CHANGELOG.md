@@ -5,7 +5,7 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
-- Add a minimal Turkish M1 presentation with actual screen images, Langfuse
+- Add a minimal English M1 presentation with actual screen images, Langfuse
   usage, versioning rationale and extension points.
 - Preserve sibling conditions and exceptions inside their numbered official
   source paragraphs, with exact subdivision addresses and offset tests.

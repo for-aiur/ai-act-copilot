@@ -52,7 +52,7 @@ default. There is no automatic provider fallback.
 
 ## Short screen guide
 
-The [minimal Turkish presentation and screen guide](docs/presentation/README.md)
+The [minimal English presentation and screen guide](docs/presentation/README.md)
 introduces each screen, Langfuse usage, RAG versioning and extension points.
 
 ## Use the workbench
