@@ -33,7 +33,11 @@ jobs:
       - name: Prepare Python
         run: uv python install 3.12
       - name: Test engine contracts, evidence, privacy and failures
-        run: uv run --project engine --python 3.12 --extra dev --extra bot --locked python -m pytest engine/tests
+        run: uv run --project engine --python 3.12 --extra dev --extra bot --extra workbench --extra workbench-test --locked python -m pytest engine/tests
+      - name: Build React workbench
+        run: |
+          npm ci --prefix dashboard
+          npm run build --prefix dashboard
       - name: Validate bot deployment configuration
         run: |
           cp bot/.env.example bot/.env

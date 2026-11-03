@@ -37,6 +37,16 @@ Fallback / stop condition:
 
 ## Architecture: small modules, one process
 
+### M1 tooling-first extension (3 November 2026)
+
+The user authorized React + Vite + TypeScript for the local dashboard, with a
+FastAPI adapter and durable local SQLite scenario drafts. Tooling and dashboard
+delivery precede model tuning. See docs/WORKBENCH.md. The later M1 scope includes
+full official corpus ingestion, hybrid FTS/Qdrant Local retrieval and evaluation.
+These explicit requirements extend the historical POC framework/database limits.
+Preserve existing scan contracts and adapters. Model-generated evaluation cases
+remain drafts until reviewed; infrastructure delivery alone does not pass M1.
+
 One Python package and one thin TypeScript VS Code extension. The original local POC needs no backend or database.
 
 Current user-authorized PR slice: stateless GitHub Actions, trusted default-branch code only, no retained database/cache/artifact of review state. Use a dedicated GitHub App identity. Read signed bot snapshots and current GitHub replies to enforce an App-owned acknowledgement check: every current finding needs an authorized acknowledgement (no reason required) or false-positive command with a reason. Bot replies are deterministic receipts, not AI legal approval. Durable history and dashboard are deferred. See docs/PR-ACTIONS.md.

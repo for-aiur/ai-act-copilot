@@ -5,6 +5,15 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+M1 tooling foundation (EVR-50):
+
+- Add React + Vite corpus explorer and scenario studio backed by a local FastAPI
+  adapter. Inspect exact packaged sources and provenance; save/reopen/export draft
+  scenarios persisted in SQLite.
+- Label the existing corpus as a legacy subset. No model calls or quality claims.
+- Add API integration checks and frontend build to CI. Keep workbench dependencies
+  optional; preserve ScanResult and existing adapters.
+
 Engine 0.4.3: concise PR comments and bounded citation repair (YIL-23).
 
 - Show concrete analysis, one question, code/legal links and simple reply commands.

@@ -152,6 +152,13 @@ uv. The robot icon opens Provider setup with engine, provider, model and corpus
 health. For local Ollama, choose `aiact.provider: ollama` and use **Start local
 service** if needed. Both providers use the same review pipeline and report.
 
+## Local retrieval workbench (M1)
+
+The new React + Vite dashboard browses the real packaged corpus and saves scenario
+drafts in local SQLite. Start the Python API and frontend with the commands in
+[WORKBENCH.md](docs/WORKBENCH.md). This is the first tooling slice, not completed
+full-corpus retrieval or a measured model-quality release.
+
 ## CI
 
 [GitHub Actions](https://github.com/for-aiur/ai-act-copilot/actions) runs engine
