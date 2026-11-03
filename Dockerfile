@@ -3,6 +3,7 @@ WORKDIR /frontend
 COPY dashboard/package*.json ./
 RUN npm ci
 COPY dashboard/ ./
+COPY extensions/vscode/src/contracts.ts /extensions/vscode/src/contracts.ts
 RUN npm run build
 
 FROM ghcr.io/astral-sh/uv:0.13.6 AS uv
