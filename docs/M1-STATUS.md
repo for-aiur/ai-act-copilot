@@ -7,7 +7,7 @@ acceptance. Do not mark the milestone complete using draft-case metrics.
 
 - EVR-35: pinned Publications Office consolidated 2026 XHTML plus original and
   amendment recitals. 119 articles, 14 annexes, 180 original recitals and
-  47 amendment recitals; 360 documents / 1,773 exact-offset chunks.
+  47 amendment recitals; 360 documents / 1,771 exact-offset chunks.
 - EVR-45: generic source, query, candidate, golden-case and evaluation records,
   with AI Act and authored technical documentation adapters.
 - EVR-33/36: typed runtime settings, SQLite/PostgreSQL-ready immutable storage,

@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from importlib.resources import files
 from pathlib import Path
 
-PARSER_VERSION = "cellar-xhtml-2"
+PARSER_VERSION = "cellar-xhtml-3"
 CELEX = "02024R1689-20260727"
 NS = "{http://www.w3.org/1999/xhtml}"
 
@@ -42,6 +42,7 @@ def subdivisions(root):
             path = [*path, label]
             found.append(("-".join(path), body, offset))
         cursor = 0
+        sibling_paragraph = []
         for child in node:
             child_text = text(child)
             if not child_text:
@@ -50,7 +51,16 @@ def subdivisions(root):
             if position < 0:
                 raise ValueError("Nested official source block lost its parent offset")
             cursor = position + len(child_text)
-            walk(child, path, offset + position)
+            child_path = path
+            # Some official article paragraphs use sibling DOM blocks for their
+            # following conditions/exceptions rather than nesting those blocks.
+            if node is root and root.get("id", "").startswith("art_"):
+                number = next((text(c).strip("(). ").lower() for c in child if c.get("class") == "no-parag"), "")
+                if re.fullmatch(r"[0-9]+[a-z]?", number):
+                    sibling_paragraph = [number]
+                else:
+                    child_path = sibling_paragraph
+            walk(child, child_path, offset + position)
     walk(root, [], 0)
     return found
 
@@ -117,6 +127,15 @@ def import_official(source_dir: Path | None = None) -> dict:
                 raise ValueError("Source block cannot be mapped to parent: " + document["id"])
             cursor = start + len(block)
             match = re.match(r"^(?:\()?([0-9]+[a-z]?)[.)]\s", block)
+            end = cursor
+            if match and document["kind"] == "article":
+                # Retain all contiguous subparagraphs, including exceptions.
+                later = next((b for b in document["blocks"][index:] if re.match(r"^(?:\()?([0-9]+[a-z]?)[.)]\s", b)), None)
+                end = document["text"].find(later, cursor) if later else len(document["text"])
+                if end < cursor:
+                    raise ValueError("Numbered paragraph boundary lost its source offset")
+                block = document["text"][start:end].rstrip()
+                end = start + len(block)
             suffix = match[1] if match else "block-" + str(index)
             chunk_id = document["id"] + "-" + suffix
             if chunk_id in seen:
@@ -125,7 +144,7 @@ def import_official(source_dir: Path | None = None) -> dict:
             references = {"article-" + n.lower() for n in re.findall(r"Article\s+(\d+[a-z]?)", block)}
             references |= {"annex-" + n.lower() for n in re.findall(r"Annex\s+([IVX]+)\b", block)}
             chunks.append({"id": chunk_id, "document_id": document["id"], "title": document["title"] + " / " + suffix,
-                           "text": block, "start": start, "end": cursor, "checksum": checksum(block.encode()),
+                           "text": block, "start": start, "end": end, "checksum": checksum(block.encode()),
                            "references": sorted(references & actual)})
         for suffix, body, start in fine_blocks[document["id"]]:
             identity = document["id"] + "-" + suffix

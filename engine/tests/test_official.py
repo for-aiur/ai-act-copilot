@@ -25,6 +25,10 @@ def test_full_official_inventory_and_rebuild():
     assert any(c["id"] == "article-6-1a" for c in snapshot["chunks"])
     assert any(c["id"] == "annex-iii-4-a" for c in snapshot["chunks"])
     assert any(c["id"] == "article-5-1-ba" for c in snapshot["chunks"])
+    chunks = {c["id"]: c for c in snapshot["chunks"]}
+    assert "shall always be considered" in chunks["article-6-3"]["text"]
+    assert "narrow procedural task" in chunks["article-6-3-a"]["text"]
+    assert "4. A provider" not in chunks["article-6-3"]["text"]
 
 
 def test_missing_provision_fails_even_with_updated_download_hash(tmp_path):
