@@ -43,13 +43,20 @@ acceptance. Do not mark the milestone complete using draft-case metrics.
   domain switching and real FTS/dense/fusion stage results.
 - Existing VS Code suite after default change: 31 passed.
 - Latest targeted tracing/provider tests: 38 passed.
-- Docker Compose configuration validates. Local Docker daemon remains unavailable;
-  UI launch timed out. No local container startup/restart acceptance is claimed.
+- Actual CI checks passed on commit 8d030f5: PostgreSQL parity, deterministic
+  RAG reports and failing-fixture rejection, packaged Docker Compose startup,
+  API evaluation and same-active-release persistence after restart.
+- Software CI passed: complete engine/extension tests, React build, wheel/VSIX
+  packaging, isolated installed-wheel checks and the existing bot image smoke.
+- Browser smoke passed: exact passage labels, save/reopen, explicit approval to
+  revision 2, JSON download, case replay and context-fingerprint comparison.
+  Changing context removed the old displayed result and labels.
+- Local Docker daemon remains unavailable. Container acceptance was observed
+  on GitHub Actions, not invented as a local result.
 
 ## Remaining acceptance
 
-Final browser and isolated wheel checks are in progress. Observe CI Compose
-and PostgreSQL results when available. Gemini and Langfuse live credentials are absent from this session:
+Final UI detail refinements are being rechecked in the same CI pipeline. Gemini and Langfuse live credentials are absent from this session:
 live cloud review/trace acceptance remains unverified. Expert-approved legal gold,
 sealed holdout, semantic review and measured final M1 quality targets remain open.
 Protected release CI intentionally fails when these prerequisites are absent.

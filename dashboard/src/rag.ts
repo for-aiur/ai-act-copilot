@@ -133,9 +133,12 @@ export type Evaluation = {
     cases: number;
     recall: number | null;
     mean_precision: number | null;
+    mean_mrr: number | null;
+    mean_ndcg: number | null;
     missing_required: number;
     false_positives: number;
   };
+  summary_at_5?: { recall: number | null };
   quality_gate: { status: string; reasons: string[] };
   scores: {
     case_id: string;

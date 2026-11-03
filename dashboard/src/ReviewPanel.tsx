@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink, LoaderCircle, Play, ShieldCheck } from "lucide-react";
 import { request } from "./api";
-import type { Versions } from "./rag";
+import type { Result, Versions } from "./rag";
 import type { ScanResult } from "../../extensions/vscode/src/contracts";
 
 type Review = {
@@ -10,6 +10,16 @@ type Review = {
   rag_release_id: string;
   trace_id: string;
   trace_url: string | null;
+  understanding: {
+    ai_use: string;
+    purpose: string;
+    facts: { evidence_id: string; fact: string }[];
+    unknowns: string[];
+    retrieval_intents: string[];
+  } | null;
+  retrieval: Result | null;
+  review_passages: { id: string; title: string; text: string; url: string }[];
+  usage: Record<string, number> | null;
   steps: { stage: string; elapsed_ms: number; status: string }[];
 };
 
@@ -33,7 +43,6 @@ export default function ReviewPanel({
     setConsent(false);
     setResult(null);
     setError("");
-    setBusy(false);
   }, [code, context, versions?.active, versions?.provider, versions?.model]);
   const cloud = versions?.provider === "gemini";
   async function review() {
@@ -57,7 +66,7 @@ export default function ReviewPanel({
       if (current === generation.current)
         setError(e instanceof Error ? e.message : "Review unavailable.");
     } finally {
-      if (current === generation.current) setBusy(false);
+      setBusy(false);
     }
   }
   return (
@@ -179,6 +188,97 @@ export default function ReviewPanel({
               <p className="context-question">{f.context_question}</p>
             </article>
           ))}
+          {result.understanding && (
+            <details className="review-debug">
+              <summary>Extracted purpose, facts and search intents</summary>
+              <h4>{result.understanding.purpose}</h4>
+              <p>AI use: {result.understanding.ai_use}</p>
+              <ul>
+                {result.understanding.facts.map((f) => (
+                  <li key={f.evidence_id + f.fact}>
+                    {f.evidence_id}: {f.fact}
+                  </li>
+                ))}
+              </ul>
+              <h4>Unknowns</h4>
+              <ul>
+                {result.understanding.unknowns.map((u) => (
+                  <li key={u}>{u}</li>
+                ))}
+              </ul>
+              <h4>Retrieval intents</h4>
+              <ol>
+                {result.understanding.retrieval_intents.map((i) => (
+                  <li key={i}>{i}</li>
+                ))}
+              </ol>
+            </details>
+          )}
+          {result.retrieval && (
+            <details className="review-debug">
+              <summary>Actual retrieval stages and candidates</summary>
+              <p>
+                Source {result.retrieval.snapshot_id} · Context{" "}
+                {result.retrieval.context_fingerprint}
+              </p>
+              {Object.entries(result.retrieval.stages).map(([stage, hits]) => (
+                <details key={stage}>
+                  <summary>
+                    {stage}: {hits.length} candidates
+                  </summary>
+                  {hits.map((h) => (
+                    <article key={h.chunk_id}>
+                      <strong>
+                        #{h.rank} {h.chunk_id} · {h.score.toFixed(5)}
+                      </strong>
+                      <p>{h.reason}</p>
+                      <blockquote>{h.text}</blockquote>
+                    </article>
+                  ))}
+                </details>
+              ))}
+            </details>
+          )}
+          <details className="review-debug">
+            <summary>
+              Exact passages sent to the review model (
+              {result.review_passages.length})
+            </summary>
+            {result.review_passages.map((p) => (
+              <article key={p.id}>
+                <h4>
+                  {p.title} · {p.id}
+                </h4>
+                <blockquote>{p.text}</blockquote>
+                <a href={p.url} target="_blank" rel="noreferrer">
+                  Open official source
+                  <ExternalLink size={12} />
+                </a>
+              </article>
+            ))}
+          </details>
+          <details className="review-debug">
+            <summary>Coverage, model and prompt provenance</summary>
+            <pre>
+              {JSON.stringify(
+                {
+                  coverage: result.scan_result.coverage,
+                  metadata: result.scan_result.metadata,
+                  usage: result.usage,
+                  budgets: {
+                    source_bytes: 24000,
+                    legal_bytes: 12000,
+                    passages: 6,
+                    findings: 4,
+                    request_seconds: 60,
+                    deadline_seconds: 120,
+                  },
+                },
+                null,
+                2,
+              )}
+            </pre>
+          </details>
           <div className="stage-strip">
             {result.steps.map((s, i) => (
               <span key={i}>

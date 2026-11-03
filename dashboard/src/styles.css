@@ -1821,3 +1821,26 @@ pre {
   font-size: 11px;
   max-width: 100%;
 }
+
+.review-debug {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  overflow-wrap: anywhere;
+}
+.review-debug summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.review-debug pre {
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow: auto;
+}
+.review-debug blockquote {
+  white-space: pre-wrap;
+  font-family: Georgia, serif;
+}
+.review-debug article {
+  padding: 12px 0;
+}

@@ -200,18 +200,22 @@ def router(settings=None):
         return approved.model_dump(mode="json")
 
     @routes.post("/evaluate")
-    def evaluate(domain="ai-act", release: str | None = None, include_holdout: bool = False):
+    def evaluate(domain="ai-act", release: str | None = None, include_holdout: bool = False, case_id: str | None = None):
         rt = runtime()
         cases = latest_cases(rt.store, domain)
-        selected = [c for c in cases if include_holdout or c.split != "holdout"]
-        scores = []
+        selected = [c for c in cases if (include_holdout or c.split != "holdout") and (case_id is None or c.id == case_id)]
+        if case_id and not selected:
+            raise HTTPException(404, "Case is unavailable in this domain or is an excluded holdout.")
+        scores, scores_at_5 = [], []
         with rt.lock:
             retriever = rt.get_retriever(domain, release)
             for case in selected:
                 result = retriever.search(case.request)
                 scores.append(score_case(case, result))
+                scores_at_5.append(score_case(case, result, k=5))
             payload = {"id": str(uuid4()), "domain_id": domain, "rag_release_id": retriever.manifest["rag_release_id"],
-                "scores": scores, "summary": summarize(scores), "quality_gate": quality_gate(cases, scores)}
+                "scores": scores, "summary": summarize(scores), "scores_at_5": scores_at_5,
+                "summary_at_5": summarize(scores_at_5), "quality_gate": quality_gate(cases, scores)}
             rt.store.append("evaluation", payload["id"], domain, payload)
         return payload
 

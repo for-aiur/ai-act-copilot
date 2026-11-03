@@ -31,6 +31,12 @@ def test_missing_source_is_false_negative_and_draft_cannot_pass_quality_gate(tmp
     assert latest_cases(store, "workbench-api") == [second]
     assert store.record("case", "case", 1)["status"] == "draft"
     assert latest_cases(store, "ai-act") == []
+    conflicting = second.model_copy(update={"id": "contradictory", "revision": 1,
+        "labels": (GoldLabel(document_id="health", label="not_relevant", rationale="Conflicting judgment"),)})
+    with pytest.raises(ValueError, match="Conflicting approved labels"):
+        save_case(store, conflicting)
+    separate = conflicting.model_copy(update={"request": conflicting.request.model_copy(update={"scenario": "Different deployment context"})})
+    save_case(store, separate)
     with pytest.raises(ValueError, match="reference"):
         save_case(store, case.model_copy(update={"id": "bad", "labels": (GoldLabel(document_id="made-up", label="relevant", rationale="No source"),)}))
     retriever.close()

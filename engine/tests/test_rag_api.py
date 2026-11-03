@@ -25,6 +25,9 @@ def test_workbench_case_annotation_approval_and_restart(tmp_path):
         evaluation = client.post("/api/rag/evaluate", params={"domain": "workbench-api"}).json()
         assert evaluation["scores"][0]["missed_required"] == ["drafts"]
         assert evaluation["quality_gate"]["status"] == "blocked"
+        single = client.post("/api/rag/evaluate", params={"domain": "workbench-api", "case_id": "api-test"}).json()
+        assert single["summary"]["cases"] == 1 and single["summary_at_5"]["cases"] == 1
+        assert client.post("/api/rag/evaluate", params={"domain": "ai-act", "case_id": "api-test"}).status_code == 404
         assert client.get("/api/rag/cases", params={"domain": "ai-act"}).json() == []
     with TestClient(create_app(tmp_path / "legacy.sqlite", settings=settings)) as client:
         cases = client.get("/api/rag/cases", params={"domain": "workbench-api"}).json()

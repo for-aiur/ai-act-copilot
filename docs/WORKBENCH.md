@@ -61,7 +61,9 @@ aiact rag eval --dataset evaluation/gold/ai-act.json --include-holdout --require
 Seeding never overwrites existing case IDs/revisions. Changed source snapshots
 require reviewed case revisions. Metrics distinguish expected sources from actual
 hits and report required-source recall, labelled precision, MRR/nDCG, misses,
-false positives and uncertainty. UI evaluation excludes holdout by default.
+false positives and uncertainty. UI evaluation excludes holdout by default. Use **Evaluate** on one case or
+**Evaluate cases** for the development suite. Reports include Recall@5/10,
+Precision@10, MRR/nDCG and context-specific labelled misses/false positives.
 
 ## Official updates
 

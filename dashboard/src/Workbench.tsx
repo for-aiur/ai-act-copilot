@@ -1144,6 +1144,26 @@ export default function Workbench() {
                       Open
                       <ArrowRight size={13} />
                     </button>
+                    <button
+                      className="secondary"
+                      disabled={
+                        !!busy || !versions?.active || c.split === "holdout"
+                      }
+                      onClick={() =>
+                        void act("evaluate", async () => {
+                          setEvaluation(
+                            await post<Evaluation>(
+                              "/api/rag/evaluate?domain=" +
+                                domain +
+                                "&case_id=" +
+                                encodeURIComponent(c.id),
+                            ),
+                          );
+                        })
+                      }
+                    >
+                      Evaluate
+                    </button>
                     {c.status === "draft" && (
                       <button
                         className="secondary"
@@ -1207,6 +1227,36 @@ export default function Workbench() {
                     <div>
                       <strong>{evaluation.summary.missing_required}</strong>
                       <span>Missing required sources</span>
+                    </div>
+                  </div>
+                  <div className="metric-grid">
+                    <div>
+                      <strong>
+                        {evaluation.summary_at_5?.recall?.toFixed(3) ?? "n/a"}
+                      </strong>
+                      <span>Recall@5</span>
+                    </div>
+                    <div>
+                      <strong>
+                        {evaluation.summary.mean_precision?.toFixed(3) ?? "n/a"}
+                      </strong>
+                      <span>Precision@10</span>
+                    </div>
+                    <div>
+                      <strong>
+                        {evaluation.summary.mean_mrr?.toFixed(3) ?? "n/a"}
+                      </strong>
+                      <span>MRR@10</span>
+                    </div>
+                    <div>
+                      <strong>
+                        {evaluation.summary.mean_ndcg?.toFixed(3) ?? "n/a"}
+                      </strong>
+                      <span>nDCG@10</span>
+                    </div>
+                    <div>
+                      <strong>{evaluation.summary.false_positives}</strong>
+                      <span>Labelled false positives</span>
                     </div>
                   </div>
                   <ul>
