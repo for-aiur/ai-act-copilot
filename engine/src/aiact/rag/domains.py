@@ -4,7 +4,7 @@ import json
 import re
 from importlib.resources import files
 
-from .contracts import Chunk, Document, KnowledgeDomain, Snapshot, SourceMetadata
+from .contracts import Chunk, Document, KnowledgeDomain, Snapshot, SourceMetadata, DateRule
 from .official import checksum, CELEX
 
 DOMAINS = (
@@ -19,10 +19,19 @@ def load_snapshot(domain_id="ai-act") -> Snapshot:
         identity = raw.pop("snapshot_id")
         if checksum(raw) != identity:
             raise ValueError("Official snapshot integrity mismatch")
+        timing = next(d["text"] for d in raw["documents"] if d["id"] == "article-113")
+        rules = (
+            DateRule(condition="High-risk under Article 6(2) and Annex III; Article 113(c) scope and exceptions apply", date="2027-12-02", source_id="article-113", quote="2 December 2027 as regards AI systems classified as high-risk pursuant to Article 6(2) and Annex III; and"),
+            DateRule(condition="High-risk under Article 6(1) and Annex I; Article 113(c) scope and exceptions apply", date="2028-08-02", source_id="article-113", quote="2 August 2028 as regards AI systems classified as high-risk pursuant to Article 6(1) and Annex I;"),
+        )
+        if any(rule.quote not in timing for rule in rules):
+            raise ValueError("Reviewed date rule no longer matches the official source")
         return Snapshot(domain_id=domain_id, snapshot_id=identity, source_version=CELEX, parser_version=raw["parser_version"],
             documents=tuple(Document(id=d["id"], title=d["title"], text=d["text"], source_url=d["source_url"], kind=d["kind"], checksum=d["checksum"],
                 metadata=SourceMetadata(origin=d["origin"], binding=d["binding"], chapter=d["chapter"], celex=d["source_celex"],
                     publication_date=d["publication_date"], consolidated_date=d["consolidated_date"],
+                    entry_into_force="2024-08-01" if d["origin"] == "original" else "2026-07-27" if d["origin"] == "amendment" else None,
+                    applicability_rules=rules if d["kind"] == "article" and d["id"].split("-")[1].isdigit() and 6 <= int(d["id"].split("-")[1]) <= 27 else (),
                     applicability_status=d["applicability"]["status"], applicability_sources=tuple(d["applicability"]["source_ids"]))) for d in raw["documents"]),
             chunks=tuple(Chunk(**c) for c in raw["chunks"]), source_hashes=tuple(s["sha256"] for s in raw["sources"]), scope_limits=tuple(raw["scope_limits"]), complete=raw["coverage"]["complete"])
     if domain_id != "workbench-api":

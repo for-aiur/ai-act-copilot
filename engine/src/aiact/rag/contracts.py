@@ -10,16 +10,25 @@ class Record(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class DateRule(Record):
+    condition: str
+    date: str
+    source_id: str
+    quote: str
+
+
 class SourceMetadata(Record):
     origin: str
     binding: bool | None = None
     chapter: str | None = None
     celex: str | None = None
     publication_date: str | None = None
+    entry_into_force: str | None = None
     consolidated_date: str | None = None
     applicability_status: str = "unknown"
     applicability_date: str | None = None
     applicability_sources: tuple[str, ...] = ()
+    applicability_rules: tuple[DateRule, ...] = ()
 
 
 class Document(Record):
