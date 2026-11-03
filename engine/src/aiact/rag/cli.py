@@ -10,15 +10,34 @@ from .store import Store
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="aiact rag")
-    parser.add_argument("action", choices=["build", "status", "activate", "rollback"])
+    parser.add_argument("action", choices=["build", "status", "activate", "rollback", "seed-drafts", "eval"])
     parser.add_argument("--domain", choices=["ai-act", "workbench-api"], default="ai-act")
     parser.add_argument("--release")
     parser.add_argument("--download-model", action="store_true", help="Explicit setup operation: download local embedding model")
     parser.add_argument("--lexical-only", action="store_true", help="Build a labelled lexical baseline, not a hybrid release")
     parser.add_argument("--allow-unapproved", action="store_true", help="Activate for local tooling tests without claiming quality acceptance")
+    parser.add_argument("--dataset", help="Explicit versioned GoldenCase JSON bundle")
+    parser.add_argument("--output", help="Write a versioned evaluation JSON report")
+    parser.add_argument("--include-holdout", action="store_true", help="Explicit release evaluation only; do not tune on held-out cases")
+    parser.add_argument("--require-quality", action="store_true", help="Fail unless the final M1 expert-gold policy passes")
     args = parser.parse_args(argv)
     try:
         settings = load_settings()
+        if args.action in {"seed-drafts", "eval"}:
+            store = Store(settings.database_url.get_secret_value())
+            identity = args.release or store.pointer(args.domain)
+            store.close()
+            if not identity:
+                raise ValueError("An explicit or active release is required.")
+            from .benchmark import seed_fixtures, benchmark
+            report = seed_fixtures(settings, args.domain, identity) if args.action == "seed-drafts" else benchmark(settings, args.domain, identity, args.dataset, args.include_holdout)
+            if args.output:
+                from pathlib import Path
+                output = Path(args.output)
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(json.dumps(report, indent=2) + "\n")
+            print(json.dumps(report))
+            return 1 if args.require_quality and report.get("quality_gate", {}).get("status") != "pass" else 0
         if args.action == "build":
             print(json.dumps(build_release(settings, args.domain, args.download_model, args.lexical_only)))
             return 0
