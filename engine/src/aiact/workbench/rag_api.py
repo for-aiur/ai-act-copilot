@@ -145,6 +145,16 @@ def router(settings=None):
             source = Path(temporary) / body.filename
             source.write_text(body.code)
             payload = review_python(source, provider, rt.get_retriever("ai-act"), body.context)
+            from aiact.telemetry import Trace
+            from aiact.contracts import ScanResult
+            trace = Trace(rt.settings)
+            trace.steps = payload["steps"]
+            trace.attributes.update(payload.get("usage") or {})
+            if trace.steps:
+                trace.started = trace.steps[0]["start_ns"]
+            trace.finish(ScanResult.model_validate(payload["scan_result"]), payload["rag_release_id"])
+            payload["trace_id"] = trace.id
+            payload["trace_url"] = ("https://cloud.langfuse.com/project/" + rt.settings.langfuse_project_id + "/traces/" + trace.id) if rt.settings.langfuse_enabled and rt.settings.langfuse_project_id else None
             identity = str(uuid4())
             rt.store.append("review", identity, "ai-act", payload)
         return {"id": identity, **payload}

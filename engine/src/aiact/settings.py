@@ -21,6 +21,7 @@ class Settings(BaseModel):
     langfuse_host: Literal["https://cloud.langfuse.com"] = "https://cloud.langfuse.com"
     langfuse_public_key: SecretStr = SecretStr("")
     langfuse_secret_key: SecretStr = SecretStr("")
+    langfuse_project_id: str = Field(default="", pattern=r"^[a-zA-Z0-9_-]*$", max_length=100)
     gemini_api_key: SecretStr = SecretStr("")
     request_seconds: int = Field(default=60, ge=1, le=60)
     deadline_seconds: int = Field(default=120, ge=1, le=120)
@@ -56,6 +57,7 @@ ENV_KEYS = {
     "EMBEDDING_MODEL": "embedding_model", "EMBEDDING_REVISION": "embedding_revision",
     "LANGFUSE_ENABLED": "langfuse_enabled", "LANGFUSE_HOST": "langfuse_host",
     "LANGFUSE_PUBLIC_KEY": "langfuse_public_key", "LANGFUSE_SECRET_KEY": "langfuse_secret_key",
+    "LANGFUSE_PROJECT_ID": "langfuse_project_id",
     "GEMINI_API_KEY": "gemini_api_key", "AIACT_CLOUD_CONSENT": "cloud_consent",
     "AIACT_REQUEST_SECONDS": "request_seconds", "AIACT_DEADLINE_SECONDS": "deadline_seconds",
 }

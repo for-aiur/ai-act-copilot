@@ -1,3 +1,4 @@
+import ReviewPanel from "./ReviewPanel";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowDownToLine,
@@ -997,7 +998,8 @@ export default function Workbench() {
                   </button>
                 </div>
               </section>
-            </>
+              {domain === "ai-act" && <ReviewPanel versions={versions} context={[scenario, actor, deployment, constraints].filter(Boolean).join("\n")} />}
+          </>
           )}
           {view === "cases" && (
             <section className="draft-panel">

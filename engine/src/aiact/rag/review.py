@@ -150,4 +150,5 @@ def review_python(path: Path, provider, retriever, explicit_context="", budgets=
     result = ScanResult(status=status, findings=findings, errors=errors, coverage=coverage, metadata=metadata)
     return {"scan_result": result.model_dump(mode="json"), "understanding": understanding.model_dump() if understanding else None,
         "retrieval": retrieval.model_dump(mode="json") if retrieval else None, "review_passages": passages,
-        "rag_release_id": retriever.manifest["rag_release_id"], "steps": steps}
+        "rag_release_id": retriever.manifest["rag_release_id"], "steps": steps,
+        "usage": getattr(provider, "usage_totals", None)}

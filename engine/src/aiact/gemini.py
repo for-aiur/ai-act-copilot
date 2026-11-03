@@ -154,6 +154,11 @@ class Gemini:
         result = self.request({"systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
                                "contents": [{"role": "user", "parts": [{"text": prompt}]}],
                                "generationConfig": config}, timeout)
+        self.usage_totals = getattr(self, "usage_totals", {})
+        for source, target in [("promptTokenCount", "input_tokens"), ("candidatesTokenCount", "output_tokens"), ("totalTokenCount", "total_tokens")]:
+            count = result.get("usageMetadata", {}).get(source)
+            if type(count) is int and 0 <= count <= 1_000_000_000:
+                self.usage_totals[target] = self.usage_totals.get(target, 0) + count
         try:
             candidates = result.get("candidates", [])
             if not candidates:
