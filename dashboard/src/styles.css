@@ -246,18 +246,7 @@ main {
   color: #3b4941;
   font-weight: 500;
 }
-.local-badge {
-  font-size: 8px;
-  letter-spacing: 1.3px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid #dce4d9;
-  border-radius: 5px;
-  padding: 7px 9px;
-  color: #536c56;
-  background: #f4f8f0;
-}
+
 .page {
   padding: 39px 42px 0;
   max-width: 1600px;

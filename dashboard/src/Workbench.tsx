@@ -368,10 +368,6 @@ export default function Workbench() {
             <ChevronRight size={14} />
             <strong>{names[view]}</strong>
           </div>
-          <span className="local-badge">
-            <span className="tiny-dot" />
-            LOCAL ONLY
-          </span>
         </header>
         <div className="page">
           <div className="page-heading">
