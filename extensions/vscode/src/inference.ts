@@ -4,7 +4,7 @@ export const GEMINI_KEY = 'aiact.geminiApiKey';
 export const GEMINI_CONSENT = 'aiact.geminiConsent';
 
 export function inferenceSettings(config: vscode.WorkspaceConfiguration) {
-  const provider = config.get<string>('provider', 'ollama');
+  const provider = config.get<string>('provider', 'gemini');
   if (provider !== 'ollama' && provider !== 'gemini') { throw new Error('Choose Ollama or Gemini in AI Act Copilot provider settings.'); }
   return {provider, model: provider === 'gemini' ? config.get<string>('geminiModel', 'gemini-3.1-flash-lite') : config.get<string>('model', 'qwen2.5:3b')};
 }
