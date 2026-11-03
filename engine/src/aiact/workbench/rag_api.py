@@ -81,6 +81,17 @@ def router(settings=None):
         rt = runtime()
         return [d.model_dump() | {"active": rt.store.pointer(d.id)} for d in DOMAINS]
 
+    @routes.get("/health")
+    def readiness():
+        rt = runtime()
+        identity = rt.store.pointer("ai-act")
+        if not identity:
+            raise HTTPException(503, "Initial RAG setup is not complete.")
+        from aiact.rag.releases import verify_bundle
+        manifest, snapshot, _ = verify_bundle(rt.settings.data_dir / "releases" / identity)
+        return {"status": "ready", "rag_release_id": identity, "source_complete": snapshot.complete,
+                "quality_status": manifest["quality_status"], "inference_provider": rt.settings.provider}
+
     @routes.get("/library")
     def library(domain: str = "ai-act", q: str = Query(default="", max_length=200), kind: str = ""):
         rt = runtime()

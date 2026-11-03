@@ -109,4 +109,17 @@ def create_app(db_path: Path | None = None, settings=None) -> FastAPI:
             db.execute("INSERT INTO drafts VALUES (?, ?, ?)", (draft_id, json.dumps(payload), created))
         return payload | {"id": draft_id, "created_at": created, "status": "draft"}
 
+    static_dir = os.environ.get("AIACT_STATIC_DIR")
+    if static_dir:
+        from fastapi.staticfiles import StaticFiles
+        from starlette.exceptions import HTTPException as StaticHTTPException
+        class SPAFiles(StaticFiles):
+            async def get_response(self, path, scope):
+                try:
+                    return await super().get_response(path, scope)
+                except StaticHTTPException as exc:
+                    if exc.status_code != 404 or path.startswith("api/") or Path(path).suffix:
+                        raise
+                    return await super().get_response("index.html", scope)
+        app.mount("/", SPAFiles(directory=static_dir, html=True), name="dashboard")
     return app

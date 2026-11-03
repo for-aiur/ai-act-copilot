@@ -13,3 +13,4 @@ engine/.venv
 bot/config.toml
 .aiact-bot
 .aiact-results
+.aiact-workbench
