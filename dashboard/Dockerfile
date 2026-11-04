@@ -4,6 +4,9 @@ COPY dashboard/package*.json ./
 RUN npm ci
 COPY dashboard/ ./
 COPY extensions/vscode/src/contracts.ts /extensions/vscode/src/contracts.ts
+COPY examples/recruitment/ /examples/recruitment/
+COPY examples/biometrics/ /examples/biometrics/
+COPY examples/chatbot/ /examples/chatbot/
 RUN npm run build
 
 FROM nginx:1.27-alpine

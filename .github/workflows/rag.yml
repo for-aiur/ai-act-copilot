@@ -64,7 +64,7 @@ jobs:
         with: {persist-credentials: false}
       - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
         with: {version: '0.13.6'}
-      - run: uv run --project engine --python 3.12 --extra dev --extra rag --extra postgres --locked python -m pytest engine/tests/test_postgres_parity.py
+      - run: uv run --project engine --python 3.12 --extra dev --extra workbench --extra workbench-test --extra rag --extra postgres --locked python -m pytest engine/tests/test_postgres_parity.py
         env:
           AIACT_TEST_POSTGRES_URL: postgresql+psycopg://aiact:ephemeral-ci-only@localhost:5432/aiact_test
   compose:
