@@ -64,7 +64,7 @@ jobs:
         with: {persist-credentials: false}
       - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
         with: {version: '0.13.6'}
-      - run: uv run --project engine --python 3.12 --extra dev --extra rag --extra postgres --locked python -m pytest engine/tests/test_postgres_parity.py
+      - run: uv run --project engine --python 3.12 --extra dev --extra workbench --extra workbench-test --extra rag --extra postgres --locked python -m pytest engine/tests/test_postgres_parity.py
         env:
           AIACT_TEST_POSTGRES_URL: postgresql+psycopg://aiact:ephemeral-ci-only@localhost:5432/aiact_test
   compose:
@@ -79,10 +79,10 @@ jobs:
         run: docker compose run --rm -e AIACT_EVAL_DOMAIN=workbench-api rag-eval
       - name: Prove source and active release survive restart
         run: |
-          curl --fail http://127.0.0.1:8000/api/rag/health > /tmp/before.json
-          docker compose restart rag
+          curl --fail http://127.0.0.1:8001/api/rag/health > /tmp/before.json
+          docker compose restart api
           for attempt in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:8000/api/rag/health > /tmp/after.json; then break; fi
+            if curl --fail --silent http://127.0.0.1:8001/api/rag/health > /tmp/after.json; then break; fi
             sleep 3
           done
           python -c 'import json; a=json.load(open("/tmp/before.json")); b=json.load(open("/tmp/after.json")); assert a["rag_release_id"] == b["rag_release_id"]'
