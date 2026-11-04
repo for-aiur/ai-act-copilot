@@ -285,7 +285,7 @@ def router(settings=None):
         selected = [c for c in cases if (include_holdout or c.split != "holdout") and (case_id is None or c.id == case_id)]
         if case_id and not selected:
             raise HTTPException(404, "Case is unavailable in this domain or is an excluded holdout.")
-        scores, scores_at_preview = [], []
+        scores, scores_at_preview, scores_at_5 = [], [], []
         expert_scores = []
         with rt.lock:
             retriever = rt.get_retriever(domain, release)
@@ -294,10 +294,12 @@ def router(settings=None):
                     result_limit=max(rt.settings.evaluation_k, rt.settings.evaluation_preview_k, 10))
                 scores.append(score_case(case, result, k=rt.settings.evaluation_k))
                 scores_at_preview.append(score_case(case, result, k=rt.settings.evaluation_preview_k))
+                scores_at_5.append(score_case(case, result, k=5))
                 expert_scores.append(score_case(case, result, k=10))
             payload = {"id": str(uuid4()), "domain_id": domain, "rag_release_id": retriever.manifest["rag_release_id"],
                 "scores": scores, "summary": summarize(scores), "scores_at_preview": scores_at_preview,
-                "summary_at_preview": summarize(scores_at_preview), "quality_gate": quality_gate(cases, expert_scores),
+                "summary_at_preview": summarize(scores_at_preview), "scores_at_5": scores_at_5,
+                "summary_at_5": summarize(scores_at_5), "quality_gate": quality_gate(cases, expert_scores),
                 "experiment_gate": experiment_gate(scores, rt.settings.minimum_holdout_recall),
                 "configuration": {"fingerprint": rt.settings.config_fingerprint(), "values": rt.settings.editable_config(),
                     "evaluation_k": rt.settings.evaluation_k, "preview_k": rt.settings.evaluation_preview_k}}
