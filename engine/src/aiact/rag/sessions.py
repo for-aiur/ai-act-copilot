@@ -18,6 +18,7 @@ from aiact.contracts import Coverage, Evidence, Finding, Metadata, ReviewEvent, 
 from aiact.pipeline import _request
 from aiact.providers import Ollama, Provider, ReviewFailure
 from aiact.settings import Settings, load_settings
+from aiact.telemetry import traced_call
 from aiact.validation import DraftReview, validate_review
 from .contracts import RetrievalRequest, ScenarioContext
 from .review import Extraction
@@ -336,7 +337,8 @@ def _graph(checkpointer=None):
                      ("legal_retrieval", _retrieve), ("legal_review", _review),
                      ("evidence_validation", _validate), ("await_context", _await_context),
                      ("finish_context", _finish)):
-        graph.add_node(name, fn)
+        graph.add_node(name, (lambda state, runtime, node=fn, stage=name:
+            traced_call(stage, node, state, runtime)) if name not in {"await_context", "finish_context"} else fn)
     graph.add_edge(START, "code_collection")
     graph.add_edge("code_collection", "purpose_extraction")
     graph.add_conditional_edges("purpose_extraction",
@@ -446,14 +448,21 @@ def _settings(settings):
 
 
 def start_review_session(path: Path, provider: Provider, retriever, explicit_context="",
-                         budgets=Budgets(), settings: Settings | None=None, max_context_answers=3):
+                         budgets=Budgets(), settings: Settings | None=None, max_context_answers=3,
+                         session_id: str | None=None):
     from aiact.checkpoints import open_checkpointer
     if not 1 <= max_context_answers <= 3:
         raise ValueError("A review can ask from 1 to 3 context questions.")
     settings = _settings(settings)
-    session_id, start = uuid4().hex, time.monotonic()
+    session_id, start = session_id or uuid4().hex, time.monotonic()
     with open_checkpointer(settings.database_url.get_secret_value()) as saver:
         graph = _graph(saver)
+        saved = graph.get_state(_thread(session_id))
+        if saved and saved.values:
+            output = dict(saved.values)
+            if any(getattr(task, "interrupts", ()) for task in saved.tasks):
+                output["__interrupt__"] = True
+            return _session(_with_audit_records(output, session_id, settings.database_url.get_secret_value()), session_id)
         output = graph.invoke(_initial(retriever, provider, explicit_context, max_context_answers), _thread(session_id),
             context=_run_context(path, provider, retriever, explicit_context, budgets, start + budgets.total_seconds))
     return _session(output, session_id, int((time.monotonic() - start) * 1000))

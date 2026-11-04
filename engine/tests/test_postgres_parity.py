@@ -52,3 +52,35 @@ def test_checkpointed_rag_review_survives_postgres_reopen(tmp_path):
     assert resumed.status == "complete"
     assert resumed.rag_release_id == manifest["rag_release_id"]
     retriever.close()
+
+
+@pytest.mark.skipif(not os.environ.get("AIACT_TEST_POSTGRES_URL"), reason="Requires the isolated PostgreSQL CI service")
+def test_workspace_keys_and_durable_review_jobs_match_sqlite(tmp_path):
+    from aiact.workbench.identity import IdentityStore
+    from aiact.workbench.reviews import ReviewJobRepository
+
+    database_urls = ["sqlite:///" + str(tmp_path / "local.sqlite"), os.environ["AIACT_TEST_POSTGRES_URL"]]
+    restored = []
+    for url in database_urls:
+        identities = IdentityStore(url)
+        workspace = identities.register("Parity workspace", f"{os.urandom(8).hex()}@example.test",
+            "a-local-password-long-enough")
+        created_key = identities.create_api_key(workspace["tenant_id"], workspace["id"], "parity test")
+        authenticated = identities.authenticate_api_key(created_key["key"])
+        assert authenticated["tenant_id"] == workspace["tenant_id"]
+        identities.record_usage(authenticated, "/api/reviews", 202, 3)
+
+        jobs = ReviewJobRepository(url)
+        job, created = jobs.create(workspace["tenant_id"], workspace["id"],
+            {"filename": "review.py", "code": "model.generate()"}, "d" * 64, "parity-key-0001")
+        assert created
+        identities.close()
+        jobs.close()
+
+        identities = IdentityStore(url)
+        jobs = ReviewJobRepository(url)
+        restored.append((jobs.get(job["id"], workspace["tenant_id"])["status"],
+            identities.list_usage(workspace["tenant_id"])[0]["status_code"]))
+        identities.close()
+        jobs.close()
+    assert restored == [("queued", 202), ("queued", 202)]

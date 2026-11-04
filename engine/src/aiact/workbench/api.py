@@ -31,7 +31,11 @@ def create_app(db_path: Path | None = None, settings=None) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"])
     database = db_path or Path(os.environ.get("AIACT_WORKBENCH_DB", ".aiact-workbench/drafts.sqlite3"))
     from .rag_api import router
-    app.include_router(router(settings))
+    from .reviews import ApiKeyUsageMiddleware
+    app.add_middleware(ApiKeyUsageMiddleware)
+    rag_router = router(settings)
+    app.include_router(rag_router)
+    app.include_router(rag_router.product_router)
 
     @app.exception_handler(ValueError)
     async def invalid_rag(request, exc):

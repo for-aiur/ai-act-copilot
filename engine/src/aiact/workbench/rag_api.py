@@ -17,6 +17,8 @@ from aiact.rag.releases import build_release
 from aiact.rag.retriever import HybridRetriever
 from aiact.rag.store import Store
 from aiact.settings import Settings, load_settings
+from .identity import IdentityStore
+from .reviews import ReviewJobRepository, ReviewJobWorker
 
 
 class BuildInput(BaseModel):
@@ -42,8 +44,16 @@ class Runtime:
     def __init__(self, settings):
         self.settings = settings
         self.store = Store(settings.database_url.get_secret_value())
+        self.identity = IdentityStore(settings.database_url.get_secret_value())
+        self.review_jobs = ReviewJobRepository(settings.database_url.get_secret_value())
         self.lock = threading.RLock()
         self.retriever = None
+        self.review_worker = None
+
+    def start(self):
+        if self.review_worker is None:
+            self.review_worker = ReviewJobWorker(self, self.review_jobs, self.identity)
+        self.review_worker.start()
 
     def get_retriever(self, domain, identity=None):
         identity = identity or self.store.pointer(domain)
@@ -57,8 +67,12 @@ class Runtime:
         return self.retriever
 
     def close(self):
+        if self.review_worker:
+            self.review_worker.stop()
         if self.retriever:
             self.retriever.close()
+        self.review_jobs.close()
+        self.identity.close()
         self.store.close()
 
     def update_settings(self, updated):
@@ -73,9 +87,12 @@ def router(settings=None):
     init_lock = threading.RLock()
     @asynccontextmanager
     async def lifespan(app):
-        yield
-        if "runtime" in state:
-            state["runtime"].close()
+        rt = runtime()
+        rt.start()
+        try:
+            yield
+        finally:
+            rt.close()
     routes = APIRouter(prefix="/api/rag", lifespan=lifespan)
 
     def runtime():
@@ -83,6 +100,9 @@ def router(settings=None):
             if "runtime" not in state:
                 state["runtime"] = Runtime(settings or load_settings())
         return state["runtime"]
+
+    from .reviews import router as review_router
+    routes.product_router = review_router(runtime)
 
     @routes.get("/settings")
     def get_settings():

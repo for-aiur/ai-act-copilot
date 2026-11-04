@@ -5,6 +5,11 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-30: add local workspace accounts, tenant-scoped API keys and measured API
+  usage, plus durable tenant-scoped review jobs with retries, idempotent starts,
+  saved context answers and restart recovery. Keep provider failures explicit and
+  do not put source, prompts or credentials into trace metadata.
+
 - EVR-29: preserve question, answer, finding revision and reviewer decision history
   for resumable RAG reviews. Keep decisions separate from scan findings, require
   a reason to mark a false positive, and reopen a dismissed finding when new
