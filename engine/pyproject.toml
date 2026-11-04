@@ -7,13 +7,13 @@ name = "ai-act-copilot"
 version = "0.5.0"
 description = "Evidence-grounded engineering review assistant with local Ollama or opt-in Gemini"
 requires-python = ">=3.11"
-dependencies = ["langgraph>=1.0,<2", "pydantic>=2.7,<3"]
+dependencies = ["langgraph>=1.0,<2", "langgraph-checkpoint-sqlite>=3.1.1,<3.1.2", "pydantic>=2.7,<3"]
 
 [project.optional-dependencies]
 workbench = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "sqlalchemy>=2.0,<3"]
 workbench-test = ["httpx>=0.27,<1"]
 rag = ["sqlalchemy>=2.0,<3", "qdrant-client>=1.15,<2", "fastembed>=0.7,<1; sys_platform != 'darwin' or platform_machine != 'x86_64' or python_version < '3.13'"]
-postgres = ["psycopg[binary]>=3.2,<4"]
+postgres = ["langgraph-checkpoint-postgres>=3.0,<4", "psycopg[binary]>=3.2,<4"]
 bot = [
   "PyJWT[crypto]>=2.10,<3",
   "cryptography>=48,<49; platform_system == 'Darwin' and platform_machine == 'x86_64'",

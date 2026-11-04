@@ -88,5 +88,15 @@ class ScanResult(Contract):
         return self
 
 
+class ReviewSession(Contract):
+    """Local resumable wrapper; ScanResult remains the versioned scan contract."""
+    id: str = Field(min_length=1, max_length=255)
+    status: Literal["pending", "context_needed", "complete", "partial", "failed"]
+    context_question: str | None = None
+    finding_id: str | None = None
+    answer_count: int = Field(default=0, ge=0)
+    scan_result: ScanResult | None = None
+
+
 if __name__ == "__main__":
     print(json.dumps(ScanResult.model_json_schema(), indent=2))

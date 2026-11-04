@@ -97,6 +97,10 @@ Switch to **Workbench API guide** to exercise the same tools with a second,
 authored technical domain. Its two engineering fixtures are separate from legal
 expert gold. Feedback never globally excludes documents or trains the retriever.
 
+The review engine's saved pause/resume flow is documented in
+[Saved review sessions](docs/REVIEW-SESSIONS.md). The dashboard does not expose
+that flow yet.
+
 ## Native development
 
 Requirements: Python **3.12**, [uv](https://docs.astral.sh/uv/) and Node **24**.
