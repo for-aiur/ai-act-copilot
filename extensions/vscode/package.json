@@ -2,7 +2,7 @@
   "name": "ai-act-copilot",
   "displayName": "AI Act Copilot",
   "description": "Review AI use in Python code with source evidence, official EU passages and practical context questions.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "evros-labs",
   "engines": {
     "vscode": "^1.85.0"
@@ -129,7 +129,7 @@
             "ollama",
             "gemini"
           ],
-          "default": "ollama",
+          "default": "gemini",
           "description": "Inference provider. Gemini sends selected code/context and retrieved legal passages to Google and uses your API quota. Cloud reviews require approval for this workspace."
         },
         "aiact.geminiModel": {

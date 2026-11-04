@@ -4,12 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-act-copilot"
-version = "0.4.3"
+version = "0.5.0"
 description = "Evidence-grounded engineering review assistant with local Ollama or opt-in Gemini"
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2.7,<3"]
 
 [project.optional-dependencies]
+workbench = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "sqlalchemy>=2.0,<3"]
+workbench-test = ["httpx>=0.27,<1"]
+rag = ["sqlalchemy>=2.0,<3", "qdrant-client>=1.15,<2", "fastembed>=0.7,<1; sys_platform != 'darwin' or platform_machine != 'x86_64' or python_version < '3.13'"]
+postgres = ["psycopg[binary]>=3.2,<4"]
 bot = [
   "PyJWT[crypto]>=2.10,<3",
   "cryptography>=48,<49; platform_system == 'Darwin' and platform_machine == 'x86_64'",
@@ -24,7 +28,10 @@ aiact-bot = "aiact.github_bot.server:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-aiact = ["data/*.json"]
+aiact = ["data/*.json", "data/*.gz", "data/official/*.json", "data/official/*.gz", "data/evaluation/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv]
+required-environments = ["sys_platform == 'darwin' and platform_machine == 'x86_64' and python_version < '3.13'"]

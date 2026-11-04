@@ -5,6 +5,65 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-53: make code testing the primary studio flow with scenario description,
+  UTF-8 source upload/paste, 24 KB bounds, exact source-line evidence and retained
+  templates. Save code with test fixtures; hide unrelated case/context fields.
+  Explain incompatible historical candidates before activation and allow builds
+  after bookkeeping-only changes. Remove run comparison, simplify screen labels,
+  compact evaluation details, and align upload/removal controls with their rows.
+  Keep five distinct sample cases and clear the extra cases from local SQLite.
+
+- EVR-52: reuse identical local candidates across Git-only changes, retain build
+  provenance and legacy manifests, and add protected, recoverable removal.
+  Restore Create candidate and replace page slogans with task instructions.
+
+- Simplify RAG version selection and collapse developer build controls. Remove
+  unrelated setup/provenance warnings from that screen. Help popups use the
+  browser top layer and dismiss on outside click or Escape.
+
+- Clarify source and active RAG identifiers with keyboard-accessible help popups.
+  Explain publisher references, applicability and publication in plain language;
+  remove the language badge.
+
+- Keep source exploration read-only. Required-source selection now opens only
+  from a test scenario, with explicit add-to-test and return actions.
+
+- Reuse the existing Copilot logo in the dashboard and favicon. Remove internal
+  milestone labels from the user interface.
+
+- Add a minimal English M1 presentation with actual screen images, Langfuse
+  usage, versioning rationale and extension points.
+- Preserve sibling conditions and exceptions inside their numbered official
+  source paragraphs, with exact subdivision addresses and offset tests.
+
+Engine 0.5.0, dashboard 0.2.0 and extension 0.4.0 (M1 tooling):
+
+- Add a full-source, domain-independent hybrid retrieval runtime with immutable
+  manifests, local CPU embeddings, versioned storage and explicit promotion.
+- Add React source exploration, paragraph-level labels, revisioned scenario
+  approval, retrieval traces, run comparisons and evaluation exports.
+- Add bounded full-corpus review and opt-in metadata-only Langfuse tracing.
+  New editor installs use Gemini with explicit cloud consent.
+- Add 54 legal development drafts, two technical fixtures, reproducible CI
+  reports, PostgreSQL checks and a single-owner Docker Compose runtime.
+- Consolidate installation and operations documentation. Retire superseded POC
+  plans. Expert-approved gold and live cloud acceptance remain required before
+  claiming final M1 quality.
+
+EVR-35: import the full pinned Publications Office source pack (119 articles,
+14 annexes, 180 original and 47 amendment recitals), preserving source hashes,
+paragraph offsets, origin and binding/explanatory distinctions. Rebuild and
+explicit staging download commands reject incomplete or changed source inventories.
+
+M1 tooling foundation (EVR-50):
+
+- Add React + Vite corpus explorer and scenario studio backed by a local FastAPI
+  adapter. Inspect exact packaged sources and provenance; save/reopen/export draft
+  scenarios persisted in SQLite.
+- Label the existing corpus as a legacy subset. No model calls or quality claims.
+- Add API integration checks and frontend build to CI. Keep workbench dependencies
+  optional; preserve ScanResult and existing adapters.
+
 Engine 0.4.3: concise PR comments and bounded citation repair (YIL-23).
 
 - Show concrete analysis, one question, code/legal links and simple reply commands.

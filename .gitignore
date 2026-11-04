@@ -13,3 +13,8 @@ build/
 bot/.env
 bot/config.toml
 bot/*.pem
+.aiact-workbench/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example

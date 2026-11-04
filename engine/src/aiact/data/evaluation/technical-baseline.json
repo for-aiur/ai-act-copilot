@@ -1,0 +1,15 @@
+{
+  "schema_version": "1",
+  "domain_id": "workbench-api",
+  "scope": "Authored engineering fixtures only, not legal gold. Changes require explicit review.",
+  "fixture_sha256": "6e90a087772187c65a7b45184d978138400be46031fdc65d9103abab175aa3bb",
+  "summary": {
+    "cases": 2,
+    "recall": 1.0,
+    "mean_precision": 0.3333333333333333,
+    "mean_mrr": 1.0,
+    "mean_ndcg": 1.0,
+    "missing_required": 0,
+    "false_positives": 0
+  }
+}

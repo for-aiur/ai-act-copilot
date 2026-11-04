@@ -1,0 +1,56 @@
+{
+  "schema_version": "1",
+  "domain_id": "workbench-api",
+  "dataset_version": "technical-1",
+  "notice": "Engineering fixtures for the authored technical domain, not legal gold.",
+  "cases": [
+    {
+      "id": "technical-health",
+      "title": "Readiness",
+      "scenario": "Check the /api/health endpoint for corpus and database readiness",
+      "context": {
+        "actor_role": "developer",
+        "deployment": "local workbench",
+        "constraints": "",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "health",
+          "label": "must_retrieve",
+          "rationale": "The authored API source describes the exact endpoint exercised by integration tests."
+        }
+      ],
+      "area": "technical-api",
+      "origin": "human",
+      "status": "approved",
+      "author": "Repository engineering fixtures",
+      "approved_by": "Repository engineering fixtures",
+      "split": "development"
+    },
+    {
+      "id": "technical-drafts",
+      "title": "Persistence",
+      "scenario": "Use /api/drafts for scenario draft persistence and listing",
+      "context": {
+        "actor_role": "developer",
+        "deployment": "local workbench",
+        "constraints": "",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "drafts",
+          "label": "must_retrieve",
+          "rationale": "The authored API source describes the exact endpoint exercised by integration tests."
+        }
+      ],
+      "area": "technical-api",
+      "origin": "human",
+      "status": "approved",
+      "author": "Repository engineering fixtures",
+      "approved_by": "Repository engineering fixtures",
+      "split": "development"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+services:
+  rag:
+    build: .
+    ports:
+      - "127.0.0.1:${AIACT_PORT:-8000}:8000"
+    environment:
+      AIACT_DATA_DIR: /data
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/aiact.db}
+      AIACT_DOWNLOAD_MODEL: ${AIACT_DOWNLOAD_MODEL:-true}
+      AIACT_PROVIDER: ${AIACT_PROVIDER:-gemini}
+      AIACT_MODEL: ${AIACT_MODEL:-gemini-3.1-flash-lite}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+      EMBEDDING_REVISION: ${EMBEDDING_REVISION:-file-sha256-pinned-at-build}
+      VECTOR_BACKEND: qdrant-local
+      VECTOR_PATH: /data/qdrant
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-false}
+      LANGFUSE_HOST: https://cloud.langfuse.com
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_PROJECT_ID: ${LANGFUSE_PROJECT_ID:-}
+    volumes:
+      - rag-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/rag/health', timeout=5)"]
+      interval: 15s
+      timeout: 7s
+      retries: 40
+      start_period: 60s
+    init: true
+  rag-eval:
+    build: .
+    profiles: ["tools"]
+    depends_on:
+      rag:
+        condition: service_healthy
+    command: ["python", "-m", "aiact.rag.remote_eval"]
+    environment:
+      AIACT_API_URL: http://rag:8000
+      AIACT_EVAL_DOMAIN: ${AIACT_EVAL_DOMAIN:-ai-act}
+    volumes:
+      - rag-reports:/reports
+volumes:
+  rag-data:
+  rag-reports:

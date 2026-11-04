@@ -1,190 +1,188 @@
 # AI Act Copilot
 
-<img src="extensions/vscode/media/copilot-wig.png" width="128" alt="AI Act Copilot robot wearing a legal wig" />
+A local retrieval workbench and Python review assistant by Evros Labs. Explore
+versioned official sources, inspect how retrieval works, and build evaluation
+cases with explicit context and reviewer feedback.
 
-*by Evros Labs*
+The source collection contains **119 articles, 14 annexes, 180 original recitals
+and 47 amendment recitals** from the Publications Office of the EU. Five sample
+test cases cover different topics. They are drafts, not expert-approved tests.
 
-AI Act Copilot reads selected Python code, compares its intended use with saved
-AI Act passages, and returns code evidence, legal quotations and questions
-about missing context. It helps engineering review; it does not certify compliance.
+## Open the application
 
-## What legal text do we use?
+Dashboard: **[http://localhost:8000](http://localhost:8000)**.
+The dashboard and API share this address when using Docker or the built frontend.
+Keep the application process running while using it.
 
-The original English AI Act published in July 2024 is **144 pages**, including
-its recitals and annexes ([official PDF](https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng/pdf)).
-That page count describes the original publication, not later consolidated versions.
-The engine stores **114 passages, 8,296 words**, from 15 official Commission
-pages: Articles 4a, 6, 8–16, 26 and 50, and Annexes III–IV. Source links and
-checksums are saved locally. These are selected provisions, not full coverage or
-an independent legal review. Stored coverage exceeds the evaluated use cases.
+## Start with Docker (recommended)
 
-```mermaid
-flowchart LR
-    A[Official Commission web pages] -->|Selected during POC development| B[114 legal passages]
-    B --> C[(corpus.json saved on disk)]
-```
-
-“Corpus” just means **the legal text file the tool can search**. Our
-[`corpus.json`](engine/src/aiact/data/corpus.json) contains the selected passages,
-their source links and verification details. It ships with the Python engine.
-During a scan, the file is read into memory. No legal website is called; inference uses the selected provider.
-
-## What happens when you scan code?
-
-```mermaid
-flowchart TD
-    A[Your Python code] --> B[Model call 1: what does this code do?]
-    B --> C[Purpose, observed facts and missing context]
-    C --> D[Engine finds matching saved legal passages]
-    L[(Local corpus.json)] --> D
-    D --> E[Model call 2: compare the facts with those passages]
-    C --> E
-    E --> F[Engine checks code lines and exact quotations]
-    F --> G[JSON: finding, evidence and context question]
-```
-
-Both calls use your selected provider: **Ollama** runs the model locally;
-**Gemini** sends the selected code/context and retrieved passages to Google.
-For example, the first call may identify that code ranks job applicants. The
-engine then uses keyword matching to select the saved recruitment passage.
-The second call gets the code evidence, extracted facts and that passage to
-produce up to four distinct review topics, each with its own evidence and question. The model does not search the web or read the whole law.
-
-Question options live in
-[`questions.json`](engine/src/aiact/data/questions.json), separately from code.
-There are **164 authored questions**, including an evidence-oriented question
-for every stored passage. They ask for dataset lineage, experiment comparisons,
-subgroup tests, intervention records and other concrete evidence. The engine
-offers a bounded subset for the retrieved passages, with applicability hints;
-seven institutional passages have maintenance-only questions, excluded from
-developer scans. More questions do not establish broader tested domain coverage.
-See the [question catalogue](docs/QUESTION-CATALOG.md) and
-[selection rules](docs/QUESTIONS.md). Titles and explanations come from the model;
-source lines, bank membership and citation matching are checked independently.
-
-## What does update do?
-
-**It runs only when someone explicitly executes `aiact update`.** It does not
-run on startup, on save or during a scan. There is no automatic schedule.
-
-It downloads the same 15 official pages and asks: “Are our saved passages
-still there?” If yes, it saves a verified copy to `~/.cache/aiact/corpus.json`.
-Subsequent scans use that cache instead of the packaged copy unless an explicit
-corpus path is configured. If a passage changed or a download fails, it keeps
-the previous cache and reports an error.
-
-The command currently **rechecks existing text**. It does not import new
-articles or update changed legal wording. That needs a reviewed corpus revision.
-
-## Run a review
-
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
-Choose one provider; `uv run` prepares Python and dependencies automatically.
-No environment activation is needed.
-
-**Gemini (cloud):** create an [API key](https://aistudio.google.com/apikey), put it
-in your shell's `GEMINI_API_KEY` environment variable, then run:
+Requirements: a running Docker engine with Docker Compose v2.20 or newer.
+From the repository root:
 
 ```sh
-uv run --project engine --python 3.12 aiact scan examples/recruitment/ranker.py --provider gemini --json
+cp .env.example .env
+docker compose up --build
 ```
 
-The default is `gemini-3.1-flash-lite`. Override with `--model` or, in VS Code,
-`aiact.geminiModel`. Selected source, explicit context and retrieved legal text go
-to Google using your API quota. Ollama is not needed. See [Gemini setup](docs/GEMINI.md).
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Keep the command running.
+The first setup downloads the local embedding model (about 64 MB) and builds the
+source/vector indexes. Allow several minutes on a CPU. No Gemini key is needed
+for source browsing, retrieval or annotation.
 
-**Ollama (local):**
+The React build and Python API are served by one container. SQLite, embeddings,
+Qdrant and review history live in the persistent `rag-data` volume. Native
+SQLite stays in `.aiact-workbench/`, which Git ignores. There is one
+owner of the embedded vector index, with no separate Qdrant server.
 
-Install [Ollama](https://ollama.com/download) and start it. From the repository root:
+Stop with Ctrl+C, or `docker compose down` from another terminal. These retain
+data. A normal restart uses cached embeddings without downloading them again.
+New RAG candidates preserve an existing active release until explicitly selected.
+
+### Optional Gemini review
+
+Add your key to the private `.env` file:
+
+```dotenv
+GEMINI_API_KEY=your-key
+```
+
+Restart the service after configuration changes. In Code test, enter
+Python source and explicitly approve sending that code, context and retrieved
+passages to Google. Then choose **Review & save result locally**. Keys never go
+into browser settings, command arguments, reports or traces.
+
+Local retrieval uses CPU embeddings regardless of the review provider. To use
+Ollama instead, select `AIACT_PROVIDER=ollama`, configure its model and loopback
+endpoint in native mode. Container-to-host Ollama networking is not enabled by
+default. There is no automatic provider fallback.
+
+## Run the built frontend without Docker
+
+After native setup and `npm run build --prefix dashboard`, run from the repository root:
 
 ```sh
-ollama pull qwen2.5:1.5b
-uv run --project engine --python 3.12 aiact scan examples/recruitment/ranker.py --model qwen2.5:1.5b --json
+AIACT_STATIC_DIR="$PWD/dashboard/dist" uv run --project engine --extra workbench --extra rag python -m uvicorn aiact.workbench.api:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Download the model once. The engine environment lives in `engine/.venv`.
-For a local setup check, run `uv run --project engine aiact doctor --model qwen2.5:1.5b`.
+Open **[http://localhost:8000](http://localhost:8000)**. This serves the dashboard
+and API together, without a separate Vite process.
 
-`scan --json` returns `complete`, `partial` or `failed` status, findings,
-coverage, errors and model/corpus provenance. Exit code 0 means the review
-completed, 1 means it was incomplete or failed, and 2 means a usage or
-configuration error. Zero findings does not mean compliant.
+## Short screen guide
 
-The POC currently supports bounded Python source and selected recruitment,
-biometric, classification and transparency passages. See the
-[extension guide](extensions/vscode/README.md) and
-[release notes](docs/releases/v0.1.6-poc.4.md) for usage and limitations.
-Published changes are listed in the [changelog](CHANGELOG.md).
+The [short presentation and screen guide](docs/presentation/README.md)
+introduces the system, Langfuse, RAG versions and extension points.
 
-## Choose a model
+## Use the workbench
 
-This repository's workspace selects `qwen2.5:1.5b` for a smaller local model.
-For Ollama, in VS Code Settings, search `aiact.model` and choose Workspace, or edit:
+1. **Sources:** search source text or references, inspect exact wording
+   and provenance. This screen is for reading sources.
+2. **Code test:** describe the scenario, paste code or upload a source
+   file, then choose **Run**. Code and description share a 24 KB limit. Inspect
+   matching sources and label expected results. Examples remain on the right.
+   Model analysis requires a configured provider; Gemini requires explicit consent.
+3. **Test cases:** label sources, give reasons, save drafts, explicitly
+   approve a new revision and export JSON. Use **Add required source** while
+   preparing a scenario to select a source the test must find. Expectations and actual hits remain
+   separate. A missing expected source is a false negative.
+4. **RAG versions:** build a candidate, inspect its manifest and activate or
+   roll back for local tooling tests. This does not pass the final quality gate.
 
-```json
-{
-  "aiact.model": "qwen2.5:1.5b"
-}
+Switch to **Workbench API guide** to exercise the same tools with a second,
+authored technical domain. Its two engineering fixtures are separate from legal
+expert gold. Feedback never globally excludes documents or trains the retriever.
+
+## Native development
+
+Requirements: Python **3.12**, [uv](https://docs.astral.sh/uv/) and Node **24**.
+Intel Mac local embeddings require Python 3.12; the engine lockfile selects a
+compatible ONNX Runtime. The ordinary CLI supports Python 3.11+.
+
+First setup, with an explicit embedding download:
+
+```sh
+uv sync --project engine --python 3.12 --extra workbench --extra rag
+AIACT_DOWNLOAD_MODEL=true uv run --project engine --extra workbench --extra rag python -m aiact.workbench.bootstrap
 ```
 
-The model must already be installed in Ollama. CLI users select it with
-`--model qwen2.5:1.5b` or the `AIACT_MODEL` environment variable. Changing the
-setting does not download a model. Review results identify the model used.
+Start the API:
 
-## Install the VS Code extension
+```sh
+uv run --project engine --extra workbench --extra rag python -m uvicorn aiact.workbench.api:create_app --factory --host 127.0.0.1 --port 8000
+```
 
-Prepare the engine once with `uv run --project engine aiact --version`. Then:
+In a second terminal:
 
-1. For the Gemini preview, build from this checkout with
-   `npm --prefix extensions/vscode ci` and `npm --prefix extensions/vscode run package`.
-   The [published POC](https://github.com/for-aiur/ai-act-copilot/releases/tag/v0.1.6-poc.4)
-   is an older Ollama-only snapshot.
-2. In VS Code, open **Extensions → … → Install from VSIX**, select
-   `extensions/vscode/ai-act-copilot-0.3.0.vsix`, then **Developer: Reload Window**.
-3. Open the repository root and trust it. For Gemini, run
-   **AI Act Copilot: Configure Gemini**, enter your key in the masked field and
-   approve cloud review for this workspace. The key goes into VS Code's secure
-   storage, never settings JSON.
-4. Open a Python file and run **AI Act Copilot: Review current Python file**.
+```sh
+npm ci --prefix dashboard
+npm run dev --prefix dashboard
+```
 
-The checked-in workspace settings point to `engine/.venv/bin/aiact`, created by
-uv. The robot icon opens Provider setup with engine, provider, model and corpus
-health. For local Ollama, choose `aiact.provider: ollama` and use **Start local
-service** if needed. Both providers use the same review pipeline and report.
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173). Vite proxies `/api` to the
+Python service. Set `AIACT_API_TARGET` for a different local API address. No API
+URL or secret is compiled into the browser bundle. Restart Python after backend
+or `.env` changes. Native data is stored under `.aiact-workbench/`, gitignored.
 
-## CI
+## Commands and verification
 
-[GitHub Actions](https://github.com/for-aiur/ai-act-copilot/actions) runs engine
-and extension tests, builds wheel/VSIX packages and uploads release candidates
-on pushes and pull requests. See [CI details](docs/CI.md).
+```sh
+# Inspect the active source/RAG identity.
+uv run --project engine --extra rag aiact rag status
 
-## Multi-topic examples
+# Evaluate local cases; results distinguish drafts and approved gold.
+uv run --project engine --extra rag aiact rag eval --output .aiact-results/evaluation.json
 
-Review `examples/recruitment/training_review.py` for training/data governance,
-parameter choices, oversight and evaluation. `examples/recruitment/bias_audit.py`
-adds a special-category bias-audit retention/deletion scenario. Missing facts
-become questions, not proof of unethical training or dirty data. The engine
-returns at most four findings and retrieves at most six passages per scan.
+# Explicit network operations, without changing the active corpus.
+uv run --project engine --extra rag aiact corpus check
+uv run --project engine --extra rag aiact corpus sync --staging
 
-The corpus is searched locally with lexical ranking, topic gates and synonyms.
-No vector database or embeddings are required. Real Gemini output quality still
-needs manual review; fixture tests use test-only providers.
+# Full automated engine tests and frontend builds.
+uv run --project engine --extra dev --extra bot --extra workbench --extra workbench-test --extra rag --extra postgres python -m pytest engine/tests
+npm run build --prefix dashboard
+npm test --prefix extensions/vscode
+```
 
-## GitHub PR review
+`docker compose run --rm rag-eval` evaluates through the running API, so it never
+opens Qdrant concurrently. For final acceptance, `aiact rag eval --require-quality
+--include-holdout` fails unless the expert-gold policy passes. It is expected to
+fail with the initial draft-only legal data. Reports include misses and sample
+size uncertainty, rather than implying certified compliance.
 
-GitHub Actions reviews changed Python files using our GitHub App identity and
-posts code evidence, official sources and questions to the PR. No server or
-persistent database is required. [App and workflow setup](docs/PR-ACTIONS.md).
+[CI and release gates](docs/CI.md) describe PR checks, PostgreSQL parity,
+container restart tests and protected live-model evaluation. Actual observed
+checks and remaining acceptance are in [M1 status](docs/M1-STATUS.md).
 
-Reply `/aiact ack` under a finding to mark it seen and keep it open for follow-up,
-or `/aiact fp <reason>` if it does not apply. The bot replies and updates an
-App-owned merge check. Configure
-that check as required to prevent merging until every current finding has an
-authorized decision. A new commit invalidates earlier decisions.
+## Source updates and RAG versions
 
-Replies are acknowledged with deterministic receipts, not sent to the model.
-Gemini receives selected code and legal passages only during scans. Roles/model
-live in `bot/actions.toml`. Set repository variable `AIACT_PR_REVIEW_MODE=manual`
-for demos, then use **Actions > AI Act PR review > Run workflow** with a PR
-number, or post `/aiact rescan`. The default mode is `automatic`. Fork PRs are
-disabled. Dashboard and durable history remain deferred.
+The canonical source pack is pinned to CELEX `02024R1689-20260727`, with original
+and amendment Official Journal sources stored separately. Raw XHTML, source
+hashes and deterministic parser output ship in the engine. Consolidated text is
+an informational reference; authentic legal acts are the Official Journal texts.
+
+Application version, source snapshot, RAG release, case revision and evaluation
+run are separate identities. RAG bundles pin the source, parser, chunking,
+embedding files, lexical/vector indexes, retrieval code and budgets. Published
+bundles are immutable. Changed source or model files require a new candidate.
+Reviewed promotion requires an explicit decision and a passing quality gate.
+
+See [architecture](docs/ARCHITECTURE.md), [workbench operations](docs/WORKBENCH.md)
+and [corpus files](corpus/README.md).
+
+## Existing adapters
+
+The [VS Code extension](extensions/vscode/README.md) and
+[GitHub Actions App](docs/PR-ACTIONS.md) remain supported. Their existing scan
+path uses the labelled 114-passage legacy subset and reviewed question bank.
+The full-corpus workbench and explicit CLI `--rag-release` path use the new RAG
+runtime. Adapter migration to the common application is later work.
+
+The portable `aiact scan PATH --json` contract remains unchanged: one JSON result,
+0 for completed review, 1 for incomplete/failed review, and 2 for configuration
+errors. Findings alone do not fail a scan. Explicit full-corpus example:
+
+```sh
+uv run --project engine --extra rag aiact scan examples/recruitment/ranker.py --rag-release RELEASE_ID --provider gemini --cloud-consent --json
+```
+
+Use the full ID from `aiact rag status`. No scanned code is executed. Zero findings
+is not a compliance certificate. Detailed [Gemini settings](docs/GEMINI.md) and
+[published release history](CHANGELOG.md) remain available.

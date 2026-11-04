@@ -1,0 +1,123 @@
+{
+  "schema_version": "1",
+  "domain_id": "ai-act",
+  "dataset_version": "drafts-2",
+  "notice": "Five distinct model-authored development examples. None are expert-approved gold.",
+  "cases": [
+    {
+      "id": "prohibited-practices-1",
+      "title": "Workplace emotion monitoring",
+      "scenario": "A workplace system infers employees emotions from video recordings.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "Planned first deployment; safeguards and actor responsibilities are not established.",
+        "constraints": "Draft scenario. Do not infer a legal obligation solely from code or this label.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-5",
+          "label": "must_retrieve",
+          "rationale": "Model-authored proposed source to inspect for this scenario. Reviewer must verify applicability, related provisions and exceptions before approval."
+        }
+      ],
+      "area": "prohibited-practices",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Codex draft author",
+      "split": "development"
+    },
+    {
+      "id": "classification-1",
+      "title": "High-risk classification",
+      "scenario": "A provider needs to assess intended use and possible high-risk classification exceptions.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "Planned first deployment; safeguards and actor responsibilities are not established.",
+        "constraints": "Draft scenario. Do not infer a legal obligation solely from code or this label.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-6",
+          "label": "must_retrieve",
+          "rationale": "Model-authored proposed source to inspect for this scenario. Reviewer must verify applicability, related provisions and exceptions before approval."
+        }
+      ],
+      "area": "classification",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Codex draft author",
+      "split": "development"
+    },
+    {
+      "id": "data-governance-1",
+      "title": "Training data quality",
+      "scenario": "An AI training team checks dataset provenance, representativeness and possible bias.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "Planned first deployment; safeguards and actor responsibilities are not established.",
+        "constraints": "Draft scenario. Do not infer a legal obligation solely from code or this label.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-10",
+          "label": "must_retrieve",
+          "rationale": "Model-authored proposed source to inspect for this scenario. Reviewer must verify applicability, related provisions and exceptions before approval."
+        }
+      ],
+      "area": "data-governance",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Codex draft author",
+      "split": "development"
+    },
+    {
+      "id": "transparency-1",
+      "title": "Chatbot transparency",
+      "scenario": "A customer-facing chatbot generates synthetic replies and needs interaction disclosure.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "Planned first deployment; safeguards and actor responsibilities are not established.",
+        "constraints": "Draft scenario. Do not infer a legal obligation solely from code or this label.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-50",
+          "label": "must_retrieve",
+          "rationale": "Model-authored proposed source to inspect for this scenario. Reviewer must verify applicability, related provisions and exceptions before approval."
+        }
+      ],
+      "area": "transparency",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Codex draft author",
+      "split": "development"
+    },
+    {
+      "id": "general-purpose-1",
+      "title": "General-purpose AI model",
+      "scenario": "A provider distributes a general-purpose AI model and prepares documentation.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "Planned first deployment; safeguards and actor responsibilities are not established.",
+        "constraints": "Draft scenario. Do not infer a legal obligation solely from code or this label.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-53",
+          "label": "must_retrieve",
+          "rationale": "Model-authored proposed source to inspect for this scenario. Reviewer must verify applicability, related provisions and exceptions before approval."
+        }
+      ],
+      "area": "general-purpose",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Codex draft author",
+      "split": "development"
+    }
+  ]
+}

@@ -12,6 +12,7 @@ from .retrieval import retrieve
 from .retrieval import DOMAINS
 from .questions import load_question_bank, review_questions_for
 from .validation import DraftReview, validate_review
+from .telemetry import CURRENT, Trace, traced_call
 
 
 class Fact(Contract):
@@ -26,10 +27,10 @@ class Understanding(Contract):
     unknowns: list[str] = Field(max_length=5)
 
 
-def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explicit_context: str = "", budgets: Budgets = Budgets()) -> ScanResult:
+def _scan(path: Path, provider: Provider, corpus_path: Path | None = None, explicit_context: str = "", budgets: Budgets = Budgets()) -> ScanResult:
     start = time.monotonic()
     deadline = start + budgets.total_seconds
-    context = collect(path, explicit_context, budgets)
+    context = traced_call("code_collection", collect, path, explicit_context, budgets)
     metadata = Metadata(provider=getattr(provider, "name", None), model_id=provider.model, input_fingerprint=context.fingerprint or None)
     errors = list(context.errors)
     findings = []
@@ -43,7 +44,7 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
             if remaining <= 0:
                 raise ReviewFailure("timeout", "Total scan deadline reached.")
             try:
-                result = provider.generate_json(prompt, schema_override or model.model_json_schema(), min(budgets.request_seconds, remaining))
+                result = traced_call("purpose_extraction" if model is Understanding else "legal_review", provider.generate_json, prompt, schema_override or model.model_json_schema(), min(budgets.request_seconds, remaining))
                 return model.model_validate(result)
             except (ValidationError, ReviewFailure) as exc:
                 if isinstance(exc, ReviewFailure) and exc.code != "invalid_response":
@@ -84,7 +85,7 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
             raise ReviewFailure("invalid_response", "Extraction ignored an unresolved model-like invocation; no completed empty review is supported.")
         if any(f.evidence_id not in evidence for f in first.facts):
             raise ReviewFailure("evidence_invalid", "Purpose extraction referenced an unknown evidence ID.")
-        passages = retrieve(first.purpose + " " + " ".join(f.fact for f in first.facts) + " " + " ".join(s.text for s in context.sources), corpus, budgets)
+        passages = traced_call("legal_retrieval", retrieve, first.purpose + " " + " ".join(f.fact for f in first.facts) + " " + " ".join(s.text for s in context.sources), corpus, budgets)
         if not passages:
             raise ReviewFailure("corpus_unavailable", "No legal passage fits the configured legal text budget.")
         context.coverage.corpus_scope = [p["id"] for p in passages]
@@ -155,7 +156,7 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
             quote_choices = {p["id"]: p["supporting_quotes"] for p in passages}
             if any(c.section_id not in quote_choices or c.quote not in quote_choices[c.section_id] for f in draft.findings for c in f.citations):
                 raise ReviewFailure("citation_invalid", "Review did not select a supported domain passage and exact quotation.")
-            return validate_review(draft, evidence, {s.path: s.text for s in context.sources}, passages)
+            return traced_call("evidence_validation", validate_review, draft, evidence, {s.path: s.text for s in context.sources}, passages)
 
         review_request = review_prompt + json.dumps(review_data)
         while True:
@@ -188,3 +189,20 @@ def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explic
     metadata.elapsed_ms = int((time.monotonic() - start) * 1000)
     status = "failed" if not reviewed else "partial" if errors or context.coverage.skipped_files or context.coverage.truncated else "complete"
     return ScanResult(status=status, findings=findings, errors=errors, coverage=context.coverage, metadata=metadata)
+
+
+def scan(path: Path, provider: Provider, corpus_path: Path | None = None, explicit_context: str = "", budgets: Budgets = Budgets()) -> ScanResult:
+    try:
+        from .settings import load_settings
+        settings = load_settings()
+    except Exception:
+        settings = None
+    trace = Trace(settings)
+    token = CURRENT.set(trace)
+    try:
+        result = _scan(path, provider, corpus_path, explicit_context, budgets)
+        trace.attributes.update(getattr(provider, "usage_totals", {}))
+        trace.finish(result)
+        return result
+    finally:
+        CURRENT.reset(token)

@@ -1,0 +1,32 @@
+[
+  {
+    "role": "consolidated",
+    "celex": "02024R1689-20260727",
+    "url": "https://publications.europa.eu/resource/celex/02024R1689-20260727",
+    "canonical_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02024R1689-20260727",
+    "sha256": "5e7719f77e8a606b257dc25958ee3222c4383300a5a34270a5b850a2ce8b8715",
+    "retrieved_at": "2026-11-03",
+    "file": "02024R1689-20260727.xhtml.gz",
+    "format": "application/xhtml+xml"
+  },
+  {
+    "role": "original",
+    "celex": "32024R1689",
+    "url": "https://publications.europa.eu/resource/celex/32024R1689",
+    "canonical_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689",
+    "sha256": "8f0b656302f9864cc87e040c371f209a9d65ae1a6cecc25ca5eb737e872d721a",
+    "retrieved_at": "2026-11-03",
+    "file": "32024R1689.xhtml.gz",
+    "format": "application/xhtml+xml"
+  },
+  {
+    "role": "amendment",
+    "celex": "32026R1744",
+    "url": "https://publications.europa.eu/resource/celex/32026R1744",
+    "canonical_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32026R1744",
+    "sha256": "9d754652b867722807e4219c85912ce354233e58a1b4eb8c7752b4d1922993db",
+    "retrieved_at": "2026-11-03",
+    "file": "32026R1744.xhtml.gz",
+    "format": "application/xhtml+xml"
+  }
+]

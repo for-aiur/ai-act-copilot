@@ -1,0 +1,184 @@
+"""Deterministic importer for the pinned Publications Office XHTML source pack."""
+import gzip
+import hashlib
+import json
+import re
+import xml.etree.ElementTree as ET
+from importlib.resources import files
+from pathlib import Path
+
+PARSER_VERSION = "cellar-xhtml-3"
+CELEX = "02024R1689-20260727"
+NS = "{http://www.w3.org/1999/xhtml}"
+
+
+def checksum(value) -> str:
+    raw = value if isinstance(value, bytes) else json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+    return hashlib.sha256(raw).hexdigest()
+
+
+def text(element) -> str:
+    """Normalize layout whitespace only; omit publisher revision navigation."""
+    def walk(node):
+        if node.get("class") in {"modref", "title-article-norm", "eli-title", "title-annex-1"}:
+            return ""
+        parts = [node.text or ""]
+        for child in node:
+            parts.extend((walk(child), child.tail or ""))
+        return "".join(parts)
+    return " ".join(walk(element).split())
+
+
+def subdivisions(root):
+    """Map numbered/lettered DOM subdivisions to exact parent offsets."""
+    found = []
+    def walk(node, path, offset):
+        body = text(node)
+        marker = next((child for child in node if child.get("class") == "no-parag"), None)
+        column = next((child for child in node if child.get("class") == "list grid-list-column-1"), None)
+        label = text(marker) if marker is not None else text(column) if column is not None else ""
+        label = label.strip("(). ").lower()
+        if re.fullmatch(r"[0-9]+[a-z]?|[a-z]+", label):
+            path = [*path, label]
+            found.append(("-".join(path), body, offset))
+        cursor = 0
+        sibling_paragraph = []
+        for child in node:
+            child_text = text(child)
+            if not child_text:
+                continue
+            position = body.find(child_text, cursor)
+            if position < 0:
+                raise ValueError("Nested official source block lost its parent offset")
+            cursor = position + len(child_text)
+            child_path = path
+            # Some official article paragraphs use sibling DOM blocks for their
+            # following conditions/exceptions rather than nesting those blocks.
+            if node is root and root.get("id", "").startswith("art_"):
+                number = next((text(c).strip("(). ").lower() for c in child if c.get("class") == "no-parag"), "")
+                if re.fullmatch(r"[0-9]+[a-z]?", number):
+                    sibling_paragraph = [number]
+                else:
+                    child_path = sibling_paragraph
+            walk(child, child_path, offset + position)
+    walk(root, [], 0)
+    return found
+
+
+def import_official(source_dir: Path | None = None) -> dict:
+    directory = source_dir or files("aiact").joinpath("data/official")
+    sources = json.loads(directory.joinpath("sources.json").read_text())
+    documents = []
+    fine_blocks = {}
+    for source in sources:
+        raw = gzip.decompress(directory.joinpath(source["file"]).read_bytes())
+        if checksum(raw) != source["sha256"]:
+            raise ValueError("Official source checksum mismatch: " + source["celex"])
+        root = ET.fromstring(raw)
+        parents = {child: parent for parent in root.iter() for child in parent}
+        prefix = r"art_[0-9]+[a-z]?|anx_[IVX]+" if source["role"] == "consolidated" else r"rct_[0-9]+"
+        found = [node for node in root.iter() if re.fullmatch(prefix, node.get("id", ""))]
+        for node in found:
+            source_id = node.get("id")
+            kind = "article" if source_id.startswith("art_") else "annex" if source_id.startswith("anx_") else "recital"
+            number = source_id.split("_")[1].lower()
+            document_id = ("amendment-" if source["role"] == "amendment" else "") + kind + "-" + number
+            title_node = next((e for e in node.iter() if e.get("class") in {"stitle-article-norm", "title-annex-2"}), None)
+            title = kind.title() + " " + number.upper()
+            if title_node is not None:
+                title += ": " + " ".join("".join(title_node.itertext()).split())
+            body = text(node)
+            if not body:
+                raise ValueError("Empty official document: " + source_id)
+            chapter = None
+            ancestor = parents.get(node)
+            while ancestor is not None:
+                chapter = ancestor.get("id", "") if ancestor.get("id", "").startswith("cpt_") else chapter
+                ancestor = parents.get(ancestor)
+            documents.append({
+                "id": document_id, "title": title, "text": body,
+                "source_url": source["canonical_url"] + "#" + source_id,
+                "source_celex": source["celex"], "source_anchor": source_id,
+                "kind": kind, "origin": source["role"], "chapter": chapter,
+                "binding": kind != "recital", "checksum": checksum(body.encode()),
+                "consolidated_date": "2026-07-27" if source["role"] == "consolidated" else None,
+                "publication_date": {"32024R1689": "2024-07-12", "32026R1744": "2026-07-24"}.get(source["celex"]),
+                "applicability": {"status": "conditional_or_unknown", "date": None, "source_ids": ["article-111", "article-113"]},
+                "blocks": [text(child) for child in node if text(child)],
+            })
+            fine_blocks[document_id] = subdivisions(node)
+    actual = {d["id"] for d in documents}
+    expected_articles = {"article-" + str(n) for n in range(1, 114)} | {"article-4a", "article-60a", "article-75a", "article-75b", "article-75c", "article-75d"}
+    expected_annexes = {"annex-" + n for n in ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii", "xiii", "xiv"]}
+    if {d["id"] for d in documents if d["kind"] == "article"} != expected_articles or {d["id"] for d in documents if d["kind"] == "annex"} != expected_annexes:
+        raise ValueError("Consolidated article/annex inventory is incomplete or changed.")
+    for source, expected in [("original", 180), ("amendment", 47)]:
+        ids = {d["source_anchor"] for d in documents if d["origin"] == source}
+        if ids != {"rct_" + str(i) for i in range(1, expected + 1)}:
+            raise ValueError("Recital inventory is incomplete or changed: " + source)
+    if len(actual) != len(documents):
+        raise ValueError("Duplicate source document IDs.")
+    chunks = []
+    for document in documents:
+        cursor, seen = 0, set()
+        for index, block in enumerate(document["blocks"], 1):
+            start = document["text"].find(block, cursor)
+            if start < 0:
+                raise ValueError("Source block cannot be mapped to parent: " + document["id"])
+            cursor = start + len(block)
+            match = re.match(r"^(?:\()?([0-9]+[a-z]?)[.)]\s", block)
+            end = cursor
+            if match and document["kind"] == "article":
+                # Retain all contiguous subparagraphs, including exceptions.
+                later = next((b for b in document["blocks"][index:] if re.match(r"^(?:\()?([0-9]+[a-z]?)[.)]\s", b)), None)
+                end = document["text"].find(later, cursor) if later else len(document["text"])
+                if end < cursor:
+                    raise ValueError("Numbered paragraph boundary lost its source offset")
+                block = document["text"][start:end].rstrip()
+                end = start + len(block)
+            suffix = match[1] if match else "block-" + str(index)
+            chunk_id = document["id"] + "-" + suffix
+            if chunk_id in seen:
+                chunk_id += "-" + str(index)
+            seen.add(chunk_id)
+            references = {"article-" + n.lower() for n in re.findall(r"Article\s+(\d+[a-z]?)", block)}
+            references |= {"annex-" + n.lower() for n in re.findall(r"Annex\s+([IVX]+)\b", block)}
+            chunks.append({"id": chunk_id, "document_id": document["id"], "title": document["title"] + " / " + suffix,
+                           "text": block, "start": start, "end": end, "checksum": checksum(block.encode()),
+                           "references": sorted(references & actual)})
+        for suffix, body, start in fine_blocks[document["id"]]:
+            identity = document["id"] + "-" + suffix
+            if identity in seen:
+                continue
+            seen.add(identity)
+            references = {"article-" + n.lower() for n in re.findall(r"Article\s+(\d+[a-z]?)", body)}
+            references |= {"annex-" + n.lower() for n in re.findall(r"Annex\s+([IVX]+)\b", body)}
+            chunks.append({"id": identity, "document_id": document["id"], "title": document["title"] + " / " + suffix,
+                           "text": body, "start": start, "end": start + len(body), "checksum": checksum(body.encode()),
+                           "references": sorted(references & actual)})
+        if not document["blocks"]:
+            raise ValueError("Document has no indexable source blocks: " + document["id"])
+    snapshot = {"schema_version": "1", "domain_id": "ai-act", "parser_version": PARSER_VERSION,
+                "sources": sources, "documents": documents,
+                "chunks": chunks,
+                "coverage": {"articles": len(expected_articles), "annexes": len(expected_annexes), "original_recitals": 180, "amendment_recitals": 47, "complete": True},
+                "scope_limits": ["Consolidated text is informational. Authentic legal acts are the original and amendment Official Journal publications.",
+                                 "Complete pinned source inventory is distinct from retrieval quality. Conditional applicability requires context."]}
+    snapshot["snapshot_id"] = checksum(snapshot)
+    return snapshot
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-dir", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    snapshot = import_official(args.source_dir)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_bytes(gzip.compress(json.dumps(snapshot, ensure_ascii=False).encode(), mtime=0))
+    print(json.dumps({"snapshot_id": snapshot["snapshot_id"], "coverage": snapshot["coverage"]}))
+
+
+if __name__ == "__main__":
+    main()

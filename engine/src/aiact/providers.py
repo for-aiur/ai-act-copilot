@@ -106,6 +106,11 @@ class Ollama:
             "options": {"temperature": 0, "num_predict": 2400 if "findings" in schema.get("properties", {}) else 1100, "num_ctx": 8192},
             "keep_alive": "20m",
         }, timeout=min(timeout, 60))
+        self.usage_totals = getattr(self, "usage_totals", {})
+        for source, target in [("prompt_eval_count", "input_tokens"), ("eval_count", "output_tokens")]:
+            count = result.get(source)
+            if type(count) is int and 0 <= count <= 1_000_000_000:
+                self.usage_totals[target] = self.usage_totals.get(target, 0) + count
         try:
             if not result.get("done") or result.get("done_reason") == "length":
                 raise ValueError()

@@ -1,4 +1,4 @@
-name: POC CI
+name: Software CI
 
 on:
   push:
@@ -33,7 +33,11 @@ jobs:
       - name: Prepare Python
         run: uv python install 3.12
       - name: Test engine contracts, evidence, privacy and failures
-        run: uv run --project engine --python 3.12 --extra dev --extra bot --locked python -m pytest engine/tests
+        run: uv run --project engine --python 3.12 --extra dev --extra bot --extra workbench --extra workbench-test --extra rag --extra postgres --locked python -m pytest engine/tests
+      - name: Build React workbench
+        run: |
+          npm ci --prefix dashboard
+          npm run build --prefix dashboard
       - name: Validate bot deployment configuration
         run: |
           cp bot/.env.example bot/.env
@@ -60,6 +64,7 @@ jobs:
           "$RUNNER_TEMP/aiact-wheel/bin/aiact" --version
           "$RUNNER_TEMP/aiact-wheel/bin/aiact-bot" --help
           "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.corpus import load_corpus; assert len(load_corpus()["sections"]) == 114'
+          "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.rag.domains import load_snapshot; s=load_snapshot(); assert len(s.documents)==360 and len(s.chunks)==1771'
           "$RUNNER_TEMP/aiact-wheel/bin/python" -c 'from aiact.corpus import load_corpus; from aiact.questions import question_options_for; assert question_options_for("annex-iii-4-a", {s["id"] for s in load_corpus()["sections"]})'
       - name: Checksum release candidates
         working-directory: dist/release

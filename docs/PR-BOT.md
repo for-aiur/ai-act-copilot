@@ -4,7 +4,7 @@
 
 The GitHub App reviews changed Python files, asks source-grounded questions in
 the PR, and records scans, comment revisions and human decisions in persistent
-SQLite. It reuses the existing engine. There is no dashboard UI yet.
+SQLite. It reuses the existing engine. This deferred service is not connected to the M1 retrieval workbench.
 
 ```mermaid
 flowchart LR
@@ -195,7 +195,7 @@ Webhook bodies are limited to 1 MB. GitHub calls are bounded/paginated (200 requ
 attempts. A completed run is reused on duplicate delivery. A crash during an
 unfinished model request may still repeat that request on restart. The service
 is one worker and one SQLite database, not a horizontally scaled production
-platform. Dashboard UI, SSO, native thread-state syncing and additional model
+platform. Application integration, SSO, native thread-state syncing and additional model
 providers are not included.
 
 Local integration tests exercise the real engine, signature validation, HTTP
