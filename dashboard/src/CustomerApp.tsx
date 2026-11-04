@@ -111,6 +111,13 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     <h1>{mode === "register" ? "Create an account" : "Welcome to AI Act Copilot"}</h1>
     <p>{mode === "register" ? "Account creation is not available in this demo." : "Explore the demo with a sample review."}</p>
     {error && <div role="alert" className="inline-error"><CircleAlert size={16} />{error}</div>}
+    {mode === "login" && <>
+      <button className="google-signin" type="button">
+        <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.89c-.58 2.96-2.27 5.48-4.78 7.18l7.73 6C44.35 38.09 47 31.96 47 24.55Z"/><path fill="#FBBC05" d="M10.53 28.59a14.2 14.2 0 0 1 0-9.18l-7.98-6.2a23.94 23.94 0 0 0 0 21.58l7.98-6.2Z"/><path fill="#34A853" d="M24 48c6.48 0 11.94-2.13 15.92-5.8l-7.73-6C30.05 37.75 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.2C6.51 42.62 14.62 48 24 48Z"/></svg>
+        <span>Continue with Google</span>
+      </button>
+      <div className="auth-divider"><span>or</span></div>
+    </>}
     {mode === "register" ? <button className="button-dark auth-submit" disabled>Create an account</button> : <button className="button-dark auth-submit" onClick={enterDemo} disabled={busy}>{busy ? <LoaderCircle className="spin" size={16} /> : null}Enter the demo<ArrowRight size={16} /></button>}
     <div className="auth-switch">{mode === "register" ? <a href="/login">Back to demo sign in</a> : <button type="button" disabled>Create an account</button>}</div>
   </div></div>;
