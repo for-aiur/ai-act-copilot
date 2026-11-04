@@ -116,6 +116,19 @@ def test_login_requires_valid_password_and_logout_revokes_session(tmp_path):
         assert client.post("/api/auth/login", json={"email": "user@example.test", "password": "wrong"}).status_code == 401
 
 
+def test_demo_mode_seeds_one_demo_tenant_and_disables_account_creation(tmp_path):
+    settings = Settings(data_dir=tmp_path,
+        database_url=SecretStr(f"sqlite:///{tmp_path / 'demo.sqlite'}"), demo_mode=True)
+    with TestClient(create_app(settings=settings)) as client:
+        entered = client.post("/api/auth/demo")
+        assert entered.status_code == 200, entered.text
+        assert entered.json()["workspace"] == "AI Act Demo"
+        assert entered.json()["email"] == "demo@example.test"
+        assert client.get("/api/auth/me").json()["tenant_id"] == entered.json()["tenant_id"]
+        assert client.post("/api/auth/register", json={"workspace": "Another tenant",
+            "email": "other@example.test", "password": "a-local-password-long-enough"}).status_code == 404
+
+
 @pytest.mark.parametrize("database", [
     "sqlite",
     pytest.param("postgres", marks=pytest.mark.skipif(

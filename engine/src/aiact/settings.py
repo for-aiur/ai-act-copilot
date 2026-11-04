@@ -31,6 +31,9 @@ class Settings(BaseModel):
     langfuse_public_key: SecretStr = SecretStr("")
     langfuse_secret_key: SecretStr = SecretStr("")
     langfuse_project_id: str = Field(default="", pattern=r"^[a-zA-Z0-9_-]*$", max_length=100)
+    demo_mode: bool = False
+    demo_tenant_name: str = "AI Act Demo"
+    demo_user_email: str = "demo@example.test"
     gemini_api_key: SecretStr = SecretStr("")
     request_seconds: int = Field(default=60, ge=1, le=60)
     deadline_seconds: int = Field(default=120, ge=1, le=120)
@@ -108,14 +111,15 @@ ENV_KEYS = {
     "EMBEDDING_MODEL": "embedding_model", "EMBEDDING_REVISION": "embedding_revision",
     "LANGFUSE_ENABLED": "langfuse_enabled", "LANGFUSE_HOST": "langfuse_host",
     "LANGFUSE_PUBLIC_KEY": "langfuse_public_key", "LANGFUSE_SECRET_KEY": "langfuse_secret_key",
-    "LANGFUSE_PROJECT_ID": "langfuse_project_id",
+    "LANGFUSE_PROJECT_ID": "langfuse_project_id", "AIACT_DEMO_MODE": "demo_mode",
+    "AIACT_DEMO_TENANT_NAME": "demo_tenant_name", "AIACT_DEMO_USER_EMAIL": "demo_user_email",
     "GEMINI_API_KEY": "gemini_api_key", "AIACT_CLOUD_CONSENT": "cloud_consent",
     "AIACT_REQUEST_SECONDS": "request_seconds", "AIACT_DEADLINE_SECONDS": "deadline_seconds",
 }
 
 
 def load_settings(overrides: dict | None = None, env: Mapping[str, str] | None = None, dotenv: Path | None = Path(".env")) -> Settings:
-    values = {}
+    values = {"demo_mode": True}
     if dotenv and dotenv.is_file():
         for line in dotenv.read_text().splitlines():
             tokens = shlex.split(line, comments=True)

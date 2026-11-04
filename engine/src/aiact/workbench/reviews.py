@@ -440,7 +440,7 @@ def router(runtime_getter):
         if not user and allow_api_key and authorization.startswith("Bearer "):
             user = identity.authenticate_api_key(authorization[7:].strip())
         if not user:
-            raise HTTPException(401, "Sign in to this local workspace.", headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(401, "Sign in to continue.", headers={"WWW-Authenticate": "Bearer"})
         state = request.scope.setdefault("state", {})
         state["aiact_identity"] = user
         state["aiact_identity_store"] = identity
@@ -448,7 +448,10 @@ def router(runtime_getter):
 
     @routes.post("/api/auth/register", status_code=201)
     def register(body: RegisterRequest, response: Response):
-        identity, _ = stores()
+        rt = runtime_getter()
+        if rt.settings.demo_mode:
+            raise HTTPException(404, "Account creation is not available in this demo.")
+        identity = rt.identity
         try:
             user = identity.register(body.workspace, body.email, body.password)
         except ValueError as exc:
@@ -465,6 +468,19 @@ def router(runtime_getter):
         if not user:
             raise HTTPException(401, "Email or password is incorrect.")
         token = identity.create_session(user["id"])
+        response.set_cookie("aiact_session", token, httponly=True, samesite="lax", secure=False,
+            max_age=7 * 24 * 60 * 60, path="/")
+        return {k: user[k] for k in ("id", "tenant_id", "email", "workspace")}
+
+    @routes.post("/api/auth/demo")
+    def demo_login(response: Response):
+        rt = runtime_getter()
+        if not rt.settings.demo_mode:
+            raise HTTPException(404, "Demo sign-in is not enabled.")
+        user = rt.identity.find_user_by_email(rt.settings.demo_user_email)
+        if not user:
+            raise HTTPException(503, "Demo account is not ready. Restart the local app.")
+        token = rt.identity.create_session(user["id"])
         response.set_cookie("aiact_session", token, httponly=True, samesite="lax", secure=False,
             max_age=7 * 24 * 60 * 60, path="/")
         return {k: user[k] for k in ("id", "tenant_id", "email", "workspace")}

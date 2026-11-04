@@ -1,8 +1,8 @@
 # AI Act Copilot
 
 A local AI engineering review tool by Evros Labs. The public project page explains
-the flow. A separate sign-in workspace keeps review history, API keys and usage
-for each local workspace. The internal workbench manages official sources, RAG
+the flow. A separate sign-in dashboard shows review history, API keys and usage
+for the demo account. The internal workbench manages official sources, RAG
 versions and retrieval evaluation.
 
 The source collection contains **119 articles, 14 annexes, 180 original recitals
@@ -15,10 +15,11 @@ remains separate.
 
 ## Open the application
 
-Project page: **[http://localhost:8000](http://localhost:8000)**. Create a local
-workspace at `/register`, sign in at `/login`, and open the customer dashboard
-at `/app`. The internal RAG workbench is at `/workbench`. Keep the application
-process running while using it.
+Project page: **[http://localhost:8000](http://localhost:8000)**. Choose **View
+the demo**, then **Enter the demo** to open the review dashboard at `/app`. The
+first start creates one fictional **AI Act Demo** tenant and user. Account
+creation is disabled in this demo. The internal RAG workbench is at `/workbench`.
+Keep the application process running while using it.
 
 ## Start with Docker (recommended)
 
@@ -60,10 +61,9 @@ stack. SQLite and PostgreSQL use separate volumes; changing `DATABASE_URL` does
 not move or copy existing data. `docker compose down` keeps both volumes. Add
 `-v` only when you deliberately want to delete all saved data.
 
-### Local workspace and review flow
+### Review dashboard and review flow
 
-Register a workspace and its first user from the project page. The sign-in
-dashboard shows reviews owned by that workspace, actual worker/storage status,
+The sign-in dashboard shows demo reviews, actual worker/storage status,
 review timings and Langfuse trace links when tracing is enabled. API keys are
 created in **API keys** and shown once. Their recent requests, HTTP status and
 measured response time appear in **API usage**.
@@ -72,7 +72,7 @@ Choose a sample or start a review. At submission the job pins the currently
 active RAG version. Later activation changes affect new jobs only. If context is
 needed, answer in the review detail to resume that same job. Retrieved source
 feedback saves as a context-specific draft and does not change search behavior.
-See [local workspace and review API](docs/LOCAL-WORKSPACES.md) for details.
+See [demo account and review API](docs/LOCAL-WORKSPACES.md) for details.
 
 The internal **RAG workbench** remains a separate local tool at `/workbench`.
 Use it to explore sources, build/activate a candidate, manage test cases and

@@ -51,6 +51,8 @@ class Runtime:
         self.review_worker = None
 
     def start(self):
+        if self.settings.demo_mode:
+            self.identity.ensure_demo_user(self.settings.demo_tenant_name, self.settings.demo_user_email)
         if self.review_worker is None:
             self.review_worker = ReviewJobWorker(self, self.review_jobs, self.identity)
         self.review_worker.start()
