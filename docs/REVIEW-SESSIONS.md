@@ -6,18 +6,18 @@ An answer resumes the saved review rather than starting from the first step.
 
 ```python
 from pathlib import Path
-from aiact.pipeline import start_review_session, get_review_session, resume_review_session
+from aiact.rag.sessions import start_review_session, get_review_session, resume_review_session
+from aiact.rag.retriever import HybridRetriever
 
-session = start_review_session(Path("examples/recruitment/ranker.py"), provider)
+retriever = HybridRetriever(settings, rag_release_id)
+session = start_review_session(Path("examples/recruitment/ranker.py"), provider, retriever)
 print(session.id, session.status, session.context_question)
 
 saved = get_review_session(session.id)
-session = resume_review_session(
-    session.id,
-    Path("examples/recruitment/ranker.py"),
-    provider,
-    "A recruiter checks every score before making a decision.",
-)
+# Reopen the saved release, even if a newer release is active.
+pinned = HybridRetriever(settings, saved.rag_release_id)
+session = resume_review_session(session.id, Path("examples/recruitment/ranker.py"),
+    provider, pinned, "A recruiter checks every score before making a decision.")
 ```
 
 Install the engine with `python -m pip install -e './engine[dev]'`. SQLite is
@@ -27,13 +27,13 @@ different file, for example `sqlite:////tmp/aiact-reviews.db`. PostgreSQL is
 optional: install `./engine[postgres]` and set a `postgresql://` URL.
 
 Each checkpoint keeps the bounded evidence, retrieved legal passages, model
-identity, source fingerprint and answer history needed to resume. It does not
-store provider credentials or the full source file. If the source or original
-scenario context changes, resume returns `stale_source`; start a new review to
-use changed code. A resumed review keeps the passages already retrieved for
-that session.
+identity, source fingerprint, RAG release ID and answer history needed to
+resume. It does not store provider credentials or the full source file. If the
+source or original scenario context changes, resume returns `stale_source`; start
+a new review to use changed code. Reopen the session's saved RAG release to
+resume; newer active releases do not replace its passages.
 
 SQLite is intended for one local process. Its writes are serialized within
 that process. Use PostgreSQL before running multiple workers against the same
-sessions. The dashboard does not expose saved sessions yet; its API is a later
+sessions. The dashboard does not expose saved sessions yet; that API is another
 M2 task.

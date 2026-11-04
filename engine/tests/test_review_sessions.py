@@ -89,3 +89,46 @@ def test_review_session_contract_is_additive():
     session = ReviewSession(id="review-1", status="pending")
     assert session.status == "pending"
     assert session.scan_result is None
+
+
+def test_full_corpus_session_pins_active_release_across_pause_and_resume(tmp_path):
+    from aiact.rag.releases import build_release
+    from aiact.rag.retriever import HybridRetriever
+    from aiact.rag.sessions import get_review_session as get_rag_session
+    from aiact.rag.sessions import resume_review_session as resume_rag_session
+    from aiact.rag.sessions import start_review_session as start_rag_session
+    from aiact.settings import Settings
+    from test_full_review import FixtureProvider
+
+    settings = Settings(data_dir=tmp_path, database_url=SecretStr(f"sqlite:///{tmp_path / 'rag-sessions.sqlite'}"))
+    manifest = build_release(settings, lexical_only=True)
+    retriever = HybridRetriever(settings, manifest["rag_release_id"])
+    source = tmp_path / "chat.py"
+    source.write_text("def reply(model, text):\n    return model.generate(text)\n")
+    provider = FixtureProvider()
+
+    started = start_rag_session(source, provider, retriever, settings=settings)
+    assert started.status == "context_needed"
+    assert started.rag_release_id == manifest["rag_release_id"]
+    assert get_rag_session(started.id, settings).rag_release_id == manifest["rag_release_id"]
+
+    class OtherRelease:
+        manifest = {"rag_release_id": "a-different-release"}
+    stale_rag = resume_rag_session(started.id, source, provider, OtherRelease(), "Context", settings=settings)
+    assert stale_rag.scan_result.errors[0].code == "stale_rag"
+    source.write_text(source.read_text() + "\n# changed after pause\n")
+    stale_source = resume_rag_session(started.id, source, provider, retriever, "Context", settings=settings)
+    assert stale_source.scan_result.errors[0].code == "stale_source"
+    source.write_text("def reply(model, text):\n    return model.generate(text)\n")
+
+    resumed = resume_rag_session(started.id, source, provider, retriever,
+        "A notice tells every user before the chat begins.", settings=settings)
+    assert resumed.status == "complete"
+    assert resumed.answer_count == 1
+    assert resumed.rag_release_id == manifest["rag_release_id"]
+    calls = provider.calls
+    retry = resume_rag_session(started.id, source, provider, retriever,
+        "A notice tells every user before the chat begins.", settings=settings)
+    assert retry.status == "complete"
+    assert provider.calls == calls
+    retriever.close()
