@@ -116,9 +116,15 @@ def main(argv=None):
             settings.require_cloud(args.cloud_consent or ("--provider" in argv and args.provider == "gemini"))
             if args.provider == "gemini":
                 from .gemini import Gemini
-                provider = Gemini(model, api_key=settings.gemini_api_key.get_secret_value())
+                provider = Gemini(model, api_key=settings.gemini_api_key.get_secret_value(),
+                    temperature=settings.model_temperature, review_output_tokens=settings.model_review_output_tokens,
+                    extract_output_tokens=settings.model_extract_output_tokens)
             else:
-                provider = create_provider(args.provider, model, args.endpoint)
+                from .providers import Ollama
+                provider = Ollama(model, args.endpoint, temperature=settings.model_temperature,
+                    context_tokens=settings.ollama_context_tokens,
+                    review_output_tokens=settings.ollama_review_output_tokens,
+                    extract_output_tokens=settings.ollama_extract_output_tokens)
             retriever = HybridRetriever(settings, args.rag_release)
             try:
                 result = ScanResult.model_validate(review_python(args.path, provider, retriever, args.context, budgets)["scan_result"])

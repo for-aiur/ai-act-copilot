@@ -58,11 +58,16 @@ def local_endpoint(value: str) -> str:
 
 class Ollama:
     name = "ollama"
-    def __init__(self, model: str = "qwen2.5:3b", endpoint: str = "http://127.0.0.1:11434"):
+    def __init__(self, model: str = "qwen2.5:3b", endpoint: str = "http://127.0.0.1:11434", temperature: float = 0,
+                 context_tokens: int = 8192, review_output_tokens: int = 2400, extract_output_tokens: int = 1100):
         self.endpoint = local_endpoint(endpoint)
         if not model or "/" in model or "cloud" in model.lower() or len(model) > 100:
             raise ReviewFailure("configuration", "Choose an installed local Ollama model tag; cloud models are unsupported.")
         self.model = model
+        self.temperature = temperature
+        self.context_tokens = context_tokens
+        self.review_output_tokens = review_output_tokens
+        self.extract_output_tokens = extract_output_tokens
         self.opener = build_opener(ProxyHandler({}), NoRedirect())
 
     def request(self, path: str, body: dict | None = None, timeout: float = 3) -> dict:
@@ -103,7 +108,9 @@ class Ollama:
         result = self.request("/api/generate", {
             "model": self.model, "prompt": prompt, "format": schema, "stream": False,
             "system": SYSTEM_PROMPT,
-            "options": {"temperature": 0, "num_predict": 2400 if "findings" in schema.get("properties", {}) else 1100, "num_ctx": 8192},
+            "options": {"temperature": self.temperature,
+                "num_predict": self.review_output_tokens if "findings" in schema.get("properties", {}) else self.extract_output_tokens,
+                "num_ctx": self.context_tokens},
             "keep_alive": "20m",
         }, timeout=min(timeout, 60))
         self.usage_totals = getattr(self, "usage_totals", {})

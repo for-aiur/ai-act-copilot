@@ -62,7 +62,7 @@ def summarize(scores):
         "uncertainty_note": "Label-level Wilson interval; related labels and small scenario samples limit generalization."}
 
 
-def quality_gate(cases: list[GoldenCase], scores: list[dict]):
+def quality_gate(cases: list[GoldenCase], scores: list[dict], policy=None):
     approved = [c for c in cases if c.status == "approved"]
     approved_scores = [s for s in scores if any(c.id == s["case_id"] and c.revision == s["revision"] for c in approved)]
     holdout = [s for s in approved_scores if s["split"] == "holdout"]
@@ -84,3 +84,11 @@ def quality_gate(cases: list[GoldenCase], scores: list[dict]):
         reasons.append("Every approved case must have a version-matched evaluation.")
     return {"status": "pass" if not reasons else "blocked", "reasons": reasons, "holdout": summary,
             "policy_version": "m1-1", "targets_are_claims": False}
+
+
+def experiment_gate(scores: list[dict], target_recall: float):
+    summary = summarize(scores)
+    passed = summary["recall"] is not None and summary["recall"] >= target_recall
+    return {"status": "pass" if passed else "below_target", "target_recall": target_recall,
+            "actual_recall": summary["recall"], "cases": summary["cases"],
+            "note": "A local experiment target, not the M1 expert-gold quality gate."}

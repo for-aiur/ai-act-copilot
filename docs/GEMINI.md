@@ -8,7 +8,7 @@ cloud provider automatically.
 ## Workbench
 
 Copy `.env.example` to `.env`, set `GEMINI_API_KEY`, then restart the API or
-Compose service. In Code test, select Python source and approve the
+Compose service. Choose Gemini and the model from dashboard **Settings**. In Code test, select Python source and approve the
 cloud-transfer checkbox before **Review & save result locally**. Selected source,
 explicit context and retrieved official passages go to Google's fixed Gemini API.
 The key stays on the Python side. Do not paste it into the dashboard.

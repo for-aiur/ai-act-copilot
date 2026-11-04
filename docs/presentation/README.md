@@ -121,13 +121,13 @@ Open the trace from the review result.
 
 <details><summary>Speaker notes</summary>
 
-Configure LANGFUSE_ENABLED=true, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_PROJECT_ID in private .env configuration. Restart the API, run an authorized review and choose Open metadata-only Langfuse trace. Export uses the fixed EU endpoint. Raw code, prompts, answers and keys are excluded. An unavailable tracing service does not change the review outcome. Live Langfuse verification remains pending because credentials are not configured. No live Langfuse screenshot is claimed.
+Enable Langfuse from dashboard Settings, then put LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_PROJECT_ID in the private .env file and restart the API. Run an authorized review and choose Open metadata-only Langfuse trace. Export uses the fixed EU endpoint. Raw code, prompts, answers and keys are excluded. An unavailable tracing service does not change the review outcome. Live Langfuse verification remains pending because credentials are not configured. No live Langfuse screenshot is claimed.
 
 </details>
 
 ## 10. Using Langfuse
 
-1  Enable the connection in your private .env
+1  Enable the connection in dashboard Settings and add its keys to private .env
 2  Run a review with explicit consent
 3  Open its Langfuse trace link
 4  Inspect the steps, duration and errors

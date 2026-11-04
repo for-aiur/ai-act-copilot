@@ -55,10 +55,12 @@ Python source and explicitly approve sending that code, context and retrieved
 passages to Google. Then choose **Review & save result locally**. Keys never go
 into browser settings, command arguments, reports or traces.
 
-Local retrieval uses CPU embeddings regardless of the review provider. To use
-Ollama instead, select `AIACT_PROVIDER=ollama`, configure its model and loopback
-endpoint in native mode. Container-to-host Ollama networking is not enabled by
-default. There is no automatic provider fallback.
+Local retrieval uses CPU embeddings regardless of the review provider. Choose
+the review provider, model, output limits and search settings from **Settings**
+in the dashboard. These values are saved locally and included with evaluation
+results. API keys stay in `.env`. Ollama must be reachable from the service;
+container-to-host Ollama networking is not enabled by default. There is no
+automatic provider fallback.
 
 ## Run the built frontend without Docker
 

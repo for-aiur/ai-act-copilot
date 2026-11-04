@@ -81,8 +81,12 @@ class Gemini:
     name = "gemini"
     endpoint = ENDPOINT
 
-    def __init__(self, model: str | None = None, api_key: str | None = None):
+    def __init__(self, model: str | None = None, api_key: str | None = None, temperature: float = 0,
+                 review_output_tokens: int = 4096, extract_output_tokens: int = 2048):
         self.model = model or default_model("gemini")
+        self.temperature = temperature
+        self.review_output_tokens = review_output_tokens
+        self.extract_output_tokens = extract_output_tokens
         if not re.fullmatch(r"gemini-[A-Za-z0-9._-]{1,100}", self.model):
             raise ReviewFailure("configuration", "Use a Gemini model ID such as gemini-3.1-flash-lite.")
         self._api_key = (api_key if api_key is not None else os.environ.get("GEMINI_API_KEY", "")).strip()
@@ -147,7 +151,8 @@ class Gemini:
             raise ReviewFailure("model_unavailable", "Selected Gemini model does not support content generation.")
 
     def generate_json(self, prompt: str, schema: dict, timeout: float) -> dict:
-        config = {"temperature": 0, "maxOutputTokens": 4096 if "findings" in schema.get("properties", {}) else 2048,
+        config = {"temperature": self.temperature,
+                  "maxOutputTokens": self.review_output_tokens if "findings" in schema.get("properties", {}) else self.extract_output_tokens,
                   "responseFormat": {"text": {"mimeType": "APPLICATION_JSON", "schema": generation_schema(schema)}}}
         if self.model.startswith("gemini-3.1-flash-lite"):
             config["thinkingConfig"] = {"thinkingLevel": "minimal"}

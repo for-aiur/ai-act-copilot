@@ -5,6 +5,12 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-55: add one workbench Settings page for model parameters, review limits,
+  retrieval/build tuning, Langfuse and local evaluation targets. Keep credentials
+  in `.env`, pin search settings to new RAG manifests and retain effective
+  settings with evaluation reports. Refresh saved cases after evaluation and
+  show the exact case count for each report.
+
 - EVR-54: explain the four review steps, sample timings and Langfuse's role in
   the dashboard. Name it AI Act Test Bench, mark it as an internal tool, and
   keep version removal controls compact when blocker details are shown.
