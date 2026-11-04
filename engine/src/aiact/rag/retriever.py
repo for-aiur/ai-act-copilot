@@ -104,12 +104,15 @@ class HybridRetriever:
                 {"q": " OR ".join(terms), "s": self.snapshot.snapshot_id, "k": limit})
             return [(r[0], float(r[1])) for r in rows]
 
-    def search(self, request):
+    def search(self, request, result_limit=None):
         with self.lock:
-            return self._search(request)
+            return self._search(request, result_limit)
 
-    def _search(self, request):
+    def _search(self, request, result_limit=None):
         start = time.monotonic()
+        result_limit = result_limit or request.limit
+        if not 1 <= result_limit <= 20:
+            raise ValueError("Requested retrieval result limit is outside the supported range")
         if request.domain_id != self.snapshot.domain_id:
             raise ValueError("Request and index domains differ")
         context = request.context
@@ -150,16 +153,16 @@ class HybridRetriever:
             related = [c for c in self.snapshot.chunks if c.document_id in chunk.references or (c.document_id == chunk.document_id and c.id != identity)]
             for c in related[:self.search_config["expansion_per_seed"]]:
                 stage_lists["expansion"].append(StageHit(chunk_id=c.id, rank=len(stage_lists["expansion"]) + 1, score=0, reason="Parent sibling or declared cross-reference context"))
-        chosen = ranking[:max(1, request.limit - 2)]
+        chosen = ranking[:max(1, result_limit - 2)]
         for hit in stage_lists["expansion"]:
-            if len(chosen) >= request.limit:
+            if len(chosen) >= result_limit:
                 break
             if hit.chunk_id not in chosen:
                 chosen.append(hit.chunk_id)
                 scores.setdefault(hit.chunk_id, {})["rerank"] = 0
                 paths.setdefault(hit.chunk_id, set()).add("expansion")
         for identity in ranking:
-            if len(chosen) >= request.limit:
+            if len(chosen) >= result_limit:
                 break
             if identity not in chosen:
                 chosen.append(identity)

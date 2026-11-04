@@ -290,8 +290,8 @@ def router(settings=None):
         with rt.lock:
             retriever = rt.get_retriever(domain, release)
             for case in selected:
-                request = case.request.model_copy(update={"limit": max(rt.settings.evaluation_k, rt.settings.evaluation_preview_k, 10)})
-                result = retriever.search(request)
+                result = retriever.search(case.request,
+                    result_limit=max(rt.settings.evaluation_k, rt.settings.evaluation_preview_k, 10))
                 scores.append(score_case(case, result, k=rt.settings.evaluation_k))
                 scores_at_preview.append(score_case(case, result, k=rt.settings.evaluation_preview_k))
                 expert_scores.append(score_case(case, result, k=10))
