@@ -22,8 +22,10 @@ acceptance. Do not mark the milestone complete using draft-case metrics.
 - EVR-24/26: metadata-only opt-in Langfuse OTLP export; new editor/demo Gemini
   default with explicit consent, existing CLI local default preserved.
 - EVR-25 originally seeded 54 model-authored drafts across 18 subject areas.
-  The current local sample set has five distinct runnable examples with labels
-  accepted for local testing. It is not an expert-reviewed gold set or holdout.
+  The local demo set now has ten runnable examples: five with labels accepted
+  for local testing and five synthetic smoke cases tuned to the current build.
+  The 100% Recall@10 smoke result is not a representative expert-reviewed gold
+  set or holdout. The M1 quality gate remains open.
 - EVR-39: actual official-version discovery, pinned-source staging, version diffs
   and a quality-gated explicit promotion path.
 - EVR-46/44: Compose runtime, deterministic CI artifacts, baseline deltas,

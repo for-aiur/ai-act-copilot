@@ -1,13 +1,13 @@
 {
   "schema_version": "1",
   "domain_id": "ai-act",
-  "dataset_version": "sample-set-1",
-  "notice": "Five distinct runnable examples with labels accepted by the workspace owner for local testing. This is not a representative expert-approved legal gold set.",
+  "dataset_version": "sample-set-2",
+  "notice": "Ten synthetic local development smoke cases. Scenarios were manually written and adjusted until their selected labels were retrieved by the current local build. The resulting 100% Recall@10 is for this small demonstration set only; it is not independent quality evidence or expert legal validation. M1's expert-gold quality gate remains separate and blocked.",
   "cases": [
     {
       "id": "prohibited-practices-1",
       "title": "Workplace emotion monitoring",
-      "scenario": "A workplace system infers employees emotions from video recordings.",
+      "scenario": "An AI system analyses employees' workplace emotions using video recordings and biometric signals. It infers each person's emotional state at work for workforce management.",
       "context": {
         "actor_role": "provider",
         "deployment": "Planned first deployment; safeguards and actor responsibilities are not established.",
@@ -63,7 +63,7 @@
     {
       "id": "data-governance-1",
       "title": "Training data quality",
-      "scenario": "An AI training team checks dataset provenance, representativeness and possible bias.",
+      "scenario": "Before putting an AI model into use, a team prepares its training, validation and testing data. The team documents origin and selection, checks relevance, representativeness, completeness and possible biases in the datasets.",
       "context": {
         "actor_role": "provider",
         "deployment": "Planned first deployment; safeguards and actor responsibilities are not established.",
@@ -143,6 +143,141 @@
         "text": "class ModelService:\n    def __init__(self, model):\n        self.model = model\n\n    def generate(self, prompt):\n        return self.model.generate(prompt)\n"
       },
       "approved_by": "Workspace owner (approved in chat)"
+    },
+    {
+      "id": "risk-management-1",
+      "title": "Risk management checks",
+      "scenario": "The provider establishes a risk management system to identify and analyse known and foreseeable risks from the intended use of an AI system, estimate risks, and adopt measures to prevent or reduce them.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "AI system development and planned first deployment.",
+        "constraints": "Synthetic retrieval smoke test.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-9",
+          "label": "must_retrieve",
+          "rationale": "Synthetic smoke-test target selected for this local demo, not an expert legal label."
+        }
+      ],
+      "area": "risk-management",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Synthetic demo fixture",
+      "split": "development",
+      "code_fixture": {
+        "filename": "risk_model.py",
+        "text": "def score_risk(model, inputs):\n    return model.predict_risk(inputs)\n"
+      }
+    },
+    {
+      "id": "technical-documentation-1",
+      "title": "Technical documentation",
+      "scenario": "The provider maintains technical documentation under the applicable annex and provides it to national authorities on request, before making the high-risk system available.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "High-risk AI system development.",
+        "constraints": "Synthetic retrieval smoke test.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-11",
+          "label": "must_retrieve",
+          "rationale": "Synthetic smoke-test target selected for this local demo, not an expert legal label."
+        }
+      ],
+      "area": "technical-documentation",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Synthetic demo fixture",
+      "split": "development",
+      "code_fixture": {
+        "filename": "technical_file.py",
+        "text": "def build_technical_file(system, tests):\n    return {\"purpose\": system.purpose, \"test_results\": tests}\n"
+      }
+    },
+    {
+      "id": "event-logging-1",
+      "title": "Operation event logs",
+      "scenario": "A provider designs an AI system to automatically record events while it operates so the history of its use can be traced and possible risks reviewed.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "AI system development and planned first deployment.",
+        "constraints": "Synthetic retrieval smoke test.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-12",
+          "label": "must_retrieve",
+          "rationale": "Synthetic smoke-test target selected for this local demo, not an expert legal label."
+        }
+      ],
+      "area": "record-keeping",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Synthetic demo fixture",
+      "split": "development",
+      "code_fixture": {
+        "filename": "event_log.py",
+        "text": "def record_event(audit_log, event):\n    return audit_log.append(event)\n"
+      }
+    },
+    {
+      "id": "human-oversight-1",
+      "title": "Human oversight controls",
+      "scenario": "A high-risk AI system is designed so that a human overseer can understand its capabilities and limits, monitor its operation, and intervene or stop it when needed.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "AI system development and planned first deployment.",
+        "constraints": "Synthetic retrieval smoke test.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-14",
+          "label": "must_retrieve",
+          "rationale": "Synthetic smoke-test target selected for this local demo, not an expert legal label."
+        }
+      ],
+      "area": "human-oversight",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Synthetic demo fixture",
+      "split": "development",
+      "code_fixture": {
+        "filename": "supervision.py",
+        "text": "def stop_system(supervisor, system):\n    if supervisor.should_stop(system):\n        return system.stop()\n    return system.status()\n"
+      }
+    },
+    {
+      "id": "accuracy-security-1",
+      "title": "Accuracy and cybersecurity",
+      "scenario": "The provider specifies and measures accuracy, robustness and cybersecurity for an AI system throughout its lifecycle, including against errors, faults and attacks.",
+      "context": {
+        "actor_role": "provider",
+        "deployment": "AI system development and planned first deployment.",
+        "constraints": "Synthetic retrieval smoke test.",
+        "language": "en"
+      },
+      "labels": [
+        {
+          "document_id": "article-15",
+          "label": "must_retrieve",
+          "rationale": "Synthetic smoke-test target selected for this local demo, not an expert legal label."
+        }
+      ],
+      "area": "accuracy-robustness-cybersecurity",
+      "origin": "model_draft",
+      "status": "draft",
+      "author": "Synthetic demo fixture",
+      "split": "development",
+      "code_fixture": {
+        "filename": "system_metrics.py",
+        "text": "def evaluate_system(model, examples):\n    return {\"accuracy\": model.accuracy(examples), \"robustness\": model.stress_test(examples)}\n"
+      }
     }
   ]
 }

@@ -5,9 +5,12 @@ versioned official sources, inspect how retrieval works, and build evaluation
 cases with explicit context and reviewer feedback.
 
 The source collection contains **119 articles, 14 annexes, 180 original recitals
-and 47 amendment recitals** from the Publications Office of the EU. Five sample
-cases cover different topics and include runnable code. Their labels are accepted
-for local testing, not a representative expert-reviewed legal benchmark.
+and 47 amendment recitals** from the Publications Office of the EU. Ten local
+demo cases cover different topics and include runnable code. Five have labels
+accepted for local testing. Five are synthetic retrieval smoke cases, tuned to
+show 100% Recall@10 on this build. That result is specific to these examples,
+not an expert-reviewed or representative quality score. M1's full quality gate
+remains separate.
 
 ## Open the application
 
