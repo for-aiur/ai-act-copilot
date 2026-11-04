@@ -198,6 +198,10 @@ size uncertainty, rather than implying certified compliance.
 container restart tests and protected live-model evaluation. Actual observed
 checks and remaining acceptance are in [M1 status](docs/M1-STATUS.md).
 
+The local service boundary and possible future AWS mapping are described in
+[local deployment boundaries](docs/LOCAL-DEPLOYMENT.md). No cloud infrastructure
+is created by the local setup.
+
 ## Source updates and RAG versions
 
 The canonical source pack is pinned to CELEX `02024R1689-20260727`, with original

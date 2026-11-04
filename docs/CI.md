@@ -15,7 +15,10 @@ without model credentials. Actions are pinned to commit IDs.
 - An intentionally failing critical fixture, proving the gate rejects a miss.
 - Real PostgreSQL versus SQLite reference retrieval and restart checks.
 - Actual multi-stage Docker image / Compose startup, single-owner API evaluation
-  and restart persistence tests. No Qdrant path is opened by two containers.
+  and restart persistence tests. The packaged application stack starts with both
+  SQLite and the optional PostgreSQL profile. The async review job test also runs
+  against the isolated PostgreSQL service, including answer, resume and app
+  restart. No Qdrant path is opened by two containers.
 
 Fast PR tests use lexical baselines and test-only model responses. They do not
 claim live inference or legal accuracy. Compose smoke tests download the local

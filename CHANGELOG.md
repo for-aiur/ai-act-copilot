@@ -5,6 +5,11 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-34/32: package the customer dashboard and FastAPI worker as one local
+  Compose stack, with persistent SQLite and an optional private PostgreSQL
+  profile. Add CI startup and retrieval-persistence checks for both profiles,
+  and document the local boundary and possible future hosting map.
+
 - EVR-31: separate the public project page from the signed-in local workspace.
   Add sample-guided reviews, tenant-owned review history and detail, measured
   step timings, Langfuse trace links, API key management and actual API usage.

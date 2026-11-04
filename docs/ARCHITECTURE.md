@@ -1,8 +1,10 @@
-# M1 architecture
+# Local application architecture
 
-React + Vite is the local internal workbench. A single FastAPI process serves
-its API and, in Docker, the compiled frontend. The process owns the embedded
-Qdrant path. Evaluation containers call that API instead of opening its files.
+The public project page and signed-in customer dashboard are separate from the
+internal React + Vite RAG workbench. In Docker, Nginx serves the dashboard and
+forwards `/api` requests to one FastAPI process. That process owns the embedded
+Qdrant path and the bounded review worker. Evaluation containers call its API
+instead of opening its files.
 
 ```mermaid
 flowchart LR
@@ -57,7 +59,11 @@ source and context only after explicit consent. Langfuse export is separately
 opt-in and contains stage metadata, not code/prompts/answers. Explicitly saved
 review results retain their evidence in the private local data store.
 
-The engine now supports saved SQLite review sessions that can pause for context
-and resume after an answer. The dashboard API and user-facing session flow are
-still planned M2 work. Durable worker orchestration and AWS deployment belong to
-later milestones. The existing Actions bot remains separate.
+The local dashboard supports tenant workspaces, review history, context answers,
+API keys and usage records. Review jobs pin the active RAG release when they are
+created, then resume against that same release after an answer or process restart.
+The existing GitHub Actions bot remains a separate adapter.
+
+See [local deployment boundaries](LOCAL-DEPLOYMENT.md) for the current local
+stack and a future AWS mapping. No AWS resources are part of this repository's
+local setup.

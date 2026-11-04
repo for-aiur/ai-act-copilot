@@ -1,5 +1,7 @@
-import pytest
+import os
 import time
+
+import pytest
 
 pytest.importorskip("fastapi")
 pytest.importorskip("sqlalchemy")
@@ -84,6 +86,24 @@ def test_review_job_idempotency_and_restart_state(tmp_path):
     reopened.close()
 
 
+def test_review_job_retry_is_bounded(tmp_path):
+    url = _settings(tmp_path).database_url.get_secret_value()
+    repo = ReviewJobRepository(url)
+    job, _ = repo.create("tenant-a", "user-a", {"filename": "review.py", "code": "pass"},
+        "c" * 64, "bounded-retry-123")
+
+    first_attempt = repo.claim(job["id"])
+    assert first_attempt["attempts"] == 1
+    assert repo.retry_or_fail(job["id"], "temporary failure")["status"] == "queued"
+    second_attempt = repo.claim(job["id"])
+    assert second_attempt["attempts"] == 2
+    failed = repo.retry_or_fail(job["id"], "temporary failure")
+    assert failed["status"] == "failed"
+    assert failed["attempts"] == 2
+    assert [event["type"] for event in failed["events"]].count("started") == 2
+    repo.close()
+
+
 def test_login_requires_valid_password_and_logout_revokes_session(tmp_path):
     with TestClient(create_app(settings=_settings(tmp_path))) as client:
         assert client.post("/api/auth/register", json={"workspace": "Test", "email": "bad@example.test",
@@ -96,12 +116,20 @@ def test_login_requires_valid_password_and_logout_revokes_session(tmp_path):
         assert client.post("/api/auth/login", json={"email": "user@example.test", "password": "wrong"}).status_code == 401
 
 
-def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch):
+@pytest.mark.parametrize("database", [
+    "sqlite",
+    pytest.param("postgres", marks=pytest.mark.skipif(
+        not os.environ.get("AIACT_TEST_POSTGRES_URL"),
+        reason="Requires the isolated PostgreSQL CI service")),
+])
+def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch, database):
     from aiact.rag.releases import build_release
     from aiact.rag.store import Store
     from test_full_review import FixtureProvider
 
-    settings = Settings(data_dir=tmp_path, database_url=SecretStr(f"sqlite:///{tmp_path / 'e2e.sqlite'}"), provider="ollama")
+    database_url = (f"sqlite:///{tmp_path / 'e2e.sqlite'}" if database == "sqlite"
+        else os.environ["AIACT_TEST_POSTGRES_URL"])
+    settings = Settings(data_dir=tmp_path, database_url=SecretStr(database_url), provider="ollama")
     release = build_release(settings, lexical_only=True)
     store = Store(settings.database_url.get_secret_value())
     store.activate("ai-act", release["rag_release_id"])
@@ -123,8 +151,9 @@ def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch)
 
     monkeypatch.setattr("aiact.providers.Ollama", FakeOllama)
     source = "def reply(model, text):\n    return model.generate(text)\n"
+    email = f"reviewer-{time.time_ns()}@example.test"
     with TestClient(create_app(settings=settings)) as client:
-        _register(client, "reviewer@example.test", "Review workspace")
+        _register(client, email, "Review workspace")
         started = client.post("/api/reviews", json={"code": source, "filename": "chat.py"},
             headers={"Idempotency-Key": "demo-review-0001"})
         assert started.status_code == 202, started.text
@@ -141,6 +170,10 @@ def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch)
         assert current["status"] == "context_needed", current.get("error") or current.get("session", {}).get("scan_result")
         assert {step["stage"] for step in current["timings"]} >= {"code_collection", "purpose_extraction", "legal_retrieval"}
         assert current["sources"] and current["retrieval_request"]
+        metadata = current["session"]["scan_result"]["metadata"]
+        assert metadata["model_id"] == "test-ollama-model"
+        assert metadata["prompt_version"] and metadata["corpus_version"] and metadata["corpus_checksum"]
+        assert current["session"]["rag_release_id"] == release["rag_release_id"]
         question = current["session"]["context_question"]
         assert question and question.endswith("?")
 
@@ -162,5 +195,12 @@ def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch)
         assert any(event["type"] == "feedback_saved" for event in saved["events"])
 
     with TestClient(create_app(settings=settings)) as restarted:
-        _register(restarted, "other@example.test", "Other workspace")
+        signed_in = restarted.post("/api/auth/login", json={"email": email,
+            "password": "a-local-password-long-enough"})
+        assert signed_in.status_code == 200
+        restored = restarted.get("/api/reviews/" + identity)
+        assert restored.status_code == 200
+        assert restored.json()["status"] == "complete"
+        restarted.post("/api/auth/logout")
+        _register(restarted, f"other-{time.time_ns()}@example.test", "Other workspace")
         assert restarted.get("/api/reviews/" + identity).status_code == 404
