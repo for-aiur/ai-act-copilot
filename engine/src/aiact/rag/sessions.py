@@ -14,7 +14,7 @@ from langgraph.types import Command, interrupt
 from pydantic import ValidationError
 
 from aiact.context import Budgets, Context
-from aiact.contracts import Coverage, Evidence, Finding, Metadata, ReviewSession, ScanError, ScanResult
+from aiact.contracts import Coverage, Evidence, Finding, Metadata, ReviewEvent, ReviewSession, ScanError, ScanResult
 from aiact.pipeline import _request
 from aiact.providers import Ollama, Provider, ReviewFailure
 from aiact.settings import Settings, load_settings
@@ -51,6 +51,8 @@ class ReviewState(TypedDict, total=False):
     pending_question: str | None
     pending_finding_id: str | None
     context_exhausted: bool
+    history: list[dict]
+    decisions: dict[str, str]
 
 
 class RunContext(TypedDict, total=False):
@@ -61,6 +63,9 @@ class RunContext(TypedDict, total=False):
     budgets: Budgets
     deadline: float
     collected: Context
+    actor: str
+    audit_events: list[dict]
+    audit_decisions: dict[str, str]
 
 
 def _error(state: ReviewState, code: str, message: str) -> dict:
@@ -224,9 +229,42 @@ def _validate(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
         evidence = {key: Evidence.model_validate(value) for key, value in state["evidence"].items()}
         findings = validate_review(draft, evidence,
             {s.path: s.text for s in runtime.context["collected"].sources}, passages)
-        values = {**state, "validated_findings": [f.model_dump(mode="json") for f in findings]}
+        prior = {f.get("id"): f for f in state.get("validated_findings", [])}
+        serialized = [f.model_dump(mode="json") for f in findings]
+        history = list(state.get("history", []))
+        known_events = {e.get("id") for e in history}
+        history.extend(e for e in runtime.context.get("audit_events", []) if e.get("id") not in known_events)
+        decisions = {**state.get("decisions", {}), **runtime.context.get("audit_decisions", {})}
+        for finding in serialized:
+            old = prior.get(finding["id"])
+            if old is None:
+                old = next((candidate for candidate in prior.values()
+                    if candidate.get("evidence", {}).get("path") == finding.get("evidence", {}).get("path")
+                    and candidate.get("evidence", {}).get("start_line") == finding.get("evidence", {}).get("start_line")
+                    and candidate.get("evidence", {}).get("end_line") == finding.get("evidence", {}).get("end_line")
+                    and candidate.get("kind") == finding.get("kind")
+                    and {c.get("section_id") for c in candidate.get("citations", [])} ==
+                        {c.get("section_id") for c in finding.get("citations", [])}), None)
+            if old is not None and old != finding:
+                history.append(_event("finding_revision", finding_id=finding["id"],
+                    source_ids=[c["section_id"] for c in finding.get("citations", [])],
+                    previous_finding=old, finding=finding))
+                old_decision = decisions.get(old.get("id"))
+                if old_decision in {"acknowledged", "false_positive"}:
+                    decisions[finding["id"]] = "reopened"
+                    history.append(_event("reopened", finding_id=finding["id"], actor="System",
+                        reason="New context changed this finding."))
+            elif finding["id"] not in decisions:
+                decisions[finding["id"]] = "open"
+        values = {**state, "validated_findings": serialized}
         question = _next_question(values)
+        if question and not any(e.get("type") == "question_asked" and
+                e.get("finding_id") == question[1] and e.get("question") == question[0] for e in history):
+            current = next((f for f in serialized if f["id"] == question[1]), {})
+            history.append(_event("question_asked", finding_id=question[1], question=question[0],
+                source_ids=[c["section_id"] for c in current.get("citations", [])]))
         return {"validated_findings": values["validated_findings"], "reviewed": True,
+            "history": history, "decisions": decisions,
             "pending_question": question[0] if question else None,
             "pending_finding_id": question[1] if question else None,
             "needs_context": bool(state.get("needs_context") and findings)}
@@ -238,6 +276,13 @@ def _validate(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
         return _error(state, "review_failed", "Review could not complete. Check source, pinned RAG release and provider settings.")
 
 
+def _event(kind, *, finding_id=None, question=None, answer=None, actor="Reviewer", reason=None,
+           source_ids=None, previous_finding=None, finding=None):
+    return ReviewEvent(id=uuid4().hex, type=kind, created_at=datetime.now(timezone.utc).isoformat(),
+        actor=actor, finding_id=finding_id, question=question, answer=answer, reason=reason,
+        source_ids=source_ids or [], previous_finding=previous_finding, finding=finding).model_dump(mode="json")
+
+
 def _await_context(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
     question = state.get("pending_question")
     if not question:
@@ -245,9 +290,17 @@ def _await_context(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
     answer = interrupt({"question": question, "finding_id": state.get("pending_finding_id")})
     if not isinstance(answer, str) or not answer.strip() or len(answer) > 2000:
         return _error(state, "invalid_context_answer", "Answer with 1 to 2000 characters so the review can continue.")
-    return {"context_answers": [*state.get("context_answers", []), {"question": question,
+    answer_record = {"question": question,
         "finding_id": state.get("pending_finding_id"), "answer": answer.strip(),
-        "answered_at": datetime.now(timezone.utc).isoformat()}], "reviewed": False}
+        "answered_at": datetime.now(timezone.utc).isoformat()}
+    finding = next((f for f in state.get("validated_findings", [])
+                    if f.get("id") == state.get("pending_finding_id")), {})
+    return {"context_answers": [*state.get("context_answers", []), answer_record],
+        "history": [*state.get("history", []), _event("context_answered", finding_id=state.get("pending_finding_id"),
+            question=question, answer=answer.strip(), actor=runtime.context.get("actor", "Reviewer"),
+            source_ids=[c["section_id"] for c in finding.get("citations", [])])],
+        "decisions": {**state.get("decisions", {}), state.get("pending_finding_id"): "provide_context"},
+        "reviewed": False}
 
 
 def _after(state: ReviewState):
@@ -264,7 +317,17 @@ def _after(state: ReviewState):
 
 
 def _finish(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
-    return {"context_exhausted": bool(_next_question(state))}
+    unresolved = _next_question(state)
+    if not unresolved:
+        return {"context_exhausted": False}
+    finding_id = unresolved[1]
+    decisions = dict(state.get("decisions", {}))
+    history = list(state.get("history", []))
+    if decisions.get(finding_id) != "needs_human_review":
+        decisions[finding_id] = "needs_human_review"
+        history.append(_event("needs_human_review", finding_id=finding_id,
+            reason="Context questions remain after the configured question limit."))
+    return {"context_exhausted": True, "decisions": decisions, "history": history}
 
 
 def _graph(checkpointer=None):
@@ -290,7 +353,7 @@ def _initial(retriever, provider, context: str, max_answers: int) -> ReviewState
     return {"base_context": context, "rag_release_id": retriever.manifest["rag_release_id"],
         "provider_name": provider.name, "model_id": provider.model,
         "errors": [], "error": None, "repair_used": False, "repair_requested": False,
-        "reviewed": False, "context_answers": [], "max_context_answers": max_answers,
+        "reviewed": False, "context_answers": [], "history": [], "decisions": {}, "max_context_answers": max_answers,
         "pending_question": None, "pending_finding_id": None, "context_exhausted": False}
 
 
@@ -298,9 +361,11 @@ def _collect_source(path: Path, context: str, budgets: Budgets) -> Context:
     return collect_upload(path, context, budgets)
 
 
-def _run_context(path, provider, retriever, context, budgets, deadline, collected=None):
+def _run_context(path, provider, retriever, context, budgets, deadline, collected=None, actor="Reviewer",
+                 audit_events=None, audit_decisions=None):
     return {"path": path, "provider": provider, "retriever": retriever, "explicit_context": context,
-        "budgets": budgets, "deadline": deadline, "collected": collected}
+        "budgets": budgets, "deadline": deadline, "collected": collected, "actor": actor,
+        "audit_events": audit_events or [], "audit_decisions": audit_decisions or {}}
 
 
 def _thread(session_id):
@@ -342,7 +407,33 @@ def _session(output, session_id, elapsed=None):
         context_question=output.get("pending_question") if waiting else None,
         finding_id=output.get("pending_finding_id") if waiting else None,
         answer_count=len(output.get("context_answers", [])), rag_release_id=output.get("rag_release_id"),
+        history=[ReviewEvent.model_validate(e) for e in output.get("history", [])],
+        decisions=output.get("decisions", {}),
         scan_result=result)
+
+
+def _with_audit_records(output, session_id, database_url):
+    events, decisions = _load_audit_records(session_id, database_url)
+    history = list(output.get("history", []))
+    known_events = {event.get("id") for event in history}
+    history.extend(event for event in events if event.get("id") not in known_events)
+    return {**output, "history": history, "decisions": {**output.get("decisions", {}), **decisions}}
+
+
+def _load_audit_records(session_id, database_url):
+    from .store import Store
+    store = Store(database_url)
+    try:
+        rows = store.list_records("review_decision", "ai-act", limit=10000)
+    finally:
+        store.close()
+    events = [row["payload"] for row in rows if row["payload"].get("session_id") == session_id]
+    events.sort(key=lambda item: item["event"]["created_at"])
+    history = [item["event"] for item in events]
+    decisions = {}
+    for item in events:
+        decisions[item["finding_id"]] = item["decision"]
+    return history, decisions
 
 
 def _session_error(session_id, code, message, rag_release_id=None):
@@ -378,11 +469,45 @@ def get_review_session(session_id: str, settings: Settings | None=None):
     output = dict(snapshot.values)
     if any(getattr(task, "interrupts", ()) for task in snapshot.tasks):
         output["__interrupt__"] = True
-    return _session(output, session_id)
+    return _session(_with_audit_records(output, session_id, settings.database_url.get_secret_value()), session_id)
+
+
+def record_finding_decision(session_id: str, finding_id: str, action: str, *, actor="Reviewer",
+                            reason: str | None=None, settings: Settings | None=None):
+    """Record a human review state without changing or approving the finding."""
+    allowed = {"provide_context", "acknowledged", "false_positive", "reopened", "needs_human_review"}
+    if action not in allowed:
+        raise ValueError(f"Decision must be one of: {', '.join(sorted(allowed))}.")
+    if action == "false_positive" and (not isinstance(reason, str) or not reason.strip()):
+        raise ValueError("A false-positive decision requires a reason.")
+    if not isinstance(actor, str) or not actor.strip() or len(actor) > 120:
+        raise ValueError("Reviewer name must contain 1 to 120 characters.")
+    from aiact.checkpoints import open_checkpointer
+    from .store import Store
+    settings = _settings(settings)
+    with open_checkpointer(settings.database_url.get_secret_value()) as saver:
+        graph, config = _graph(saver), _thread(session_id)
+        snapshot = graph.get_state(config)
+        if not snapshot or not snapshot.values:
+            return _session_error(session_id, "session_not_found", "Review session was not found in the selected database.")
+        state = dict(snapshot.values)
+        if finding_id not in {f.get("id") for f in state.get("validated_findings", [])}:
+            return _session_error(session_id, "finding_not_found", "Finding was not found in this review session.", state.get("rag_release_id"))
+        finding = next(f for f in state.get("validated_findings", []) if f.get("id") == finding_id)
+        event = _event(action, finding_id=finding_id, actor=actor.strip(), reason=reason.strip() if reason else None,
+            question=finding.get("context_question"), source_ids=[c["section_id"] for c in finding.get("citations", [])])
+        rag_release_id = state.get("rag_release_id")
+    store = Store(settings.database_url.get_secret_value())
+    try:
+        store.append("review_decision", event["id"], "ai-act", {"session_id": session_id,
+            "rag_release_id": rag_release_id, "finding_id": finding_id, "decision": action, "event": event})
+    finally:
+        store.close()
+    return get_review_session(session_id, settings)
 
 
 def resume_review_session(session_id: str, path: Path, provider: Provider, retriever, answer: str,
-                          budgets=Budgets(), settings: Settings | None=None):
+                          budgets=Budgets(), settings: Settings | None=None, actor="Reviewer"):
     from aiact.checkpoints import open_checkpointer
     settings = _settings(settings)
     start = time.monotonic()
@@ -393,7 +518,7 @@ def resume_review_session(session_id: str, path: Path, provider: Provider, retri
             return _session_error(session_id, "session_not_found", "Review session was not found in the selected database.")
         state = dict(snapshot.values)
         if not any(getattr(task, "interrupts", ()) for task in snapshot.tasks):
-            return _session(state, session_id)
+            return _session(_with_audit_records(state, session_id, settings.database_url.get_secret_value()), session_id)
         if (state.get("provider_name") != provider.name or state.get("model_id") != provider.model):
             return _session_error(session_id, "session_model_changed", "This review is pinned to another provider or model. Start a new review.", state.get("rag_release_id"))
         identity = retriever.manifest["rag_release_id"]
@@ -403,11 +528,15 @@ def resume_review_session(session_id: str, path: Path, provider: Provider, retri
             return _session_error(session_id, "invalid_context_answer", "Answer with 1 to 2000 characters.", identity)
         if any(a["question"] == state.get("pending_question") and a["answer"] == answer.strip()
                for a in state.get("context_answers", [])):
-            return _session(state, session_id)
+            state["__interrupt__"] = True
+            return _session(_with_audit_records(state, session_id, settings.database_url.get_secret_value()), session_id)
         collected = _collect_source(path, state.get("base_context", ""), budgets)
         if collected.fingerprint != state.get("input_fingerprint"):
             return _session_error(session_id, "stale_source", "The source or original context changed after this review paused. Start a new review.", identity)
+        audit_events, audit_decisions = _load_audit_records(session_id, settings.database_url.get_secret_value())
         output = graph.invoke(Command(resume=answer.strip()), config,
             context=_run_context(path, provider, retriever, state.get("base_context", ""), budgets,
-                start + budgets.total_seconds, collected=collected))
-    return _session(output, session_id, int((time.monotonic() - start) * 1000))
+                start + budgets.total_seconds, collected=collected, actor=actor,
+                audit_events=audit_events, audit_decisions=audit_decisions))
+    return _session(_with_audit_records(output, session_id, settings.database_url.get_secret_value()),
+        session_id, int((time.monotonic() - start) * 1000))
