@@ -65,8 +65,11 @@ class HybridRetriever:
     def __init__(self, settings, release_id, store=None, embedder=None, vector_factory=QdrantVectorRetriever):
         self.settings = settings
         self.manifest, self.snapshot, vectors = verify_bundle(settings.data_dir / "releases" / release_id)
+        self.search_config = self.manifest.get("retrieval_config", {"stage_candidates": 30, "max_intents": 4, "max_query_terms": 40,
+            "fusion_k": 60, "exact_reference_boost": 1.0, "lexical_overlap_weight": .01,
+            "expansion_seed_limit": 3, "expansion_per_seed": 4, "default_limit": 10})
         from .releases import compatibility
-        state = compatibility(self.manifest)
+        state = compatibility(self.manifest, settings)
         if not state["compatible"]:
             raise ValueError(state["compatibility_reason"])
         self.store = store or Store(settings.database_url.get_secret_value())
@@ -87,8 +90,9 @@ class HybridRetriever:
             self.vector = vector_factory(settings.vector_path, release_id, self.snapshot, vectors,
                 self.manifest["vector_index_fingerprint"], self.manifest["embedding"]["dimension"])
 
-    def lexical(self, query: str, limit=30):
-        terms = sorted(words(query))[:40]
+    def lexical(self, query: str, limit=None):
+        limit = limit or self.search_config["stage_candidates"]
+        terms = sorted(words(query))[:self.search_config["max_query_terms"]]
         if not terms:
             return []
         with self.store.engine.connect() as db:
@@ -110,20 +114,20 @@ class HybridRetriever:
             raise ValueError("Request and index domains differ")
         context = request.context
         query = "\n".join([request.scenario, context.actor_role, context.deployment, context.constraints])
-        if len(query.encode()) > self.settings.max_query_bytes:
+        if len(query.encode()) > self.search_config.get("max_query_bytes", self.settings.max_query_bytes):
             raise ValueError("Query exceeds the configured byte budget")
-        intents = list(dict.fromkeys([query, *request.intents]))[:4]
+        intents = list(dict.fromkeys([query, *request.intents]))[:self.search_config["max_intents"]]
         stage_lists = {"lexical": [], "dense": [], "exact": [], "expansion": []}
         reference_ids = resolve_reference(request.domain_id, query + " " + " ".join(request.intents))
         exact_chunks = [c for c in self.snapshot.chunks if c.document_id in reference_ids]
         exact_chunks.sort(key=lambda c: (-len(words(query) & words(c.text)), c.id))
-        for rank, chunk in enumerate(exact_chunks[:30], 1):
+        for rank, chunk in enumerate(exact_chunks[:self.search_config["stage_candidates"]], 1):
             stage_lists["exact"].append(StageHit(chunk_id=chunk.id, rank=rank, score=1.0, reason="Explicit reference resolved by domain adapter"))
         for intent in intents:
             for rank, (identity, score) in enumerate(self.lexical(intent), 1):
                 stage_lists["lexical"].append(StageHit(chunk_id=identity, rank=rank, score=score, reason="FTS lexical rank for explicit context"))
             if self.vector:
-                for rank, (identity, score) in enumerate(self.vector.search(self.embedder.query(intent), 30), 1):
+                for rank, (identity, score) in enumerate(self.vector.search(self.embedder.query(intent), self.search_config["stage_candidates"]), 1):
                     stage_lists["dense"].append(StageHit(chunk_id=identity, rank=rank, score=score, reason="Local embedding cosine similarity"))
         scores, paths = {}, {}
         for stage in ("lexical", "dense", "exact"):
@@ -134,17 +138,17 @@ class HybridRetriever:
                     continue
                 scores.setdefault(hit.chunk_id, {})
                 scores[hit.chunk_id][stage] = max(scores[hit.chunk_id].get(stage, 0), hit.score)
-                scores[hit.chunk_id]["fusion"] = scores[hit.chunk_id].get("fusion", 0) + 1 / (60 + hit.rank)
+                scores[hit.chunk_id]["fusion"] = scores[hit.chunk_id].get("fusion", 0) + 1 / (self.search_config["fusion_k"] + hit.rank)
                 paths.setdefault(hit.chunk_id, set()).add(stage)
         for identity, values in scores.items():
             overlap = len(words(query) & words(self.chunks[identity].text)) / max(1, len(words(query)))
-            values["rerank"] = values["fusion"] + (1.0 if "exact" in values else 0) + .01 * overlap
+            values["rerank"] = values["fusion"] + (self.search_config["exact_reference_boost"] if "exact" in values else 0) + self.search_config["lexical_overlap_weight"] * overlap
         ranking = sorted(scores, key=lambda identity: (-scores[identity]["rerank"], identity))
         # Keep parent/exception context discoverable without replacing the candidate set.
-        for identity in ranking[:3]:
+        for identity in ranking[:self.search_config["expansion_seed_limit"]]:
             chunk = self.chunks[identity]
             related = [c for c in self.snapshot.chunks if c.document_id in chunk.references or (c.document_id == chunk.document_id and c.id != identity)]
-            for c in related[:4]:
+            for c in related[:self.search_config["expansion_per_seed"]]:
                 stage_lists["expansion"].append(StageHit(chunk_id=c.id, rank=len(stage_lists["expansion"]) + 1, score=0, reason="Parent sibling or declared cross-reference context"))
         chosen = ranking[:max(1, request.limit - 2)]
         for hit in stage_lists["expansion"]:
@@ -161,8 +165,8 @@ class HybridRetriever:
                 chosen.append(identity)
         candidates = tuple(Candidate(chunk=self.chunks[identity], document=self.documents[self.chunks[identity].document_id],
             rank=rank, scores=scores[identity], paths=tuple(sorted(paths[identity]))) for rank, identity in enumerate(chosen, 1))
-        stage_lists["fusion"] = [StageHit(chunk_id=i, rank=n, score=scores[i]["fusion"], reason="Reciprocal rank fusion, k=60") for n, i in enumerate(ranking[:30], 1)]
-        stage_lists["rerank"] = [StageHit(chunk_id=i, rank=n, score=scores[i]["rerank"], reason="Fusion + explicit reference + bounded query overlap") for n, i in enumerate(ranking[:30], 1)]
+        stage_lists["fusion"] = [StageHit(chunk_id=i, rank=n, score=scores[i]["fusion"], reason=f"Reciprocal rank fusion, k={self.search_config['fusion_k']}") for n, i in enumerate(ranking[:self.search_config["stage_candidates"]], 1)]
+        stage_lists["rerank"] = [StageHit(chunk_id=i, rank=n, score=scores[i]["rerank"], reason="Fusion + explicit reference + bounded query overlap") for n, i in enumerate(ranking[:self.search_config["stage_candidates"]], 1)]
         warnings = ["Retrieval quality has not been approved for this release."]
         if self.manifest["mode"] == "lexical":
             warnings.append("Lexical baseline only. Dense retrieval was explicitly disabled for this build.")

@@ -2010,6 +2010,60 @@ pre {
   color: #455d4b;
 }
 
+.settings-panel {
+  display: grid;
+  gap: 18px;
+  max-width: 1000px;
+}
+.settings-secret-note,
+.settings-group > p,
+.settings-fingerprint {
+  color: #5f6f63;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.settings-group {
+  border: 1px solid #dfe7df;
+  border-radius: 12px;
+  padding: 18px;
+  background: #fff;
+}
+.settings-group h3 {
+  margin: 0 0 5px;
+}
+.settings-group > p {
+  margin: 0 0 16px;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+.settings-grid label {
+  display: grid;
+  gap: 6px;
+  color: #27392d;
+  font-size: 13px;
+}
+.settings-grid input,
+.settings-grid select {
+  min-width: 0;
+  width: 100%;
+}
+.settings-grid input.settings-toggle {
+  width: 20px;
+  height: 20px;
+  accent-color: #386c4a;
+}
+.settings-fingerprint {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .review-input .code-editor {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px;

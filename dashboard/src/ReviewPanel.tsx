@@ -22,10 +22,12 @@ export type Review = {
   review_passages: { id: string; title: string; text: string; url: string }[];
   usage: Record<string, number> | null;
   steps: { stage: string; elapsed_ms: number; status: string }[];
+  configuration?: { fingerprint: string; values: Record<string, unknown> };
 };
 
 export default function ReviewPanel({
   versions,
+  maxSourceBytes,
   context,
   onContextChange,
   code,
@@ -35,6 +37,7 @@ export default function ReviewPanel({
   onStart,
 }: {
   versions: Versions | null;
+  maxSourceBytes: number;
   context: string;
   onContextChange: (v: string) => void;
   code: string;
@@ -58,6 +61,7 @@ export default function ReviewPanel({
     code,
     filename,
     context,
+    maxSourceBytes,
     versions?.active,
     versions?.provider,
     versions?.model,
@@ -133,9 +137,9 @@ export default function ReviewPanel({
               const file = e.target.files?.[0];
               e.target.value = "";
               if (!file) return;
-              if (file.size > 24000) {
+              if (file.size > maxSourceBytes) {
                 setError(
-                  "The file exceeds 24 KB. Upload a smaller script or extract a section.",
+                  `The file exceeds ${Math.round(maxSourceBytes / 1000)} KB. Upload a smaller script or extract a section.`,
                 );
                 return;
               }
@@ -155,7 +159,7 @@ export default function ReviewPanel({
         </div>
         <p className="source-size">
           {new TextEncoder().encode(code + context).length.toLocaleString()} /
-          24,000 bytes
+          {maxSourceBytes.toLocaleString()} bytes
         </p>
         <label>
           Code
@@ -168,11 +172,11 @@ export default function ReviewPanel({
               setResult(null);
             }}
             spellCheck={false}
-            maxLength={24000}
+            maxLength={maxSourceBytes}
             rows={14}
           />
         </label>
-        <p>Code is read, not run. Up to 24 KB per test.</p>
+        <p>Code is read, not run. Up to {Math.round(maxSourceBytes / 1000)} KB per test.</p>
         {cloud && (
           <label className="cloud-consent">
             <input
@@ -201,7 +205,7 @@ export default function ReviewPanel({
           disabled={
             busy ||
             !code.trim() ||
-            new TextEncoder().encode(code + context).length > 24000 ||
+            new TextEncoder().encode(code + context).length > maxSourceBytes ||
             !versions?.active ||
             versions.active_compatible === false ||
             (cloud && (!consent || !versions.cloud_key_configured))
@@ -343,14 +347,7 @@ export default function ReviewPanel({
                   coverage: result.scan_result.coverage,
                   metadata: result.scan_result.metadata,
                   usage: result.usage,
-                  budgets: {
-                    source_bytes: 24000,
-                    legal_bytes: 12000,
-                    passages: 6,
-                    findings: 4,
-                    request_seconds: 60,
-                    deadline_seconds: 120,
-                  },
+                  configuration: result.configuration,
                 },
                 null,
                 2,

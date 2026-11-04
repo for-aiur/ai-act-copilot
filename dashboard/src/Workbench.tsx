@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import ReviewPanel from "./ReviewPanel";
+import SettingsPanel from "./SettingsPanel";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowDownToLine,
@@ -20,6 +21,7 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
 import { request } from "./api";
@@ -35,6 +37,8 @@ import type {
   RRequest,
   Run,
   Versions,
+  SettingsResponse,
+  WorkbenchSettings,
 } from "./rag";
 
 function Help({ label, text }: { label: string; text: string }) {
@@ -101,6 +105,7 @@ type View =
   | "cases"
   | "versions"
   | "flow"
+  | "settings"
   | "source-picker";
 const names: Record<View, string> = {
   corpus: "Sources",
@@ -109,6 +114,7 @@ const names: Record<View, string> = {
   cases: "Test cases",
   versions: "RAG versions",
   flow: "How it works",
+  settings: "Settings",
 };
 const short = (v: string) => v.slice(0, 12);
 function download(name: string, value: unknown) {
@@ -157,6 +163,7 @@ export default function Workbench() {
   const [editing, setEditing] = useState<Case | null>(null);
   const [reviewer, setReviewer] = useState("");
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+  const [settings, setSettings] = useState<SettingsResponse | null>(null);
   const [removeTarget, setRemoveTarget] = useState<Manifest | null>(null);
   const sequence = useRef(0);
   const [targetChunk, setTargetChunk] = useState("");
@@ -186,7 +193,7 @@ export default function Workbench() {
     context: { actor_role: actor, deployment, constraints, language: "en" },
     intents: [],
     kinds: [],
-    limit: 10,
+    limit: settings?.values.retrieval_limit || 10,
   };
   useEffect(() => {
     setTargetChunk("");
@@ -199,9 +206,23 @@ export default function Workbench() {
     setVersions(v);
     setCases(c);
   }
+  async function saveWorkbenchSettings(values: WorkbenchSettings) {
+    const result = await request<SettingsResponse>("/api/rag/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+    const complete = { ...settings, ...result } as SettingsResponse;
+    setSettings(complete);
+    await refresh();
+    return complete;
+  }
   useEffect(() => {
     request<Domain[]>("/api/rag/domains")
       .then(setDomains)
+      .catch((e) => setError(e.message));
+    request<SettingsResponse>("/api/rag/settings")
+      .then(setSettings)
       .catch((e) => setError(e.message));
   }, []);
   useEffect(() => {
@@ -409,6 +430,7 @@ export default function Workbench() {
               ["cases", FileText],
               ["versions", Layers3],
               ["flow", GitBranch],
+              ["settings", SlidersHorizontal],
             ] as const
           ).map(([v, Icon]) => (
             <button
@@ -453,6 +475,8 @@ export default function Workbench() {
                         "Create and choose a search version.",
                       flow:
                         "See what happens when you review a piece of code.",
+                      settings:
+                        "Set the values used for models, search, review limits and evaluation.",
                       "source-picker":
                         "Choose a document or passage that this test must retrieve.",
                     } as Record<View, string>
@@ -495,6 +519,9 @@ export default function Workbench() {
                 <X size={16} />
               </button>
             </div>
+          )}
+          {view === "settings" && settings && (
+            <SettingsPanel response={settings} onSave={saveWorkbenchSettings} />
           )}
           {view === "flow" && (
             <section className="flow-page" aria-label="Review steps">
@@ -873,6 +900,7 @@ export default function Workbench() {
                 {domain === "ai-act" ? (
                   <ReviewPanel
                     versions={versions}
+                    maxSourceBytes={settings?.values.max_source_bytes || 24000}
                     context={scenario}
                     onContextChange={setScenario}
                     code={sourceCode}
@@ -1219,11 +1247,11 @@ export default function Workbench() {
                   disabled={!!busy || !versions?.active || !cases.length}
                   onClick={() =>
                     void act("evaluate", async () => {
-                      setEvaluation(
-                        await post<Evaluation>(
-                          "/api/rag/evaluate?domain=" + domain,
-                        ),
+                      const result = await post<Evaluation>(
+                        "/api/rag/evaluate?domain=" + domain,
                       );
+                      await refresh();
+                      setEvaluation(result);
                     })
                   }
                 >
@@ -1286,14 +1314,14 @@ export default function Workbench() {
                       }
                       onClick={() =>
                         void act("evaluate", async () => {
-                          setEvaluation(
-                            await post<Evaluation>(
-                              "/api/rag/evaluate?domain=" +
-                                domain +
-                                "&case_id=" +
-                                encodeURIComponent(c.id),
-                            ),
+                          const result = await post<Evaluation>(
+                            "/api/rag/evaluate?domain=" +
+                              domain +
+                              "&case_id=" +
+                              encodeURIComponent(c.id),
                           );
+                          await refresh();
+                          setEvaluation(result);
                         })
                       }
                     >
@@ -1345,7 +1373,10 @@ export default function Workbench() {
               )}
               {evaluation && (
                 <div className="evaluation">
-                  <h3>Evaluation: {evaluation.quality_gate.status}</h3>
+                  <h3>Evaluation results</h3>
+                  <p>
+                    {evaluation.summary.cases} saved test case{evaluation.summary.cases === 1 ? "" : "s"} evaluated · RAG {short(evaluation.rag_release_id)}
+                  </p>
                   <div className="metric-grid">
                     <div>
                       <strong>{evaluation.summary.cases}</strong>
@@ -1357,7 +1388,7 @@ export default function Workbench() {
                           ? "n/a"
                           : (evaluation.summary.recall * 100).toFixed(1) + "%"}
                       </strong>
-                      <span>Required-source recall</span>
+                      <span>Required-source recall at {evaluation.configuration?.evaluation_k ?? 10}</span>
                     </div>
                     <div>
                       <strong>{evaluation.summary.missing_required}</strong>
@@ -1366,12 +1397,15 @@ export default function Workbench() {
                   </div>
                   <details className="evaluation-details">
                     <summary>Details and per-case results</summary>
+                    <p>
+                      Local target: {evaluation.experiment_gate?.status === "pass" ? "met" : "not met"} ({evaluation.experiment_gate?.target_recall == null ? "target not set" : (evaluation.experiment_gate.target_recall * 100).toFixed(0) + "%"}). M1 expert gate: {evaluation.quality_gate.status}.
+                    </p>
                     <div className="metric-grid secondary-metrics">
                       <div>
                         <strong>
-                          {evaluation.summary_at_5?.recall?.toFixed(3) ?? "n/a"}
+                          {evaluation.summary_at_preview?.recall?.toFixed(3) ?? "n/a"}
                         </strong>
-                        <span>Recall at 5</span>
+                        <span>Recall at {evaluation.configuration?.preview_k ?? 5}</span>
                       </div>
                       <div>
                         <strong>

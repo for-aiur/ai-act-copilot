@@ -144,7 +144,9 @@ export type Evaluation = {
     missing_required: number;
     false_positives: number;
   };
-  summary_at_5?: { recall: number | null };
+  summary_at_preview?: { recall: number | null };
+  experiment_gate?: { status: string; target_recall: number; actual_recall: number | null; cases: number; note: string };
+  configuration?: { fingerprint: string; values: Record<string, unknown>; evaluation_k: number; preview_k: number };
   quality_gate: { status: string; reasons: string[] };
   scores: {
     case_id: string;
@@ -152,4 +154,46 @@ export type Evaluation = {
     missed_required: string[];
     false_positives: string[];
   }[];
+};
+export type WorkbenchSettings = {
+  provider: "gemini" | "ollama";
+  model: string;
+  model_temperature: number;
+  model_review_output_tokens: number;
+  model_extract_output_tokens: number;
+  ollama_url: string;
+  ollama_context_tokens: number;
+  ollama_review_output_tokens: number;
+  ollama_extract_output_tokens: number;
+  embedding_model: string;
+  embedding_revision: string;
+  langfuse_enabled: boolean;
+  langfuse_project_id: string;
+  request_seconds: number;
+  deadline_seconds: number;
+  max_query_bytes: number;
+  max_files: number;
+  max_file_bytes: number;
+  max_source_bytes: number;
+  max_passages: number;
+  max_legal_bytes: number;
+  retrieval_limit: number;
+  stage_candidates: number;
+  max_intents: number;
+  max_query_terms: number;
+  fusion_k: number;
+  exact_reference_boost: number;
+  lexical_overlap_weight: number;
+  expansion_seed_limit: number;
+  expansion_per_seed: number;
+  evaluation_k: number;
+  evaluation_preview_k: number;
+  minimum_holdout_recall: number;
+};
+export type SettingsResponse = {
+  values: WorkbenchSettings;
+  fingerprint: string;
+  saved: boolean;
+  secrets?: { gemini_api_key: boolean; langfuse_keys: boolean };
+  fixed_quality_gate?: { approved_cases: number; source_areas: number; holdout_recall: number; critical_cases: string };
 };

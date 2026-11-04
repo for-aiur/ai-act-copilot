@@ -25,13 +25,15 @@ def release_identity(manifest):
     return checksum(content)
 
 
-def compatibility(manifest):
+def compatibility(manifest, settings=None):
     # Build bookkeeping, evaluation and persistence changes do not change search.
     relevant = {"retriever.py", "domains.py", "embeddings.py"}
     changed = [name for name, digest in manifest.get("implementation", {}).items()
                if name in relevant and checksum(Path(__file__).with_name(name).read_bytes()) != digest]
-    return {"compatible": not changed, "compatibility_reason":
-        "This candidate uses older search code. Create a candidate from this checkout to test it here." if changed else None}
+    reason = "This candidate uses older search code. Create a candidate from this checkout to test it here." if changed else None
+    if settings and manifest.get("mode") == "hybrid" and manifest.get("embedding", {}).get("model") != settings.embedding_model:
+        reason = "The selected embedding model changed. Build a new candidate before running search."
+    return {"compatible": reason is None, "compatibility_reason": reason}
 
 
 def verify_bundle(directory: Path, allow_staging=False) -> tuple[dict, Snapshot, list]:
@@ -102,10 +104,18 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
         "vector_client_version": importlib.metadata.version("qdrant-client") if not lexical_only else "not-used",
         "lexical_index": {"backend": "sqlite-fts5-bm25" if settings.database_url.get_secret_value().startswith("sqlite:") else "postgresql-tsvector",
                           "version": "1", "term_combination": "OR"},
-        "query_planner": "explicit-context-intents-1", "fusion": {"algorithm": "rrf", "k": 60},
-        "reranker": {"version": PIPELINE_VERSION, "exact_boost": 1.0, "lexical_overlap_weight": 0.01},
+        "query_planner": "explicit-context-intents-1", "fusion": {"algorithm": "rrf", "k": settings.fusion_k},
+        "reranker": {"version": PIPELINE_VERSION, "exact_boost": settings.exact_reference_boost,
+            "lexical_overlap_weight": settings.lexical_overlap_weight},
         "expansion_policy": "bounded-parent-cross-reference-1",
-        "budgets": {"stage_candidates": 30, "intents": 4, "output": 20},
+        "retrieval_config": {"stage_candidates": settings.stage_candidates, "max_intents": settings.max_intents,
+            "max_query_terms": settings.max_query_terms,
+            "max_query_bytes": settings.max_query_bytes,
+            "fusion_k": settings.fusion_k, "exact_reference_boost": settings.exact_reference_boost,
+            "lexical_overlap_weight": settings.lexical_overlap_weight,
+            "expansion_seed_limit": settings.expansion_seed_limit, "expansion_per_seed": settings.expansion_per_seed,
+            "default_limit": settings.retrieval_limit},
+        "budgets": {"stage_candidates": settings.stage_candidates, "intents": settings.max_intents, "output": settings.retrieval_limit},
         "gold_dataset_version": None, "evaluation_run_id": None, "quality_status": "not_evaluated",
         "file_hashes": {"snapshot.json": checksum(snapshot_bytes), "vectors.json.gz": checksum(vector_bytes)},
     }

@@ -93,7 +93,7 @@ def review_python(path: Path, provider, retriever, explicit_context="", budgets=
             with stage("legal_retrieval"):
                 retrieval = retriever.search(RetrievalRequest(domain_id="ai-act", scenario=understanding.purpose,
                     context=ScenarioContext(deployment=explicit_context),
-                    intents=tuple(understanding.retrieval_intents), limit=10))
+                    intents=tuple(understanding.retrieval_intents), limit=retriever.search_config["default_limit"]))
                 passages, size = [], 0
                 for candidate in retrieval.candidates:
                     body = candidate.chunk.text

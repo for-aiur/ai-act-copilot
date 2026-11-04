@@ -3,6 +3,21 @@
 Use the [root setup guide](../README.md) for the supported Docker/native commands.
 This page covers data, evaluation and version operations.
 
+## Workbench settings
+
+Open **Settings** in the left menu to edit the review model, model output limits,
+code and legal text budgets, retrieval ranking options, and the local evaluation
+target in one form. Saved values live in the ignored local file
+`.aiact-workbench/workbench-settings.json` (Compose: `/data/workbench-settings.json`).
+Evaluation reports keep the effective settings and a fingerprint so a later edit
+does not change an earlier result. Search settings are captured in each new RAG
+manifest, so create and activate a new candidate after changing them.
+
+API keys remain in the private `.env` file and are never returned to the browser.
+Storage paths and service connections remain deployment settings. The configurable
+local recall target is an experiment aid; it cannot change the fixed M1 expert-gold
+gate or make synthetic cases count as expert approval.
+
 ## Local data
 
 Native defaults: `.aiact-workbench/aiact.db`, `models/`, `qdrant/`,
@@ -62,8 +77,9 @@ Seeding never overwrites existing case IDs/revisions. Changed source snapshots
 require reviewed case revisions. Metrics distinguish expected sources from actual
 hits and report required-source recall, labelled precision, MRR/nDCG, misses,
 false positives and uncertainty. UI evaluation excludes holdout by default. Use **Evaluate** on one case or
-**Evaluate cases** for the development suite. Reports include Recall@5/10,
-Precision@10, MRR/nDCG and context-specific labelled misses/false positives.
+**Evaluate cases** for the development suite. Reports include the configured
+recall depth and preview depth, Precision, MRR/nDCG and context-specific labelled
+misses/false positives.
 
 ## Official updates
 
@@ -83,8 +99,8 @@ affected recorded citations. Promotion requires the final expert-gold gate.
 
 ## Langfuse
 
-Set `LANGFUSE_ENABLED=true`, the public/secret keys and `LANGFUSE_PROJECT_ID` in
-private runtime configuration. The fixed EU endpoint receives OTLP spans with
+Turn Langfuse on in **Settings**, then set the public/secret keys in private
+`.env`. The fixed EU endpoint receives OTLP spans with
 run/model/source identities, stage durations and available token counts. Raw
 code, prompts, answers, keys and reviewer text are excluded. Disabled or failed
 export does not change scan results. The review screen links to a trace when a
@@ -128,10 +144,11 @@ pin that ID when each review starts.
 ## Code-first testing
 
 In Code test, enter a scenario description and paste code or upload one
-UTF-8 source file, then choose Run. Code plus description are limited to 24 KB;
-archives, binary files and hidden configuration files are rejected. Nothing is
-executed. Uploaded Python uses AST ranges; other allowed source types use exact
-numbered lines without claiming parser-based understanding. Semantic results
+UTF-8 source file, then choose Run. Code plus description default to 24 KB;
+change the limit in Settings. Archives, binary files and hidden configuration
+files are rejected. Nothing is executed. Uploaded Python uses AST ranges; other
+allowed source types use exact numbered lines without claiming parser-based
+understanding. Semantic results
 still depend on the configured model. Examples remain on the right.
 
 Gemini needs its private runtime key and explicit per-input cloud consent.

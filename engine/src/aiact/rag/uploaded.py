@@ -9,15 +9,15 @@ from aiact.providers import ReviewFailure
 
 SOURCE_EXTENSIONS = {'.py','.js','.jsx','.ts','.tsx','.java','.go','.rs','.cs','.c','.cpp','.h','.hpp','.rb','.php','.swift','.kt','.scala','.sql','.sh','.r','.m','.txt'}
 
-def validate_upload(filename, code, context=''):
+def validate_upload(filename, code, context='', max_bytes=24_000):
     if not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_. -]{0,119}',filename) or Path(filename).suffix.lower() not in SOURCE_EXTENSIONS:
         raise ValueError('Choose a supported source file, not an archive or configuration file.')
     if '\x00' in code or any(ord(c)<32 and c not in '\n\r\t' for c in code):
         raise ValueError('Only UTF-8 text source files are supported.')
     if not code.strip():
         raise ValueError('The source file is empty.')
-    if len(code.encode('utf-8'))+len(context.encode('utf-8'))>24_000:
-        raise ValueError('Code and optional context must fit within 24 KB. Choose a smaller script or extract a section; nothing has been reviewed.')
+    if len(code.encode('utf-8'))+len(context.encode('utf-8'))>max_bytes:
+        raise ValueError(f'Code and optional context must fit within {max_bytes // 1000} KB. Choose a smaller script or extract a section; nothing has been reviewed.')
 
 def collect_upload(path, explicit_context='', budgets=Budgets()):
     path=Path(path)
@@ -25,7 +25,7 @@ def collect_upload(path, explicit_context='', budgets=Budgets()):
         raise ReviewFailure('unsupported_input','Upload must be one bounded regular source file.')
     try:
         code=path.read_text(encoding='utf-8')
-        validate_upload(path.name,code,explicit_context)
+        validate_upload(path.name,code,explicit_context,budgets.source_bytes)
     except (ValueError,UnicodeDecodeError) as exc:
         raise ReviewFailure('unsupported_input',str(exc)) from None
     if path.suffix.lower()=='.py':
