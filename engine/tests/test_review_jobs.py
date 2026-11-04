@@ -40,8 +40,10 @@ def test_local_workspaces_isolate_reviews_and_api_keys(tmp_path):
         repo.close()
 
         assert client_a.get("/api/reviews/" + job["id"]).status_code == 200
+        assert client_a.get("/api/reviews/summary").json()["total"] == 1
         assert client_b.get("/api/reviews/" + job["id"]).status_code == 404
         assert client_b.get("/api/reviews").json() == []
+        assert client_b.get("/api/reviews/summary").json()["total"] == 0
 
         created_key = client_a.post("/api/api-keys", json={"name": "local script"})
         assert created_key.status_code == 201
@@ -137,6 +139,8 @@ def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch)
             time.sleep(0.05)
             current = client.get("/api/reviews/" + identity).json()
         assert current["status"] == "context_needed", current.get("error") or current.get("session", {}).get("scan_result")
+        assert {step["stage"] for step in current["timings"]} >= {"code_collection", "purpose_extraction", "legal_retrieval"}
+        assert current["sources"] and current["retrieval_request"]
         question = current["session"]["context_question"]
         assert question and question.endswith("?")
 
@@ -151,6 +155,11 @@ def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch)
         assert current["status"] == "complete", current
         assert any(event["type"] == "answer_queued" for event in current["events"])
         assert any(event["type"] == "context_answered" for event in current["session"]["history"])
+        feedback = client.post(f"/api/reviews/{identity}/retrieval-feedback", json={
+            "source_id": current["sources"][0]["id"], "label": "relevant", "reason": "Supports this scenario."})
+        assert feedback.status_code == 201, feedback.text
+        saved = client.get("/api/reviews/" + identity).json()
+        assert any(event["type"] == "feedback_saved" for event in saved["events"])
 
     with TestClient(create_app(settings=settings)) as restarted:
         _register(restarted, "other@example.test", "Other workspace")

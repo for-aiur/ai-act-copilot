@@ -1,8 +1,9 @@
 # AI Act Copilot
 
-A local retrieval workbench and Python review assistant by Evros Labs. Explore
-versioned official sources, inspect how retrieval works, and build evaluation
-cases with explicit context and reviewer feedback.
+A local AI engineering review tool by Evros Labs. The public project page explains
+the flow. A separate sign-in workspace keeps review history, API keys and usage
+for each local workspace. The internal workbench manages official sources, RAG
+versions and retrieval evaluation.
 
 The source collection contains **119 articles, 14 annexes, 180 original recitals
 and 47 amendment recitals** from the Publications Office of the EU. Ten local
@@ -14,9 +15,10 @@ remains separate.
 
 ## Open the application
 
-Dashboard: **[http://localhost:8000](http://localhost:8000)**.
-The dashboard and API share this address when using Docker or the built frontend.
-Keep the application process running while using it.
+Project page: **[http://localhost:8000](http://localhost:8000)**. Create a local
+workspace at `/register`, sign in at `/login`, and open the customer dashboard
+at `/app`. The internal RAG workbench is at `/workbench`. Keep the application
+process running while using it.
 
 ## Start with Docker (recommended)
 
@@ -41,6 +43,24 @@ owner of the embedded vector index, with no separate Qdrant server.
 Stop with Ctrl+C, or `docker compose down` from another terminal. These retain
 data. A normal restart uses cached embeddings without downloading them again.
 New RAG candidates preserve an existing active release until explicitly selected.
+
+### Local workspace and review flow
+
+Register a workspace and its first user from the project page. The sign-in
+dashboard shows reviews owned by that workspace, actual worker/storage status,
+review timings and Langfuse trace links when tracing is enabled. API keys are
+created in **API keys** and shown once. Their recent requests, HTTP status and
+measured response time appear in **API usage**.
+
+Choose a sample or start a review. At submission the job pins the currently
+active RAG version. Later activation changes affect new jobs only. If context is
+needed, answer in the review detail to resume that same job. Retrieved source
+feedback saves as a context-specific draft and does not change search behavior.
+See [local workspace and review API](docs/LOCAL-WORKSPACES.md) for details.
+
+The internal **RAG workbench** remains a separate local tool at `/workbench`.
+Use it to explore sources, build/activate a candidate, manage test cases and
+evaluation settings. It is not the customer review dashboard.
 
 ### Optional Gemini review
 

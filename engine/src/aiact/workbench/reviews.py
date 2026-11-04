@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import Column, Integer, MetaData, String, Table, Text, UniqueConstraint, create_engine, insert, select, update
+from sqlalchemy import Column, Integer, MetaData, String, Table, Text, UniqueConstraint, create_engine, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine import make_url
 
@@ -71,7 +71,7 @@ class ReviewJobRepository:
         db.execute(insert(events).values(job_id=identity, revision=revision, type=kind,
             created_at=_now(), payload=json.dumps(payload or {}, sort_keys=True)))
 
-    def _row(self, db, row):
+    def _row(self, db, row, *, include_events=True):
         result = dict(row)
         result["request"] = json.loads(result.pop("request_payload"))
         result["session"] = ReviewSession.model_validate_json(result.pop("session_payload")) if result.get("session_payload") else None
@@ -80,9 +80,12 @@ class ReviewJobRepository:
         result["answer"] = json.loads(result.pop("answer_payload")) if result.get("answer_payload") else None
         result["events"] = [{"revision": e["revision"], "type": e["type"], "created_at": e["created_at"],
             "details": json.loads(e["payload"])} for e in db.execute(select(events).where(events.c.job_id == result["id"])
-                .order_by(events.c.revision)).mappings()]
+                .order_by(events.c.revision)).mappings()] if include_events else []
         trace = next((event["details"] for event in reversed(result["events"]) if event["details"].get("trace_id")), {})
         result["trace_id"], result["trace_url"] = trace.get("trace_id"), trace.get("trace_url")
+        result["timings"] = trace.get("timings", [])
+        result["retrieval_request"] = trace.get("retrieval_request")
+        result["sources"] = trace.get("sources", [])
         return result
 
     def get(self, identity: str, tenant_id: str | None=None):
@@ -97,7 +100,14 @@ class ReviewJobRepository:
         with self.engine.connect() as db:
             rows = db.execute(select(jobs).where(jobs.c.tenant_id == tenant_id)
                 .order_by(jobs.c.created_at.desc()).limit(limit)).mappings()
-            return [self._row(db, row) for row in rows]
+            return [self._row(db, row, include_events=False) for row in rows]
+
+    def summary_for_tenant(self, tenant_id: str):
+        with self.engine.connect() as db:
+            counts = db.execute(select(jobs.c.status, func.count()).where(jobs.c.tenant_id == tenant_id)
+                .group_by(jobs.c.status)).all()
+        statuses = {status: count for status, count in counts}
+        return {"total": sum(statuses.values()), "by_status": statuses}
 
     def list_pending(self):
         with self.engine.connect() as db:
@@ -156,7 +166,8 @@ class ReviewJobRepository:
             claimed["resuming"] = previous_status == "answer_queued"
             return claimed
 
-    def set_result(self, identity, status, session=None, error=None, trace_id=None, trace_url=None):
+    def set_result(self, identity, status, session=None, error=None, trace_id=None, trace_url=None, timings=None,
+                   retrieval_request=None, sources=None):
         session_payload = session.model_dump_json() if isinstance(session, ReviewSession) else None
         error_payload = json.dumps(error, sort_keys=True) if error else None
         with self.engine.begin() as db:
@@ -166,7 +177,14 @@ class ReviewJobRepository:
             db.execute(update(jobs).where(jobs.c.id == identity).values(status=status,
                 session_payload=session_payload or row["session_payload"], answer_payload=None,
                 error=error_payload, updated_at=_now()))
-            self._event(db, identity, status, {k: v for k, v in {"trace_id": trace_id, "trace_url": trace_url}.items() if v})
+            details = {k: v for k, v in {"trace_id": trace_id, "trace_url": trace_url}.items() if v}
+            if timings:
+                details["timings"] = timings
+            if retrieval_request:
+                details["retrieval_request"] = retrieval_request
+            if sources:
+                details["sources"] = sources
+            self._event(db, identity, status, details)
             return self._row(db, db.execute(select(jobs).where(jobs.c.id == identity)).mappings().one())
 
     def retry_or_fail(self, identity, message, max_attempts=2):
@@ -241,6 +259,13 @@ class AnswerRequest(BaseModel):
     answer: str = Field(min_length=1, max_length=2000)
 
 
+class RetrievalFeedbackRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    source_id: str = Field(min_length=1, max_length=160)
+    label: Literal["relevant", "not_relevant", "uncertain"]
+    reason: str = Field(default="", max_length=2000)
+
+
 class ReviewJobResponse(BaseModel):
     id: str
     status: Literal["queued", "running", "answer_queued", "context_needed", "complete", "partial", "failed"]
@@ -252,6 +277,9 @@ class ReviewJobResponse(BaseModel):
     events: list[dict] = Field(default_factory=list)
     trace_id: str | None = None
     trace_url: str | None = None
+    timings: list[dict] = Field(default_factory=list)
+    retrieval_request: dict | None = None
+    sources: list[dict] = Field(default_factory=list)
 
 
 class ReviewJobWorker:
@@ -297,7 +325,7 @@ class ReviewJobWorker:
             from aiact.context import Budgets
             from aiact.gemini import Gemini
             from aiact.providers import Ollama
-            from aiact.rag.sessions import get_review_session, resume_review_session, start_review_session
+            from aiact.rag.sessions import get_review_retrieval_context, get_review_session, resume_review_session, start_review_session
             from aiact.settings import load_settings
             from aiact.telemetry import CURRENT, Trace
 
@@ -343,9 +371,17 @@ class ReviewJobWorker:
                                 budgets=budgets, settings=settings, session_id=job["id"])
             trace.attributes.update(getattr(provider, "usage_totals", {}))
             trace.finish(session.scan_result, request["rag_release_id"])
+            try:
+                retrieval_context = get_review_retrieval_context(job["id"], settings)
+            except Exception:
+                retrieval_context = {"request": None, "sources": []}
             trace_url = ("https://cloud.langfuse.com/project/" + settings.langfuse_project_id + "/traces/" + trace.id
                 if settings.langfuse_enabled and settings.langfuse_project_id else None)
-            self.repository.set_result(job["id"], session.status, session=session, trace_id=trace.id, trace_url=trace_url)
+            timings = [{"stage": step["stage"], "elapsed_ms": max(0, int((step["end_ns"] - step["start_ns"]) / 1_000_000)),
+                "status": step["status"]} for step in trace.steps]
+            self.repository.set_result(job["id"], session.status, session=session, trace_id=trace.id,
+                trace_url=trace_url, timings=timings, retrieval_request=retrieval_context["request"],
+                sources=retrieval_context["sources"])
         except Exception:
             # Exception text may contain provider request details. Keep the
             # persisted user-facing error free of source, prompts and secrets.
@@ -385,7 +421,8 @@ class ApiKeyUsageMiddleware:
 def _job_response(job):
     return ReviewJobResponse(id=job["id"], status=job["status"], attempts=job["attempts"],
         created_at=job["created_at"], updated_at=job["updated_at"], session=job.get("session"),
-        error=job.get("error"), events=job.get("events", []), trace_id=job.get("trace_id"), trace_url=job.get("trace_url"))
+        error=job.get("error"), events=job.get("events", []), trace_id=job.get("trace_id"), trace_url=job.get("trace_url"),
+        timings=job.get("timings", []), retrieval_request=job.get("retrieval_request"), sources=job.get("sources", []))
 
 
 def router(runtime_getter):
@@ -502,6 +539,11 @@ def router(runtime_getter):
         _, repository = stores()
         return [_job_response(job) for job in repository.list_for_tenant(user["tenant_id"])]
 
+    @routes.get("/api/reviews/summary")
+    def review_summary(user=Depends(current_user)):
+        _, repository = stores()
+        return repository.summary_for_tenant(user["tenant_id"])
+
     @routes.get("/api/reviews/{identity_id}")
     def get_review(identity_id: str, user=Depends(current_user)):
         _, repository = stores()
@@ -519,6 +561,47 @@ def router(runtime_getter):
         if result == "conflict":
             raise HTTPException(409, "This review is not waiting for this answer. Reload the review first.")
         return _job_response(job)
+
+    @routes.post("/api/reviews/{identity_id}/retrieval-feedback", status_code=201)
+    def retrieval_feedback(identity_id: str, body: RetrievalFeedbackRequest, user=Depends(current_user)):
+        rt = runtime_getter()
+        job = rt.review_jobs.get(identity_id, user["tenant_id"])
+        if not job:
+            raise HTTPException(404, "Review was not found in this workspace.")
+        source = next((item for item in job.get("sources", []) if item.get("id") == body.source_id), None)
+        if not source or not job.get("retrieval_request") or not job.get("session"):
+            raise HTTPException(409, "This review has no saved source list to label.")
+        from aiact.rag.contracts import GoldLabel, GoldenCase, RetrievalRequest
+        from aiact.rag.feedback import latest_cases, save_case
+        request_data = RetrievalRequest.model_validate(job["retrieval_request"])
+        case_id = "review-" + identity_id
+        existing = next((case for case in latest_cases(rt.store, "ai-act") if case.id == case_id), None)
+        if existing and existing.status == "approved":
+            raise HTTPException(409, "This review feedback is already approved and cannot be changed.")
+        prior_labels = list(existing.labels) if existing else []
+        current = next((label for label in prior_labels if label.chunk_id == body.source_id), None)
+        reason = body.reason or "No additional reason provided."
+        if current and current.label == body.label and current.rationale == reason:
+            return {"case_id": case_id, "revision": existing.revision, "label": body.label, "saved": True}
+        labels = [label for label in prior_labels if label.chunk_id != body.source_id]
+        labels.append(GoldLabel(document_id=source["document_id"], chunk_id=body.source_id,
+            label=body.label, rationale=reason))
+        session = job["session"]
+        scan = session.scan_result
+        if not scan or not scan.metadata.corpus_checksum or not session.rag_release_id:
+            raise HTTPException(409, "This review has no pinned source version for feedback.")
+        try:
+            case = GoldenCase(id=case_id, title="Review feedback " + identity_id[:8], request=request_data,
+                snapshot_id=scan.metadata.corpus_checksum, rag_release_id=session.rag_release_id,
+                labels=tuple(labels), author=user["email"], origin="human", status="draft",
+                split="development", area="review feedback", revision=(existing.revision + 1 if existing else 1))
+            save_case(rt.store, case)
+        except (ValueError, TypeError):
+            raise HTTPException(409, "This source feedback could not be saved for the pinned RAG version.") from None
+        with rt.review_jobs.engine.begin() as db:
+            rt.review_jobs._event(db, identity_id, "feedback_saved", {"source_id": body.source_id,
+                "label": body.label, "reason": reason, "case_id": case_id, "revision": case.revision})
+        return {"case_id": case_id, "revision": case.revision, "label": body.label, "saved": True}
 
     @routes.get("/api/system/health")
     def product_health():
