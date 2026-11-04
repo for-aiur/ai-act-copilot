@@ -5,6 +5,11 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-28: persist resumable review checkpoints in local SQLite by default, with
+  optional PostgreSQL, source freshness checks and a bounded context question
+  flow. Keep API keys out of checkpoints and preserve the existing ScanResult
+  contract.
+
 - EVR-27: run bounded code collection, purpose extraction, legal retrieval,
   review and evidence validation as named LangGraph steps. Keep the current
   review contract, shared repair/deadline limits and privacy-safe stage traces.

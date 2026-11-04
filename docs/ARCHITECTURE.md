@@ -57,6 +57,7 @@ source and context only after explicit consent. Langfuse export is separately
 opt-in and contains stage metadata, not code/prompts/answers. Explicitly saved
 review results retain their evidence in the private local data store.
 
-LangGraph interrupt/resume belongs to M2. Public application APIs, durable worker
-orchestration and end-user dashboard flows belong to M3. AWS and application-level
-GitHub bot migration belong to M4. The existing Actions bot remains separate.
+The engine now supports saved SQLite review sessions that can pause for context
+and resume after an answer. The dashboard API and user-facing session flow are
+still planned M2 work. Durable worker orchestration and AWS deployment belong to
+later milestones. The existing Actions bot remains separate.
