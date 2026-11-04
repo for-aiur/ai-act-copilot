@@ -7,7 +7,7 @@ name = "ai-act-copilot"
 version = "0.5.0"
 description = "Evidence-grounded engineering review assistant with local Ollama or opt-in Gemini"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2.7,<3"]
+dependencies = ["langgraph>=1.0,<2", "pydantic>=2.7,<3"]
 
 [project.optional-dependencies]
 workbench = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "sqlalchemy>=2.0,<3"]

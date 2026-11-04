@@ -5,6 +5,10 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-27: run bounded code collection, purpose extraction, legal retrieval,
+  review and evidence validation as named LangGraph steps. Keep the current
+  review contract, shared repair/deadline limits and privacy-safe stage traces.
+
 - EVR-55: add one workbench Settings page for model parameters, review limits,
   retrieval/build tuning, Langfuse and local evaluation targets. Keep credentials
   in `.env`, pin search settings to new RAG manifests and retain effective
