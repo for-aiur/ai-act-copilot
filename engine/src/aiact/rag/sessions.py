@@ -39,6 +39,7 @@ class ReviewState(TypedDict, total=False):
     evidence: dict[str, dict]
     understanding: dict
     passages: list[dict]
+    retrieval_request: dict
     review_data: dict
     review_prompt: str
     review_schema: dict
@@ -149,7 +150,8 @@ def _retrieve(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
         for candidate in result.candidates if result else ():
             text = candidate.chunk.text
             if len(passages) < runtime.context["budgets"].passages and size + len(text.encode()) <= runtime.context["budgets"].legal_bytes:
-                passages.append({"id": candidate.chunk.id, "title": candidate.document.title, "text": text,
+                passages.append({"id": candidate.chunk.id, "document_id": candidate.document.id,
+                    "title": candidate.document.title, "text": text,
                     "url": candidate.document.source_url, "metadata": candidate.document.metadata.model_dump(mode="json")})
                 size += len(text.encode())
         if first.ai_use != "none" and not passages:
@@ -157,6 +159,7 @@ def _retrieve(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
         coverage = Coverage.model_validate(state["coverage"])
         coverage.corpus_scope = [p["id"] for p in passages]
         data = {"understanding": first.model_dump(), "explicit_context": context_text,
+            "retrieval_request": request.model_dump(mode="json"),
             "evidence": state["evidence"], "official_passages": passages}
         schema = DraftReview.model_json_schema()
         if passages:
@@ -172,7 +175,8 @@ def _retrieve(state: ReviewState, runtime: Runtime[RunContext]) -> dict:
             "Return up to four distinct, qualified engineering concerns or context questions. Ask one specific unresolved question per finding. "
             "Do not infer missing controls from one file, legal classification, compliance or illegality. Cite only supplied passage IDs and exact quotes from each same passage. "
             "Resolve source URLs in code. Keep explanations and next actions concise.\nUNTRUSTED_DATA:\n")
-        return {"passages": passages, "review_data": data, "review_schema": schema,
+        return {"passages": passages, "retrieval_request": request.model_dump(mode="json"),
+            "review_data": data, "review_schema": schema,
             "review_prompt": prompt, "needs_context": needs_context,
             "coverage": coverage.model_dump(mode="json"),
             "metadata": Metadata.model_validate(state["metadata"]).model_dump(mode="json") | {
@@ -479,6 +483,18 @@ def get_review_session(session_id: str, settings: Settings | None=None):
     if any(getattr(task, "interrupts", ()) for task in snapshot.tasks):
         output["__interrupt__"] = True
     return _session(_with_audit_records(output, session_id, settings.database_url.get_secret_value()), session_id)
+
+
+def get_review_retrieval_context(session_id: str, settings: Settings | None=None):
+    """Return the bounded, pinned passages and exact query used by a saved review."""
+    from aiact.checkpoints import open_checkpointer
+    settings = _settings(settings)
+    with open_checkpointer(settings.database_url.get_secret_value()) as saver:
+        snapshot = _graph(saver).get_state(_thread(session_id))
+    if not snapshot or not snapshot.values:
+        return {"request": None, "sources": []}
+    state = snapshot.values
+    return {"request": state.get("retrieval_request"), "sources": state.get("passages", [])}
 
 
 def record_finding_decision(session_id: str, finding_id: str, action: str, *, actor="Reviewer",

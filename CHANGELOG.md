@@ -5,6 +5,12 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-31: separate the public project page from the signed-in local workspace.
+  Add sample-guided reviews, tenant-owned review history and detail, measured
+  step timings, Langfuse trace links, API key management and actual API usage.
+  Save source relevance feedback as version-pinned drafts without changing
+  retrieval behavior.
+
 - EVR-30: add local workspace accounts, tenant-scoped API keys and measured API
   usage, plus durable tenant-scoped review jobs with retries, idempotent starts,
   saved context answers and restart recovery. Keep provider failures explicit and
