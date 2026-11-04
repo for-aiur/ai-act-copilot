@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
     server: {
       strictPort: true,
       proxy: {
-        "/api": { target: env.AIACT_API_TARGET || "http://127.0.0.1:8000" },
+        "/api": { target: env.AIACT_API_TARGET || "http://127.0.0.1:8001" },
       },
     },
   };

@@ -1,21 +1,25 @@
 services:
-  rag:
-    build: .
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "127.0.0.1:${AIACT_PORT:-8000}:8000"
+      - "127.0.0.1:${AIACT_API_PORT:-8001}:8000"
     environment:
       AIACT_DATA_DIR: /data
       DATABASE_URL: ${DATABASE_URL:-sqlite:////data/aiact.db}
       AIACT_DOWNLOAD_MODEL: ${AIACT_DOWNLOAD_MODEL:-true}
       AIACT_PROVIDER: ${AIACT_PROVIDER:-gemini}
       AIACT_MODEL: ${AIACT_MODEL:-gemini-3.1-flash-lite}
+      AIACT_OLLAMA_URL: ${AIACT_OLLAMA_URL:-http://host.docker.internal:11434}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
       EMBEDDING_REVISION: ${EMBEDDING_REVISION:-file-sha256-pinned-at-build}
       VECTOR_BACKEND: qdrant-local
       VECTOR_PATH: /data/qdrant
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AIACT_CLOUD_CONSENT: "false"
       LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-false}
-      LANGFUSE_HOST: https://cloud.langfuse.com
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_PROJECT_ID: ${LANGFUSE_PROJECT_ID:-}
@@ -26,20 +30,59 @@ services:
       interval: 15s
       timeout: 7s
       retries: 40
-      start_period: 60s
+      start_period: 90s
+    stop_grace_period: 130s
     init: true
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    ports:
+      - "127.0.0.1:${AIACT_PORT:-8000}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    init: true
+
+  postgres:
+    image: postgres:17-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aiact}
+      POSTGRES_USER: ${POSTGRES_USER:-aiact}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+    init: true
+
   rag-eval:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     profiles: ["tools"]
     depends_on:
-      rag:
+      api:
         condition: service_healthy
     command: ["python", "-m", "aiact.rag.remote_eval"]
     environment:
-      AIACT_API_URL: http://rag:8000
+      AIACT_API_URL: http://api:8000
       AIACT_EVAL_DOMAIN: ${AIACT_EVAL_DOMAIN:-ai-act}
     volumes:
       - rag-reports:/reports
+
 volumes:
   rag-data:
   rag-reports:
+  postgres-data:

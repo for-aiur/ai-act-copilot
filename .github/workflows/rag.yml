@@ -79,10 +79,10 @@ jobs:
         run: docker compose run --rm -e AIACT_EVAL_DOMAIN=workbench-api rag-eval
       - name: Prove source and active release survive restart
         run: |
-          curl --fail http://127.0.0.1:8000/api/rag/health > /tmp/before.json
-          docker compose restart rag
+          curl --fail http://127.0.0.1:8001/api/rag/health > /tmp/before.json
+          docker compose restart api
           for attempt in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:8000/api/rag/health > /tmp/after.json; then break; fi
+            if curl --fail --silent http://127.0.0.1:8001/api/rag/health > /tmp/after.json; then break; fi
             sleep 3
           done
           python -c 'import json; a=json.load(open("/tmp/before.json")); b=json.load(open("/tmp/after.json")); assert a["rag_release_id"] == b["rag_release_id"]'

@@ -35,14 +35,30 @@ The first setup downloads the local embedding model (about 64 MB) and builds the
 source/vector indexes. Allow several minutes on a CPU. No Gemini key is needed
 for source browsing, retrieval or annotation.
 
-The React build and Python API are served by one container. SQLite, embeddings,
-Qdrant and review history live in the persistent `rag-data` volume. Native
-SQLite stays in `.aiact-workbench/`, which Git ignores. There is one
-owner of the embedded vector index, with no separate Qdrant server.
+The React dashboard and Python API run as separate services in the same Compose
+stack. Open the project page at `http://localhost:8000`; the local API is also
+available at `http://localhost:8001`. SQLite, embeddings, embedded Qdrant and
+review history live in the persistent `rag-data` volume. There is one API worker
+and one owner of the vector index, with no separate Qdrant server.
 
 Stop with Ctrl+C, or `docker compose down` from another terminal. These retain
 data. A normal restart uses cached embeddings without downloading them again.
 New RAG candidates preserve an existing active release until explicitly selected.
+
+### Optional PostgreSQL storage
+
+The default setup uses SQLite. To run the same local flow with PostgreSQL, set
+`DATABASE_URL=postgresql+psycopg://aiact@postgres:5432/aiact` in `.env`, then run:
+
+```sh
+docker compose --profile postgres up --build
+```
+
+The profile keeps PostgreSQL private to the Compose network and uses local-only
+trust authentication. Do not reuse this setting outside the local development
+stack. SQLite and PostgreSQL use separate volumes; changing `DATABASE_URL` does
+not move or copy existing data. `docker compose down` keeps both volumes. Add
+`-v` only when you deliberately want to delete all saved data.
 
 ### Local workspace and review flow
 
@@ -118,8 +134,8 @@ authored technical domain. Its two engineering fixtures are separate from legal
 expert gold. Feedback never globally excludes documents or trains the retriever.
 
 The review engine's saved pause/resume flow is documented in
-[Saved review sessions](docs/REVIEW-SESSIONS.md). The dashboard does not expose
-that flow yet.
+[Saved review sessions](docs/REVIEW-SESSIONS.md). The local dashboard exposes
+it in each review detail page.
 
 ## Native development
 
@@ -137,7 +153,7 @@ AIACT_DOWNLOAD_MODEL=true uv run --project engine --extra workbench --extra rag 
 Start the API:
 
 ```sh
-uv run --project engine --extra workbench --extra rag python -m uvicorn aiact.workbench.api:create_app --factory --host 127.0.0.1 --port 8000
+uv run --project engine --extra workbench --extra rag python -m uvicorn aiact.workbench.api:create_app --factory --host 127.0.0.1 --port 8001
 ```
 
 In a second terminal:
@@ -148,9 +164,10 @@ npm run dev --prefix dashboard
 ```
 
 Open [http://127.0.0.1:5173](http://127.0.0.1:5173). Vite proxies `/api` to the
-Python service. Set `AIACT_API_TARGET` for a different local API address. No API
-URL or secret is compiled into the browser bundle. Restart Python after backend
-or `.env` changes. Native data is stored under `.aiact-workbench/`, gitignored.
+Python service on port 8001. Set `AIACT_API_TARGET` for a different local API
+address. No API URL or secret is compiled into the browser bundle. Restart Python
+after backend or `.env` changes. Native data is stored under `.aiact-workbench/`,
+gitignored.
 
 ## Commands and verification
 
