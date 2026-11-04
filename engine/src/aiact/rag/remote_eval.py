@@ -9,7 +9,7 @@ from urllib.request import Request, urlopen
 def main():
     endpoint = os.environ.get("AIACT_API_URL", "http://127.0.0.1:8000")
     url = urlsplit(endpoint)
-    if url.scheme != "http" or url.hostname not in {"rag", "localhost", "127.0.0.1"} or url.username or url.password:
+    if url.scheme != "http" or url.hostname not in {"api", "rag", "localhost", "127.0.0.1"} or url.username or url.password:
         raise ValueError("Evaluation endpoint must be the local workbench.")
     domain = os.environ.get("AIACT_EVAL_DOMAIN", "ai-act")
     request = Request(endpoint + "/api/rag/evaluate?" + urlencode({"domain": domain}),
