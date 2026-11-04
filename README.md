@@ -6,7 +6,8 @@ cases with explicit context and reviewer feedback.
 
 The source collection contains **119 articles, 14 annexes, 180 original recitals
 and 47 amendment recitals** from the Publications Office of the EU. Five sample
-test cases cover different topics. They are drafts, not expert-approved tests.
+cases cover different topics and include runnable code. Their labels are accepted
+for local testing, not a representative expert-reviewed legal benchmark.
 
 ## Open the application
 

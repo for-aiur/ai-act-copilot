@@ -1,8 +1,8 @@
 {
   "schema_version": "1",
   "domain_id": "ai-act",
-  "dataset_version": "drafts-2",
-  "notice": "Five distinct model-authored development examples. None are expert-approved gold.",
+  "dataset_version": "sample-set-1",
+  "notice": "Five distinct runnable examples with labels accepted by the workspace owner for local testing. This is not a representative expert-approved legal gold set.",
   "cases": [
     {
       "id": "prohibited-practices-1",
@@ -23,9 +23,14 @@
       ],
       "area": "prohibited-practices",
       "origin": "model_draft",
-      "status": "draft",
+      "status": "approved",
       "author": "Codex draft author",
-      "split": "development"
+      "split": "development",
+      "code_fixture": {
+        "filename": "workplace_emotion.py",
+        "text": "def flag_emotion(model, video_frames):\n    return [model.predict_emotion(frame) for frame in video_frames]\n"
+      },
+      "approved_by": "Workspace owner (approved in chat)"
     },
     {
       "id": "classification-1",
@@ -46,9 +51,14 @@
       ],
       "area": "classification",
       "origin": "model_draft",
-      "status": "draft",
+      "status": "approved",
       "author": "Codex draft author",
-      "split": "development"
+      "split": "development",
+      "code_fixture": {
+        "filename": "applicant_ranking.py",
+        "text": "def rank_applicants(model, applicants):\n    return sorted(applicants, key=lambda person: model.predict(person), reverse=True)\n"
+      },
+      "approved_by": "Workspace owner (approved in chat)"
     },
     {
       "id": "data-governance-1",
@@ -69,9 +79,14 @@
       ],
       "area": "data-governance",
       "origin": "model_draft",
-      "status": "draft",
+      "status": "approved",
       "author": "Codex draft author",
-      "split": "development"
+      "split": "development",
+      "code_fixture": {
+        "filename": "training_data.py",
+        "text": "def train_ranker(model, records):\n    features = [row[\"features\"] for row in records]\n    labels = [row[\"label\"] for row in records]\n    return model.fit(features, labels)\n"
+      },
+      "approved_by": "Workspace owner (approved in chat)"
     },
     {
       "id": "transparency-1",
@@ -92,9 +107,14 @@
       ],
       "area": "transparency",
       "origin": "model_draft",
-      "status": "draft",
+      "status": "approved",
       "author": "Codex draft author",
-      "split": "development"
+      "split": "development",
+      "code_fixture": {
+        "filename": "customer_chatbot.py",
+        "text": "def answer_customer(model, message):\n    return model.generate_content(message)\n"
+      },
+      "approved_by": "Workspace owner (approved in chat)"
     },
     {
       "id": "general-purpose-1",
@@ -115,9 +135,14 @@
       ],
       "area": "general-purpose",
       "origin": "model_draft",
-      "status": "draft",
+      "status": "approved",
       "author": "Codex draft author",
-      "split": "development"
+      "split": "development",
+      "code_fixture": {
+        "filename": "model_service.py",
+        "text": "class ModelService:\n    def __init__(self, model):\n        self.model = model\n\n    def generate(self, prompt):\n        return self.model.generate(prompt)\n"
+      },
+      "approved_by": "Workspace owner (approved in chat)"
     }
   ]
 }

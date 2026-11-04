@@ -11,7 +11,8 @@ independent; Git tags identify the complete repository snapshot.
   Explain incompatible historical candidates before activation and allow builds
   after bookkeeping-only changes. Remove run comparison, simplify screen labels,
   compact evaluation details, and align upload/removal controls with their rows.
-  Keep five distinct sample cases and clear the extra cases from local SQLite.
+  Keep five distinct runnable sample cases with accepted labels; clear the extra
+  cases from local SQLite.
 
 - EVR-52: reuse identical local candidates across Git-only changes, retain build
   provenance and legacy manifests, and add protected, recoverable removal.

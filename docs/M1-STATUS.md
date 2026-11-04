@@ -21,9 +21,9 @@ acceptance. Do not mark the milestone complete using draft-case metrics.
   provider protocol and deterministic code/citation validation.
 - EVR-24/26: metadata-only opt-in Langfuse OTLP export; new editor/demo Gemini
   default with explicit consent, existing CLI local default preserved.
-- EVR-25: 54 model-authored development drafts across 18 subject areas, plus
-  two approved technical fixtures. No expert-approved legal gold or untouched
-  holdout is claimed.
+- EVR-25 originally seeded 54 model-authored drafts across 18 subject areas.
+  The current local sample set has five distinct runnable examples with labels
+  accepted for local testing. It is not an expert-reviewed gold set or holdout.
 - EVR-39: actual official-version discovery, pinned-source staging, version diffs
   and a quality-gated explicit promotion path.
 - EVR-46/44: Compose runtime, deterministic CI artifacts, baseline deltas,
