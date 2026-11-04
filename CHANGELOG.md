@@ -5,13 +5,21 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-54: explain the four review steps, sample timings and Langfuse's role in
+  the dashboard. Name it AI Act Test Bench, mark it as an internal tool, and
+  keep version removal controls compact when blocker details are shown.
+- Expand the local demo set to ten runnable examples. Five synthetic smoke cases
+  are explicitly marked as drafts and documented as tuned demo data, not legal
+  gold or general quality evidence.
+
 - EVR-53: make code testing the primary studio flow with scenario description,
   UTF-8 source upload/paste, 24 KB bounds, exact source-line evidence and retained
   templates. Save code with test fixtures; hide unrelated case/context fields.
   Explain incompatible historical candidates before activation and allow builds
   after bookkeeping-only changes. Remove run comparison, simplify screen labels,
   compact evaluation details, and align upload/removal controls with their rows.
-  Keep five distinct sample cases and clear the extra cases from local SQLite.
+  Keep five distinct runnable sample cases with accepted labels; clear the extra
+  cases from local SQLite.
 
 - EVR-52: reuse identical local candidates across Git-only changes, retain build
   provenance and legacy manifests, and add protected, recoverable removal.

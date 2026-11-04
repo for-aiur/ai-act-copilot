@@ -21,7 +21,8 @@ def fixture_cases(domain, snapshot_id, rag_release_id):
         request = RetrievalRequest(domain_id=domain, scenario=row["scenario"], context=row["context"])
         cases.append(GoldenCase(id=row["id"], title=row["title"], request=request, snapshot_id=snapshot_id,
             rag_release_id=rag_release_id, labels=row["labels"], author=row["author"], origin=row["origin"], status=row["status"],
-            approved_by=row.get("approved_by"), area=row["area"], split=row["split"]))
+            approved_by=row.get("approved_by"), area=row["area"], split=row["split"],
+            code_fixture=row.get("code_fixture")))
     return data["dataset_version"], cases
 
 

@@ -160,6 +160,6 @@ Live checks and expert test approval remain open.
 
 <details><summary>Speaker notes</summary>
 
-First setup downloads the local embedding model. Browsing, retrieval and annotation need no Gemini key. Gemini review is optional and requires explicit source-transfer consent. The 54 legal scenarios are model-authored drafts, not expert gold. Final M1 acceptance requires 50+ expert-approved cases, a sealed holdout and a separate critical suite, plus live model and tracing verification. Technical readiness is separate from final quality acceptance. See README.md and docs/M1-STATUS.md.
+First setup downloads the local embedding model. Browsing, retrieval and annotation need no Gemini key. Gemini review is optional and requires explicit source-transfer consent. The local demo contains ten runnable cases: five whose labels were accepted for local testing and five synthetic smoke cases tuned to this build. Their 100% Recall@10 is only a demo result, not expert evidence. Final M1 acceptance still requires 50+ expert-approved cases, a sealed holdout and a separate critical suite, plus live model and tracing verification. See README.md and docs/M1-STATUS.md.
 
 </details>

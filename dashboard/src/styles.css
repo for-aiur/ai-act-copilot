@@ -109,13 +109,21 @@ select {
 .brand small {
   display: block;
   margin-top: 6px;
-  font-size: 9px;
-  letter-spacing: 2.4px;
+  font-size: 8px;
+  letter-spacing: 1px;
   color: #8fa297;
   font-weight: 500;
 }
+.sidebar-purpose {
+  margin: 25px 10px 0;
+  padding-top: 14px;
+  border-top: 1px solid #2a3a34;
+  color: #9daf9f;
+  font-size: 11px;
+  line-height: 1.6;
+}
 nav[aria-label="Workbench"] {
-  margin-top: 42px;
+  margin-top: 24px;
 }
 nav {
   display: grid;
@@ -959,6 +967,7 @@ footer span {
     padding: 0 8px;
   }
   .brand > span:last-child,
+  .sidebar-purpose,
   .nav-item span {
     display: none;
   }
@@ -1381,6 +1390,128 @@ footer span {
   font-size: 11px;
   color: #81946d;
 }
+.flow-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.flow-intro {
+  max-width: 760px;
+  color: #52635c;
+  line-height: 1.65;
+}
+.flow-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr) 20px minmax(0, 1fr) 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+.flow-step {
+  min-height: 190px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e2e8e1;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 11px;
+}
+.flow-number {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #e8f1e9;
+  color: #41694c;
+  font-weight: 650;
+}
+.flow-step h2,
+.flow-timings h2,
+.flow-langfuse h2 {
+  font-size: 16px;
+  font-weight: 620;
+}
+.flow-step p,
+.flow-timings > p,
+.flow-langfuse p {
+  color: #62716a;
+  line-height: 1.55;
+  font-size: 13px;
+}
+.flow-step small {
+  margin-top: auto;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: #f2f5f1;
+  color: #5d6f63;
+  font-size: 11px;
+}
+.flow-arrow {
+  color: #94a59a;
+}
+.flow-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(240px, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+.flow-timings,
+.flow-langfuse {
+  background: #fff;
+  border: 1px solid #e2e8e1;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.flow-timing-table {
+  border: 1px solid #e5ebe4;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.flow-timing-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 100px 115px;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #edf0eb;
+  color: #43534b;
+  font-size: 12px;
+}
+.flow-timing-row:last-child {
+  border-bottom: 0;
+}
+.flow-timing-row span:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+}
+.flow-timing-head {
+  background: #f5f7f4;
+  color: #738078;
+  font-size: 11px;
+}
+.flow-timings > small {
+  color: #758078;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.flow-note {
+  border-left: 3px solid #c7d8c5;
+  background: #f7f9f6;
+  padding: 11px 13px;
+  color: #56645b;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.flow-note strong {
+  color: #344b3a;
+}
+.flow-langfuse p + p {
+  padding-top: 12px;
+  border-top: 1px solid #edf0eb;
+}
 .evaluation > .secondary {
   margin-top: 20px;
 }
@@ -1457,7 +1588,13 @@ footer span {
 .version-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: flex-start;
   min-width: 148px !important;
+}
+.version-actions > .secondary {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  min-height: 34px;
 }
 .remove-confirm {
   width: min(250px, 100%);
@@ -1533,11 +1670,21 @@ pre {
   line-height: 1.8;
 }
 @media (max-width: 1000px) {
+  .flow-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .flow-arrow {
+    display: none;
+  }
+  .flow-details {
+    grid-template-columns: 1fr;
+  }
   .version-row {
     flex-direction: column;
   }
   .version-actions {
     justify-content: flex-start;
+    align-items: flex-start;
   }
   .candidate {
     padding: 20px;
@@ -1550,6 +1697,18 @@ pre {
   }
 }
 @media (max-width: 600px) {
+  .flow-steps {
+    grid-template-columns: 1fr;
+  }
+  .flow-step {
+    min-height: 0;
+  }
+  .flow-timing-row {
+    grid-template-columns: minmax(0, 1fr) 66px 84px;
+    gap: 6px;
+    padding: 9px 7px;
+    font-size: 10px;
+  }
   .domain-select {
     width: 100%;
   }

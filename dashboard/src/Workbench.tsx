@@ -12,6 +12,7 @@ import {
   ExternalLink,
   FileText,
   FlaskConical,
+  GitBranch,
   Layers3,
   LoaderCircle,
   Play,
@@ -99,6 +100,7 @@ type View =
   | "studio"
   | "cases"
   | "versions"
+  | "flow"
   | "source-picker";
 const names: Record<View, string> = {
   corpus: "Sources",
@@ -106,6 +108,7 @@ const names: Record<View, string> = {
   studio: "Code test",
   cases: "Test cases",
   versions: "RAG versions",
+  flow: "How it works",
 };
 const short = (v: string) => v.slice(0, 12);
 function download(name: string, value: unknown) {
@@ -392,9 +395,12 @@ export default function Workbench() {
             <img src="/copilot-logo.png" alt="" width="42" height="42" />
           </span>
           <span>
-            AI Act Copilot<small>EVROS LABS</small>
+            AI Act Test Bench<small>EVROS LABS · INTERNAL TOOL</small>
           </span>
         </a>
+        <p className="sidebar-purpose">
+          Create test cases and check which legal sources each version finds.
+        </p>
         <nav aria-label="Workbench">
           {(
             [
@@ -402,6 +408,7 @@ export default function Workbench() {
               ["studio", FlaskConical],
               ["cases", FileText],
               ["versions", Layers3],
+              ["flow", GitBranch],
             ] as const
           ).map(([v, Icon]) => (
             <button
@@ -444,6 +451,8 @@ export default function Workbench() {
                         "Check whether search finds the expected sources.",
                       versions:
                         "Create and choose a search version.",
+                      flow:
+                        "See what happens when you review a piece of code.",
                       "source-picker":
                         "Choose a document or passage that this test must retrieve.",
                     } as Record<View, string>
@@ -487,6 +496,67 @@ export default function Workbench() {
               </button>
             </div>
           )}
+          {view === "flow" && (
+            <section className="flow-page" aria-label="Review steps">
+              <p className="flow-intro">
+                Add code and a short description. The workbench checks the code
+                against the selected legal sources, then shows the result and
+                where it came from.
+              </p>
+              <div className="flow-steps">
+                <article className="flow-step">
+                  <span className="flow-number">1</span>
+                  <h2>Read the code</h2>
+                  <p>Collects the relevant lines and basic code facts. It never runs your code.</p>
+                  <small>On your computer</small>
+                </article>
+                <ArrowRight className="flow-arrow" size={18} aria-hidden="true" />
+                <article className="flow-step">
+                  <span className="flow-number">2</span>
+                  <h2>Understand its purpose</h2>
+                  <p>Gemini summarizes what the code appears to do and what is still unknown.</p>
+                  <small>Gemini request</small>
+                </article>
+                <ArrowRight className="flow-arrow" size={18} aria-hidden="true" />
+                <article className="flow-step">
+                  <span className="flow-number">3</span>
+                  <h2>Find legal text</h2>
+                  <p>Searches the selected local source collection for useful passages.</p>
+                  <small>On your computer</small>
+                </article>
+                <ArrowRight className="flow-arrow" size={18} aria-hidden="true" />
+                <article className="flow-step">
+                  <span className="flow-number">4</span>
+                  <h2>Review the match</h2>
+                  <p>Gemini compares the code with those passages and explains concerns or missing context.</p>
+                  <small>Gemini request</small>
+                </article>
+              </div>
+              <div className="flow-details">
+                <section className="flow-timings">
+                  <h2>Example step times</h2>
+                  <p>These are sample measurements. Actual times vary.</p>
+                  <div className="flow-timing-table" role="table" aria-label="Example review step times">
+                    <div className="flow-timing-row flow-timing-head" role="row">
+                      <span role="columnheader">Step</span><span role="columnheader">Typical*</span><span role="columnheader">Slower runs*</span>
+                    </div>
+                    <div className="flow-timing-row" role="row"><span role="cell">Read the code</span><span role="cell">0.07 s</span><span role="cell">0.13 s</span></div>
+                    <div className="flow-timing-row" role="row"><span role="cell">Understand its purpose</span><span role="cell">6.86 s</span><span role="cell">39.99 s</span></div>
+                    <div className="flow-timing-row" role="row"><span role="cell">Find legal text</span><span role="cell">0.01 s</span><span role="cell">0.01 s</span></div>
+                    <div className="flow-timing-row" role="row"><span role="cell">Review the match</span><span role="cell">2.65 s</span><span role="cell">2.65 s</span></div>
+                  </div>
+                  <small>*Typical is the middle of the measured runs. Slower runs means 95 out of 100 finished within this time.</small>
+                  <div className="flow-note"><strong>What may need speeding up?</strong> Purpose understanding is the slowest step in this sample because it waits for Gemini. We can measure prompt size, model response time, and repeat work before changing it.</div>
+                </section>
+                <section className="flow-langfuse">
+                  <h2>Where Langfuse fits</h2>
+                  <p>Langfuse shows each review and the time spent in each step. It receives timing and model details, not your code, prompts, or answers.</p>
+                  <p>A separate connection check only confirms Langfuse can receive a trace. It is not a fifth review step.</p>
+                </section>
+              </div>
+            </section>
+          )}
+          {(view === "corpus" || view === "source-picker") && (
           <section className="stats" aria-label="Source status">
             <div>
               <span className="stat-icon">
@@ -550,6 +620,8 @@ export default function Workbench() {
               </div>
             </div>
           </section>
+          )}
+          {(view === "corpus" || view === "source-picker") && (
           <div className="coverage-note">
             <CircleHelp size={17} />
             <span>
@@ -563,6 +635,7 @@ export default function Workbench() {
               />
             </span>
           </div>
+          )}
           {(view === "corpus" || view === "source-picker") && (
             <section className="explorer">
               <div className="section-header">
