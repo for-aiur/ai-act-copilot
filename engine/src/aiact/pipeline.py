@@ -209,12 +209,12 @@ def _retrieval_node(state: ReviewState) -> dict:
 
 def _review_node(state: ReviewState) -> dict:
     if state.get("error"):
-        return {}
+        return {"repair_requested": False}
     try:
         draft, repaired = _request(state, state["review_request"], DraftReview, state["review_schema"])
         return {"draft": draft, "repair_used": repaired, "repair_requested": False}
     except (ReviewFailure, ValidationError, OSError, ValueError, TypeError) as exc:
-        return _fail(state, exc)
+        return {**_fail(state, exc), "repair_requested": False}
 
 
 def _validation_node(state: ReviewState) -> dict:
