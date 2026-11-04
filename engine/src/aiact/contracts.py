@@ -95,6 +95,7 @@ class ReviewSession(Contract):
     context_question: str | None = None
     finding_id: str | None = None
     answer_count: int = Field(default=0, ge=0)
+    rag_release_id: str | None = None
     scan_result: ScanResult | None = None
 
 
