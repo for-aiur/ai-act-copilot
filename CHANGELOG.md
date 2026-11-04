@@ -5,6 +5,11 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-29: preserve question, answer, finding revision and reviewer decision history
+  for resumable RAG reviews. Keep decisions separate from scan findings, require
+  a reason to mark a false positive, and reopen a dismissed finding when new
+  context changes it. No reviewer action represents assistant approval.
+
 - EVR-28: persist resumable reviews in local SQLite by default, with optional
   PostgreSQL. Bind each review to the active RAG release and source fingerprint,
   retain its retrieved passages, and resume context questions against that same

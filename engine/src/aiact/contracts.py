@@ -96,7 +96,23 @@ class ReviewSession(Contract):
     finding_id: str | None = None
     answer_count: int = Field(default=0, ge=0)
     rag_release_id: str | None = None
+    history: list["ReviewEvent"] = Field(default_factory=list)
+    decisions: dict[str, Literal["open", "provide_context", "acknowledged", "false_positive", "reopened", "needs_human_review"]] = Field(default_factory=dict)
     scan_result: ScanResult | None = None
+
+
+class ReviewEvent(Contract):
+    id: str = Field(min_length=1, max_length=80)
+    type: Literal["question_asked", "context_answered", "finding_revision", "provide_context", "acknowledged", "false_positive", "reopened", "needs_human_review"]
+    created_at: str
+    actor: str = Field(min_length=1, max_length=120)
+    finding_id: str | None = None
+    question: str | None = None
+    answer: str | None = None
+    reason: str | None = None
+    source_ids: list[str] = Field(default_factory=list)
+    previous_finding: dict | None = None
+    finding: dict | None = None
 
 
 if __name__ == "__main__":

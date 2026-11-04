@@ -33,6 +33,21 @@ source or original scenario context changes, resume returns `stale_source`; star
 a new review to use changed code. Reopen the session's saved RAG release to
 resume; newer active releases do not replace its passages.
 
+The session history records each question, reviewer answer, supporting source
+section IDs, timestamps and any changed finding. Reviewer decisions are stored
+separately from model findings. A finding can be acknowledged, sent back for
+context, reopened or marked as a false positive. A false positive requires a
+reason. New context that changes a dismissed finding reopens it and keeps the
+earlier decision in history. These states track review work. They do not certify
+legal compliance.
+
+```python
+from aiact.rag.sessions import record_finding_decision
+
+session = record_finding_decision(session.id, finding_id, "false_positive",
+    actor="Reviewer", reason="The example is a mock, not a deployed workflow.")
+```
+
 SQLite is intended for one local process. Its writes are serialized within
 that process. Use PostgreSQL before running multiple workers against the same
 sessions. The dashboard does not expose saved sessions yet; that API is another
