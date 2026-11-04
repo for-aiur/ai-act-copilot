@@ -7,6 +7,22 @@ from aiact.rag.retriever import HybridRetriever
 from aiact.settings import Settings
 from test_full_review import FixtureProvider
 
+
+def test_explicit_python_upload_does_not_require_git(tmp_path,monkeypatch):
+    import aiact.context as context_module
+
+    source=tmp_path/'sample.py'
+    source.write_text('def review(model):\n    return model.generate("sample")\n')
+
+    def missing_git(*args,**kwargs):
+        raise FileNotFoundError('git is not installed')
+
+    monkeypatch.setattr(context_module.subprocess,'run',missing_git)
+    collected=collect_upload(source)
+
+    assert [item.path for item in collected.sources]==['sample.py']
+    assert collected.coverage.scanned_files==['sample.py']
+
 @pytest.mark.parametrize('extension', ['ts','js','java','go','rs','txt'])
 def test_selected_script_has_exact_line_evidence(tmp_path,extension):
     source=tmp_path/('chat.'+extension)

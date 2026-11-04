@@ -5,6 +5,9 @@ independent; Git tags identify the complete repository snapshot.
 
 ## Unreleased
 
+- EVR-57: collect a bounded Python file selected for review without requiring
+  Git in the API container. Workspace scans continue to check `.gitignore`.
+
 - EVR-34/32: package the customer dashboard and FastAPI worker as one local
   Compose stack, with persistent SQLite and an optional private PostgreSQL
   profile. Add CI startup and retrieval-persistence checks for both profiles,
