@@ -1,9 +1,16 @@
 # Local workspaces and review API
 
-The local app can host several separate workspaces in one installation. The
-first account created for a workspace owns that workspace. Reviews, API keys and
-usage records are filtered by its workspace ID. The legal corpus and active RAG
-build are shared by this local installation.
+The demo starts with one fictional tenant named **AI Act Demo** and user
+`demo@example.test`. Choose **Enter the demo** on the sign-in page. No password is
+needed. The demo account owns the sample reviews, API keys and usage records.
+The legal corpus and active RAG build are shared by the installation.
+
+Account creation is disabled while `AIACT_DEMO_MODE=true`, which is the default
+in the local Compose setup. Set it to `false` to enable the account registration
+endpoint for local development. Hosted sign-in integrations are a later setup.
+
+The backend keeps tenant IDs on reviews, API keys and usage so isolation can be
+tested. A tenant is the internal data group behind an account.
 
 This is local account separation for a single installation. It is not a hosted
 identity service, team invitation system or production access-control setup.
@@ -11,8 +18,8 @@ The app binds to localhost by default.
 
 ## Account and session API
 
-Create an account with a workspace name, email and password using
-`POST /api/auth/register`, or sign in using `POST /api/auth/login`.
+With demo mode off, create an account using `POST /api/auth/register`, or sign
+in using `POST /api/auth/login`.
 Passwords are stored as scrypt hashes. Browser sessions use an HTTP-only cookie
 and expire after seven days. Logging out revokes the session.
 

@@ -114,6 +114,25 @@ class IdentityStore:
             return None
         return {"id": row["id"], "tenant_id": row["tenant_id"], "email": row["email"], "workspace": row["workspace"]}
 
+    def find_user_by_email(self, email: str):
+        with self.engine.connect() as db:
+            row = db.execute(select(users.c.id, users.c.tenant_id, users.c.email,
+                tenants.c.name.label("workspace")).join(tenants, users.c.tenant_id == tenants.c.id)
+                .where(users.c.email == email.strip().casefold())).mappings().first()
+        return dict(row) if row else None
+
+    def ensure_demo_user(self, workspace: str, email: str):
+        existing = self.find_user_by_email(email)
+        if existing:
+            return existing
+        try:
+            return self.register(workspace, email, secrets.token_urlsafe(32))
+        except ValueError:
+            existing = self.find_user_by_email(email)
+            if existing:
+                return existing
+            raise
+
     def create_session(self, user_id: str):
         raw = secrets.token_urlsafe(32)
         now = datetime.now(timezone.utc)

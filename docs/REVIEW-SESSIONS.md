@@ -50,5 +50,5 @@ session = record_finding_decision(session.id, finding_id, "false_positive",
 
 SQLite is intended for one local process. Its writes are serialized within
 that process. Use PostgreSQL before running multiple workers against the same
-sessions. The dashboard does not expose saved sessions yet; that API is another
-M2 task.
+sessions. The local customer dashboard exposes the review history and answer
+flow. It remains a local product, not a hosted identity service.
