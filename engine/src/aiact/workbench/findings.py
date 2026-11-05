@@ -152,6 +152,16 @@ class CustomerFindings:
                 repositories.c.tenant_id == tenant_id,
                 repositories.c.installation_id != "local-workspace")).mappings()]
 
+    def local_review_repository(self, tenant_id):
+        installation = "local-workspace"
+        with self.engine.connect() as db:
+            legacy = db.execute(select(repositories.c.id).where(
+                repositories.c.id == "local-reviews", repositories.c.tenant_id == tenant_id,
+                repositories.c.installation_id == installation)).scalar_one_or_none()
+        identity = legacy or f"local-reviews:{tenant_id}"
+        self.bind(tenant_id, identity, installation, "Local code reviews")
+        return identity, installation
+
     def record_review(self, tenant_id, repository_id, outcome, reviewed_at=None):
         if outcome not in {"complete", "partial", "failed"}:
             raise ValueError("Unknown review outcome.")
@@ -366,8 +376,7 @@ def _demo_citations():
 
 def add_review_findings(store, tenant_id, job_id, session, reviewed_at):
     """Expose completed scan findings in the tenant inbox without pretending they came from GitHub."""
-    repo_id, install_id = "local-reviews", "local-workspace"
-    store.bind(tenant_id, repo_id, install_id, "Local code reviews")
+    repo_id, install_id = store.local_review_repository(tenant_id)
     scan = session.scan_result if session else None
     outcome = scan.status if scan and scan.status in {"complete", "partial", "failed"} else "failed"
     store.record_review(tenant_id, repo_id, outcome, reviewed_at)

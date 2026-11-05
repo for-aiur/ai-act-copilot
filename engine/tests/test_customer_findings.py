@@ -203,6 +203,7 @@ def test_local_review_findings_link_back_and_preserve_partial_or_failed_status(t
     from aiact.contracts import Coverage, Evidence, Finding, Metadata, ReviewSession, ScanError, ScanResult
     from aiact.workbench.findings import add_review_findings
     store = CustomerFindings(create_engine("sqlite:///" + str(tmp_path / "review-results.db")))
+    store.bind("tenant", "local-reviews", "local-workspace", "Local code reviews")
     finding = Finding(id="f1", title="Check human review", explanation="A score changes candidate order.",
         kind="potential_issue", priority="high", evidence=Evidence(path="review.py", start_line=2,
         end_line=2, quote="scores = model.predict(candidates)"), citations=[{"section_id":"annex-iii-4-a",
@@ -221,6 +222,13 @@ def test_local_review_findings_link_back_and_preserve_partial_or_failed_status(t
     add_review_findings(store, "tenant", "job-failed", failed, "2026-11-04T11:00:00+00:00")
     assert len(store.list("tenant")) == 1
     assert store.inventory("tenant") == []
+
+    add_review_findings(store, "another-tenant", "job-partial", partial, "2026-11-04T10:00:00+00:00")
+    other, = store.list("another-tenant")
+    assert row["repository_id"] == "local-reviews"
+    assert other["repository_id"] == "local-reviews:another-tenant"
+    assert row["id"] != other["id"]
+    assert store.inventory("another-tenant") == []
 
 
 def test_customer_usage_counts_distinct_completed_jobs_and_configured_estimate(tmp_path):

@@ -415,10 +415,9 @@ class ReviewJobWorker:
             failed = self.repository.retry_or_fail(job["id"],
                 "Review could not be completed. Check model connection and settings, then retry.", self.max_attempts)
             if failed and failed["status"] == "failed":
-                from .findings import CustomerFindings
-                store = CustomerFindings(self.repository.engine)
-                store.bind(job["tenant_id"], "local-reviews", "local-workspace", "Local code reviews")
-                store.record_review(job["tenant_id"], "local-reviews", "failed", failed["updated_at"])
+                from .findings import CustomerFindings, add_review_findings
+                add_review_findings(CustomerFindings(self.repository.engine), job["tenant_id"], job["id"],
+                    None, failed["updated_at"])
         finally:
             if token is not None:
                 CURRENT.reset(token)
