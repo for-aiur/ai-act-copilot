@@ -4,7 +4,9 @@ pytest.importorskip("sqlalchemy")
 from fastapi.testclient import TestClient
 from aiact.workbench.api import create_app
 from aiact.rag.releases import build_release
+from aiact.rag.store import Store
 from aiact.settings import Settings
+from pathlib import Path
 
 
 def test_workbench_case_annotation_approval_and_restart(tmp_path):
@@ -33,3 +35,25 @@ def test_workbench_case_annotation_approval_and_restart(tmp_path):
         cases = client.get("/api/rag/cases", params={"domain": "workbench-api"}).json()
         assert cases[0]["status"] == "approved"
         assert client.get("/api/rag/library", params={"domain": "ai-act"}).json()["total"] == 360
+
+
+def test_onboarding_preview_returns_inline_feedback_without_saving_runs(tmp_path, monkeypatch):
+    settings = Settings(data_dir=tmp_path, database_url="sqlite:///" + str(tmp_path / "preview.sqlite"),
+        provider="ollama")
+    manifest = build_release(settings, lexical_only=True)
+    store = Store(settings.database_url.get_secret_value())
+    store.activate("ai-act", manifest["rag_release_id"])
+    store.close()
+
+    def fake_review(source, provider, retriever, context, **kwargs):
+        assert context == "Visitor question to focus the review (unverified): Who checks the ranking?"
+        return {"scan_result": {"status":"complete", "findings":[], "errors":[]}}
+    monkeypatch.setattr("aiact.rag.review.review_python", fake_review)
+    sample = Path(__file__).parents[2] / "examples/recruitment/bias_audit.py"
+    with TestClient(create_app(settings=settings)) as client:
+        response = client.post("/api/rag/preview", json={"filename":sample.name,"code":sample.read_text(),
+            "question":"Who checks the ranking?"})
+        assert response.status_code == 200, response.text
+        assert response.json() == {"status":"complete", "findings":[], "errors":[]}
+        assert client.get("/api/rag/reviews").json() == []
+        assert client.get("/api/rag/runs").json() == []

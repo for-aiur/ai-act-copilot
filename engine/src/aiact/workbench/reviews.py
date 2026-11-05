@@ -6,7 +6,7 @@ import json
 import tempfile
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
@@ -14,10 +14,11 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Column, Integer, MetaData, String, Table, Text, UniqueConstraint, create_engine, func, insert, select, update
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.engine import make_url
 
 from aiact.contracts import ReviewSession
+from .ai_systems import AiInventory, EvidenceInput, LinkInput, SystemInput
 from .identity import IdentityStore
 
 metadata = MetaData()
@@ -254,9 +255,34 @@ class StartReviewRequest(BaseModel):
     cloud_consent: bool = False
 
 
+class ProjectInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=100)
+    repository_ids: list[str] = Field(default_factory=list, max_length=200)
+
+
+class FindingDecision(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    head: str = Field(min_length=1, max_length=64)
+    action: Literal["acknowledged", "false_positive", "resolved", "open", "context", "fp_approve", "unsure"]
+    reason: str = Field(default="", max_length=2000)
+    event_id: str = Field(min_length=8, max_length=128)
+    category: Literal["irrelevant_source", "code_misread", "missing_context", "other"] | None = None
+
+
+class FalsePositivePolicy(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    mode: Literal["immediate", "approval"]
+
+
 class AnswerRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     answer: str = Field(min_length=1, max_length=2000)
+
+
+class RescanRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    cloud_consent: bool = False
 
 
 class RetrievalFeedbackRequest(BaseModel):
@@ -270,15 +296,13 @@ class ReviewJobResponse(BaseModel):
     id: str
     status: Literal["queued", "running", "answer_queued", "context_needed", "complete", "partial", "failed"]
     attempts: int
+    filename: str | None = None
+    legal_source: dict | None = None
     created_at: str
     updated_at: str
     session: ReviewSession | None = None
     error: dict | None = None
     events: list[dict] = Field(default_factory=list)
-    trace_id: str | None = None
-    trace_url: str | None = None
-    timings: list[dict] = Field(default_factory=list)
-    retrieval_request: dict | None = None
     sources: list[dict] = Field(default_factory=list)
 
 
@@ -379,14 +403,22 @@ class ReviewJobWorker:
                 if settings.langfuse_enabled and settings.langfuse_project_id else None)
             timings = [{"stage": step["stage"], "elapsed_ms": max(0, int((step["end_ns"] - step["start_ns"]) / 1_000_000)),
                 "status": step["status"]} for step in trace.steps]
-            self.repository.set_result(job["id"], session.status, session=session, trace_id=trace.id,
+            saved = self.repository.set_result(job["id"], session.status, session=session, trace_id=trace.id,
                 trace_url=trace_url, timings=timings, retrieval_request=retrieval_context["request"],
                 sources=retrieval_context["sources"])
+            from .findings import CustomerFindings, add_review_findings
+            add_review_findings(CustomerFindings(self.repository.engine), job["tenant_id"], job["id"],
+                session, saved["updated_at"] if saved else _now())
         except Exception:
             # Exception text may contain provider request details. Keep the
             # persisted user-facing error free of source, prompts and secrets.
-            self.repository.retry_or_fail(job["id"],
+            failed = self.repository.retry_or_fail(job["id"],
                 "Review could not be completed. Check model connection and settings, then retry.", self.max_attempts)
+            if failed and failed["status"] == "failed":
+                from .findings import CustomerFindings
+                store = CustomerFindings(self.repository.engine)
+                store.bind(job["tenant_id"], "local-reviews", "local-workspace", "Local code reviews")
+                store.record_review(job["tenant_id"], "local-reviews", "failed", failed["updated_at"])
         finally:
             if token is not None:
                 CURRENT.reset(token)
@@ -418,11 +450,32 @@ class ApiKeyUsageMiddleware:
         await self.app(scope, receive, record_and_send)
 
 
-def _job_response(job):
+def _pinned_source(job, store, source_cache):
+    from .source_updates import source_info
+    release_id = (job.get("request") or {}).get("rag_release_id")
+    if release_id and release_id not in source_cache:
+        try:
+            source_cache[release_id] = source_info(store.snapshot(store.release(release_id)["snapshot_id"]))
+        except NoResultFound:
+            source_cache[release_id] = None
+    return source_cache.get(release_id)
+
+
+def _job_response(job, store, source_cache=None):
+    legal_source = _pinned_source(job, store, {} if source_cache is None else source_cache)
+    session = job.get("session")
+    if session:
+        visible = session.model_dump(mode="json")
+        visible["rag_release_id"] = None
+        metadata = (visible.get("scan_result") or {}).get("metadata") or {}
+        for field in ("provider", "model_id", "corpus_version", "corpus_checksum"):
+            metadata[field] = None
+        session = ReviewSession.model_validate(visible)
     return ReviewJobResponse(id=job["id"], status=job["status"], attempts=job["attempts"],
-        created_at=job["created_at"], updated_at=job["updated_at"], session=job.get("session"),
-        error=job.get("error"), events=job.get("events", []), trace_id=job.get("trace_id"), trace_url=job.get("trace_url"),
-        timings=job.get("timings", []), retrieval_request=job.get("retrieval_request"), sources=job.get("sources", []))
+        filename=(job.get("request") or {}).get("filename"), legal_source=legal_source,
+        created_at=job["created_at"], updated_at=job["updated_at"], session=session,
+        error=job.get("error"), events=[dict(event, details={key: value for key, value in event["details"].items() if key not in {"trace_id", "trace_url", "retrieval_request", "timings", "sources"}}) for event in job.get("events", [])],
+        sources=job.get("sources", []))
 
 
 def router(runtime_getter):
@@ -445,6 +498,353 @@ def router(runtime_getter):
         state["aiact_identity"] = user
         state["aiact_identity_store"] = identity
         return user
+
+    def customer_findings():
+        from .findings import CustomerFindings
+        return CustomerFindings(runtime_getter().review_jobs.engine)
+
+    def project_scope(store, tenant_id, project):
+        if project is None:
+            return None
+        repo_ids = store.project_repository_ids(tenant_id, project)
+        if repo_ids is None:
+            raise HTTPException(404, "Project not found.")
+        return repo_ids
+
+    @routes.get("/api/customer/projects")
+    def list_projects(user=Depends(current_user)):
+        return customer_findings().projects(user["tenant_id"])
+
+    def save_project(body, user, project_id=None):
+        if user["auth_type"] != "session":
+            raise HTTPException(403, "Sign in to manage projects.")
+        try:
+            return customer_findings().save_project(
+                user["tenant_id"], body.name, body.repository_ids, project_id)
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from None
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+
+    @routes.post("/api/customer/projects", status_code=201)
+    def create_project(body: ProjectInput, user=Depends(current_user)):
+        return save_project(body, user)
+
+    @routes.put("/api/customer/projects/{project_id}")
+    def update_project(project_id: str, body: ProjectInput, user=Depends(current_user)):
+        return save_project(body, user, project_id)
+
+    def require_demo(user):
+        if not runtime_getter().settings.demo_mode or user["auth_type"] != "session":
+            raise HTTPException(404, "Demo is unavailable.")
+        demo = runtime_getter().identity.find_user_by_email(runtime_getter().settings.demo_user_email)
+        if not demo or demo["tenant_id"] != user["tenant_id"]:
+            raise HTTPException(403, "Use the demo account.")
+
+    @routes.get("/api/demo/status")
+    def demo_status(user=Depends(current_user)):
+        rt = runtime_getter()
+        demo = rt.identity.find_user_by_email(rt.settings.demo_user_email) if rt.settings.demo_mode else None
+        return {"enabled": bool(demo and user["auth_type"] == "session" and demo["tenant_id"] == user["tenant_id"])}
+
+    @routes.get("/api/review-policy")
+    def review_policy():
+        return {"cloud_review_requires_consent": runtime_getter().settings.provider == "gemini"}
+
+    def inventory_call(user, operation, *args):
+        if user["auth_type"] != "session":
+            raise HTTPException(403, "Sign in to manage AI systems.")
+        runtime = runtime_getter()
+        customer_findings()  # Initialize the shared customer tables.
+        inventory = AiInventory(runtime.review_jobs.engine)
+        try:
+            return getattr(inventory, operation)(user["tenant_id"], *args)
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from None
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+
+    def evidence_source():
+        from .source_updates import source_info
+        store = runtime_getter().store
+        active = store.pointer("ai-act")
+        return source_info(store.snapshot(store.release(active)["snapshot_id"])) if active else None
+
+    ai_systems_path = "/api/customer/projects/{project_id}/ai-systems"
+
+    @routes.get(ai_systems_path)
+    def list_ai_systems(project_id: str, user=Depends(current_user)):
+        return inventory_call(user, "view", project_id)
+
+    @routes.post(ai_systems_path, status_code=201)
+    def add_ai_system(project_id: str, body: SystemInput, user=Depends(current_user)):
+        return inventory_call(user, "save_system", project_id, body)
+
+    @routes.put(ai_systems_path + "/{system_id}")
+    def update_ai_system(project_id: str, system_id: str, body: SystemInput, user=Depends(current_user)):
+        return inventory_call(user, "save_system", project_id, body, system_id)
+
+    @routes.post(ai_systems_path + "/relationships", status_code=201)
+    def link_ai_systems(project_id: str, body: LinkInput, user=Depends(current_user)):
+        return inventory_call(user, "add_link", project_id, body)
+
+    @routes.delete(ai_systems_path + "/relationships/{link_id}")
+    def unlink_ai_systems(project_id: str, link_id: str, user=Depends(current_user)):
+        inventory_call(user, "remove_link", project_id, link_id)
+        return {"removed": True}
+
+    @routes.get(ai_systems_path + "/{system_id}/evidence")
+    def list_release_evidence(project_id: str, system_id: str, user=Depends(current_user)):
+        return inventory_call(user, "evidence", project_id, system_id)
+
+    @routes.post(ai_systems_path + "/{system_id}/evidence", status_code=201)
+    def save_release_evidence(project_id: str, system_id: str, body: EvidenceInput, user=Depends(current_user)):
+        return inventory_call(user, "save_evidence", project_id, system_id, body, evidence_source())
+
+    @routes.post("/api/demo/ai-systems")
+    def demo_ai_systems(user=Depends(current_user)):
+        require_demo(user)
+        return inventory_call(user, "seed_demo", evidence_source())
+
+    @routes.post("/api/demo/seed")
+    def demo_seed(user=Depends(current_user)):
+        require_demo(user)
+        from .findings import seed_demo
+        seed_demo(customer_findings(), user["tenant_id"])
+        return {"seeded": True}
+
+    @routes.post("/api/demo/findings/{finding_id}/pr-reply")
+    def demo_reply(finding_id: str, body: FindingDecision, user=Depends(current_user)):
+        require_demo(user)
+        if not finding_id.startswith("demo-"):
+            raise HTTPException(422, "Choose a synthetic finding.")
+        store = customer_findings()
+        try:
+            from .findings import DemoGitHub
+            if body.action == "fp_approve":
+                raise HTTPException(403, "Approve from the workspace.")
+            decision = store.decide(user["tenant_id"], finding_id, body.head, body.action,
+                "simulated-github-reviewer", body.reason, body.event_id, body.category)
+            if decision["action"] != "fp_pending":
+                store.sync(user["tenant_id"], body.event_id, DemoGitHub(store, user["tenant_id"]))
+                decision["sync_status"] = "synced"
+            return decision | {"simulated": True}
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from None
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from None
+
+    @routes.get("/api/customer/overview")
+    def customer_overview(project: str | None = None, user=Depends(current_user)):
+        from .findings import policy_counts
+        store = customer_findings()
+        tenant = user["tenant_id"]
+        repo_ids = project_scope(store, tenant, project)
+        rows = store.list(tenant)
+        inventory = store.inventory(tenant)
+        if repo_ids is not None:
+            rows = [row for row in rows if row["repository_id"] in repo_ids]
+            inventory = [repo for repo in inventory if repo["id"] in repo_ids]
+        bot_rows = [row for row in rows if row["payload"].get("source_type") != "local_review"]
+        now = datetime.now(timezone.utc)
+        cutoff = (now - timedelta(days=30)).isoformat()
+        priority_order = {"high": 0, "medium": 1, "low": 2}
+        stages = {
+            stage: dict.fromkeys(priority_order, 0)
+            for stage in ("open_pr", "merged", "released", "unknown")
+        }
+        for row in bot_rows:
+            if row["state"] == "open" and row["priority"] in priority_order:
+                stage = row["payload"].get("code_stage")
+                stages.get(stage, stages["unknown"])[row["priority"]] += 1
+        queue = sorted(
+            (row for row in bot_rows if row["state"] == "open"),
+            key=lambda row: (priority_order.get(row["priority"], 3), row["created_at"], row["id"]),
+        )[:5]
+        return {
+            "open_by_code_stage": stages,
+            "policies": policy_counts(row for row in bot_rows if row["state"] != "false_positive"),
+            "needs_review": [{
+                "id": row["id"], "repository": row["name"], "pr": row["pr"],
+                "priority": row["priority"], "title": row["payload"].get("title") or "Review finding",
+                "branch": row["payload"].get("branch"),
+            } for row in queue],
+            "open_high": sum(r["state"] == "open" and r["priority"] == "high" for r in bot_rows),
+            "awaiting_context": sum(r["state"] == "open" and r["payload"].get("context_question") is not None for r in bot_rows),
+            "resolved_recently": sum(r["state"] == "resolved" and r["updated_at"] >= cutoff for r in bot_rows),
+            "repositories": [dict(repo) | {
+                "policies": policy_counts(r for r in bot_rows if r["repository_id"] == repo["id"] and r["state"] != "false_positive"),
+                "open": sum(r["repository_id"] == repo["id"] and r["state"] == "open" for r in rows),
+                "open_high": sum(r["repository_id"] == repo["id"] and r["state"] == "open" and r["priority"] == "high" for r in rows),
+                "open_medium": sum(r["repository_id"] == repo["id"] and r["state"] == "open" and r["priority"] == "medium" for r in rows),
+                "open_low": sum(r["repository_id"] == repo["id"] and r["state"] == "open" and r["priority"] == "low" for r in rows)
+            } for repo in inventory]}
+
+    @routes.get("/api/customer/source-updates")
+    def customer_source_updates(project: str | None = None, user=Depends(current_user)):
+        from .source_updates import affected_findings, source_changes, source_info
+        rt = runtime_getter()
+        active = rt.store.pointer("ai-act")
+        current = rt.store.snapshot(rt.store.release(active)["snapshot_id"]) if active else None
+        store = customer_findings()
+        repo_ids = project_scope(store, user["tenant_id"], project)
+        rows = [row for row in store.list(user["tenant_id"])
+                if repo_ids is None or row["repository_id"] in repo_ids]
+        comparisons = []
+        if current:
+            previous_ids = {
+                row["payload"]["source_snapshot_id"] for row in rows
+                if row["payload"].get("source_snapshot_id")
+                and row["payload"]["source_snapshot_id"] != current.snapshot_id
+            }
+            for identity in sorted(previous_ids):
+                try:
+                    previous = rt.store.snapshot(identity)
+                except NoResultFound:
+                    continue
+                if previous.domain_id != current.domain_id:
+                    continue
+                changes = source_changes(previous, current)
+                if not changes:
+                    continue
+                impacted = affected_findings(previous, current, rows)
+                direct = {item["repository"] for item in impacted}
+                candidates = sorted({row["name"] for row in rows
+                    if row["payload"].get("source_snapshot_id") == identity
+                    and row["name"] not in direct})
+                comparisons.append({"previous": source_info(previous), "changes": changes,
+                    "affected": impacted, "candidates": candidates})
+        demo = demo_status(user)["enabled"]
+        sample = next((row for row in rows if row["id"] == "demo-recruitment:14:demo-finding"), None) if demo else None
+        return {"active": source_info(current) if current else None, "comparisons": comparisons,
+            "demo_finding": {"id": sample["id"], "repository": sample["name"],
+                "title": sample["payload"]["title"]} if sample else None}
+
+    @routes.get("/api/customer/usage")
+    def customer_usage(user=Depends(current_user)):
+        from .identity import api_usage
+        rt = runtime_getter()
+        now = datetime.now(timezone.utc)
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+        first_day = now.date() - timedelta(days=13)
+        with rt.review_jobs.engine.connect() as db:
+            completed = db.execute(select(func.count(func.distinct(jobs.c.id))).select_from(
+                jobs.join(events, jobs.c.id == events.c.job_id)).where(
+                jobs.c.tenant_id == user["tenant_id"], jobs.c.status == "complete",
+                events.c.type == "complete", events.c.created_at >= start)).scalar()
+        with rt.identity.engine.connect() as db:
+            calls = db.execute(select(func.count()).select_from(api_usage).where(
+                api_usage.c.tenant_id == user["tenant_id"], api_usage.c.created_at >= start)).scalar()
+            day = func.substr(api_usage.c.created_at, 1, 10)
+            counts = dict(db.execute(select(day, func.count()).where(
+                api_usage.c.tenant_id == user["tenant_id"],
+                api_usage.c.created_at >= first_day.isoformat(),
+                api_usage.c.created_at <= now.isoformat(),
+            ).group_by(day)).all())
+        daily_requests = []
+        for offset in range(14):
+            date = (first_day + timedelta(days=offset)).isoformat()
+            daily_requests.append({"date": date, "requests": counts.get(date, 0)})
+        return {"completed_reviews": completed, "api_requests": calls, "estimated_charge": round(completed * rt.settings.review_unit_price, 2) if rt.settings.review_unit_price is not None else None,
+            "currency": rt.settings.billing_currency if rt.settings.review_unit_price is not None else None, "period_start": start, "daily_requests": daily_requests}
+
+    @routes.get("/api/customer/false-positive-policy")
+    def get_fp_policy(user=Depends(current_user)):
+        return customer_findings().fp_policy(user["tenant_id"])
+
+    @routes.put("/api/customer/false-positive-policy")
+    def set_fp_policy(body: FalsePositivePolicy, user=Depends(current_user)):
+        if user["auth_type"] != "session":
+            raise HTTPException(403, "Sign in to manage false-positive policy.")
+        try:
+            return customer_findings().set_fp_policy(user["tenant_id"], body.mode, user["email"])
+        except PermissionError as exc:
+            raise HTTPException(403, str(exc)) from None
+
+    @routes.get("/api/customer/false-positive-metrics")
+    def fp_metrics(project: str | None = None, history: bool = False, user=Depends(current_user)):
+        from collections import Counter
+        from .findings import finding_policies
+        store = customer_findings()
+        repo_ids = project_scope(store, user["tenant_id"], project)
+        rows = [row for row in store.list(user["tenant_id"])
+                if repo_ids is None or row["repository_id"] in repo_ids]
+        marks = store.fp_marks(user["tenant_id"])
+        dimensions = {key: Counter() for key in ("priority", "policy", "category", "model", "rag_release", "repository", "day")}
+        by_id = {row["id"]: row for row in rows}
+        submissions = [mark for mark in store.fp_submissions(user["tenant_id"])
+                       if mark["finding_id"] in by_id]
+        events = submissions if history else [mark for key, mark in marks.items() if key in by_id]
+        for mark in events:
+            row = by_id[mark["finding_id"]]
+            payload = row["payload"] if row["head"] == mark["head"] else {}
+            dimensions["priority"][row["priority"] if payload else "Unknown"] += 1
+            dimensions["policy"].update(finding_policies(payload))
+            dimensions["category"][mark["category"] or "unspecified"] += 1
+            dimensions["model"][payload.get("model_id") or "Unknown"] += 1
+            dimensions["rag_release"][payload.get("rag_release_id") or "Unknown"] += 1
+            dimensions["repository"][row["name"]] += 1
+            dimensions["day"][mark["created_at"][:10]] += 1
+        return {"findings": len(rows), "marked": sum(key in by_id for key in marks),
+            "submissions": len(submissions),
+            "pending": sum(mark["pending"] for key, mark in marks.items() if key in by_id),
+            "breakdowns": {key: dict(values) for key, values in dimensions.items()}}
+
+    @routes.get("/api/findings")
+    def list_findings(project: str | None = None, user=Depends(current_user)):
+        from .findings import finding_policies
+        rt = runtime_getter()
+        source_cache, review_versions = {}, {}
+        result = []
+        store = customer_findings()
+        repo_ids = project_scope(store, user["tenant_id"], project)
+        marks = store.fp_marks(user["tenant_id"])
+        legal = store.legal_requests(user["tenant_id"])
+        for row in store.list(user["tenant_id"]):
+            if repo_ids is not None and row["repository_id"] not in repo_ids:
+                continue
+            payload = row["payload"]
+            version = payload.get("source_version")
+            review_id = payload.get("source_review_id")
+            if not version and review_id and payload.get("source_type") == "local_review":
+                if review_id not in review_versions:
+                    job = rt.review_jobs.get(review_id, user["tenant_id"])
+                    source = _pinned_source(job, rt.store, source_cache) if job else None
+                    review_versions[review_id] = source["version"] if source else None
+                version = review_versions[review_id]
+            result.append(dict(row) | {"policies": finding_policies(payload), "source_version": version, "fp_mark": marks.get(row["id"]), "legal_request": legal.get(row["id"])})
+        return result
+
+    @routes.get("/api/repositories")
+    def list_repositories(user=Depends(current_user)):
+        return customer_findings().inventory(user["tenant_id"])
+
+    @routes.get("/api/findings/{finding_id}/history")
+    def finding_history(finding_id: str, user=Depends(current_user)):
+        try:
+            return customer_findings().history(user["tenant_id"], finding_id)
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from None
+
+    @routes.post("/api/findings/{finding_id}/decision")
+    def finding_decision(finding_id: str, body: FindingDecision, user=Depends(current_user)):
+        if user["auth_type"] != "session":
+            raise HTTPException(403, "Sign in to record a decision.")
+        try:
+            store = customer_findings()
+            decision = store.decide(user["tenant_id"], finding_id, body.head,
+                body.action, user["email"], body.reason, body.event_id, body.category)
+            if runtime_getter().settings.demo_mode and finding_id.startswith("demo-") and decision["action"] != "fp_pending":
+                from .findings import DemoGitHub
+                store.sync(user["tenant_id"], body.event_id, DemoGitHub(store, user["tenant_id"]))
+                decision["sync_status"] = "synced"
+            return decision
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from None
+        except PermissionError as exc:
+            raise HTTPException(403, str(exc)) from None
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from None
 
     @routes.post("/api/auth/register", status_code=201)
     def register(body: RegisterRequest, response: Response):
@@ -548,12 +948,14 @@ def router(runtime_getter):
             job, _ = rt.review_jobs.create(user["tenant_id"], user["id"], payload, request_hash, idempotency_key)
         except IdempotencyConflict as exc:
             raise HTTPException(409, str(exc)) from None
-        return _job_response(job)
+        return _job_response(job, runtime_getter().store)
 
     @routes.get("/api/reviews")
     def list_reviews(user=Depends(current_user)):
         _, repository = stores()
-        return [_job_response(job) for job in repository.list_for_tenant(user["tenant_id"])]
+        source_cache = {}
+        store = runtime_getter().store
+        return [_job_response(job, store, source_cache) for job in repository.list_for_tenant(user["tenant_id"])]
 
     @routes.get("/api/reviews/summary")
     def review_summary(user=Depends(current_user)):
@@ -566,7 +968,22 @@ def router(runtime_getter):
         job = repository.get(identity_id, user["tenant_id"])
         if not job:
             raise HTTPException(404, "Review was not found in this workspace.")
-        return _job_response(job)
+        return _job_response(job, runtime_getter().store)
+
+    @routes.post("/api/reviews/{identity_id}/rescan", status_code=202, response_model=ReviewJobResponse)
+    def rescan_review(identity_id: str, body: RescanRequest, request: Request,
+                      idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+                      user=Depends(current_user)):
+        rt = runtime_getter()
+        original = rt.review_jobs.get(identity_id, user["tenant_id"])
+        if not original:
+            raise HTTPException(404, "Review was not found in this workspace.")
+        if original["status"] not in {"complete", "partial", "context_needed", "failed"}:
+            raise HTTPException(409, "Wait for the original review to finish.")
+        saved = original["request"]
+        return start_review(StartReviewRequest(
+            filename=saved["filename"], code=saved["code"], context=saved.get("context", ""),
+            cloud_consent=body.cloud_consent), request, idempotency_key, user)
 
     @routes.post("/api/reviews/{identity_id}/answer", status_code=202)
     def answer_review(identity_id: str, body: AnswerRequest, user=Depends(current_user)):
@@ -576,7 +993,7 @@ def router(runtime_getter):
             raise HTTPException(404, "Review was not found in this workspace.")
         if result == "conflict":
             raise HTTPException(409, "This review is not waiting for this answer. Reload the review first.")
-        return _job_response(job)
+        return _job_response(job, runtime_getter().store)
 
     @routes.post("/api/reviews/{identity_id}/retrieval-feedback", status_code=201)
     def retrieval_feedback(identity_id: str, body: RetrievalFeedbackRequest, user=Depends(current_user)):

@@ -38,10 +38,18 @@ def test_local_workspaces_isolate_reviews_and_api_keys(tmp_path):
         job, created = repo.create(user_a["tenant_id"], user_a["id"],
             {"filename": "review.py", "code": "model.generate()"}, "a" * 64, "first-review-key")
         assert created and job["status"] == "queued"
-        repo.set_result(job["id"], "complete", session=session)
+        repo.set_result(job["id"], "complete", session=session, trace_id="private-trace",
+            trace_url="https://langfuse.example/private", timings=[{"stage":"legal_review","elapsed_ms":9}],
+            retrieval_request={"query":"private request"}, sources=[{"id":"source-1","text":"legal text"}])
         repo.close()
 
-        assert client_a.get("/api/reviews/" + job["id"]).status_code == 200
+        public_job = client_a.get("/api/reviews/" + job["id"]).json()
+        assert public_job["status"] == "complete"
+        assert not {"trace_id", "trace_url", "timings", "retrieval_request"} & public_job.keys()
+        assert public_job["session"]["rag_release_id"] is None
+        assert public_job["session"]["scan_result"]["metadata"]["provider"] is None
+        assert public_job["sources"][0]["text"] == "legal text"
+        assert all("trace_url" not in event["details"] for event in public_job["events"])
         assert client_a.get("/api/reviews/summary").json()["total"] == 1
         assert client_b.get("/api/reviews/" + job["id"]).status_code == 404
         assert client_b.get("/api/reviews").json() == []
@@ -181,12 +189,24 @@ def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch,
             time.sleep(0.05)
             current = client.get("/api/reviews/" + identity).json()
         assert current["status"] == "context_needed", current.get("error") or current.get("session", {}).get("scan_result")
-        assert {step["stage"] for step in current["timings"]} >= {"code_collection", "purpose_extraction", "legal_retrieval"}
-        assert current["sources"] and current["retrieval_request"]
+        assert current["filename"] == "chat.py" and "code" not in current
+        assert current["legal_source"]["version"] == "02024R1689-20260727"
+        assert current["legal_source"]["retrieved_at"] == "2026-11-03"
+        updates = client.get("/api/customer/source-updates").json()
+        assert updates["active"]["snapshot_id"] == current["legal_source"]["snapshot_id"]
+        assert updates["comparisons"] == []
+        assert not {"trace_id", "trace_url", "timings", "retrieval_request"} & current.keys()
+        internal = ReviewJobRepository(database_url)
+        stored = internal.get(identity)
+        assert {step["stage"] for step in stored["timings"]} >= {"code_collection", "purpose_extraction", "legal_retrieval"}
+        assert stored["trace_id"]
+        assert stored["sources"] and stored["retrieval_request"]
+        internal.close()
+        assert current["sources"]
         metadata = current["session"]["scan_result"]["metadata"]
-        assert metadata["model_id"] == "test-ollama-model"
-        assert metadata["prompt_version"] and metadata["corpus_version"] and metadata["corpus_checksum"]
-        assert current["session"]["rag_release_id"] == release["rag_release_id"]
+        assert metadata["provider"] is None and metadata["model_id"] is None
+        assert metadata["corpus_version"] is None and metadata["corpus_checksum"] is None
+        assert current["session"]["rag_release_id"] is None
         question = current["session"]["context_question"]
         assert question and question.endswith("?")
 
@@ -201,11 +221,25 @@ def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch,
         assert current["status"] == "complete", current
         assert any(event["type"] == "answer_queued" for event in current["events"])
         assert any(event["type"] == "context_answered" for event in current["session"]["history"])
+        finding_rows = client.get("/api/findings").json()
+        assert len(finding_rows) == 1
+        assert finding_rows[0]["payload"]["source_type"] == "local_review"
+        assert finding_rows[0]["payload"]["source_review_id"] == identity
+        overview = client.get("/api/customer/overview").json()
+        assert all(repo["name"] != "Local code reviews" for repo in overview["repositories"])
+        assert overview["open_high"] == 0
+        assert overview["awaiting_context"] == 0
         feedback = client.post(f"/api/reviews/{identity}/retrieval-feedback", json={
             "source_id": current["sources"][0]["id"], "label": "relevant", "reason": "Supports this scenario."})
         assert feedback.status_code == 201, feedback.text
         saved = client.get("/api/reviews/" + identity).json()
         assert any(event["type"] == "feedback_saved" for event in saved["events"])
+        rescan = client.post(f"/api/reviews/{identity}/rescan", json={},
+            headers={"Idempotency-Key": "source-rescan-0001"})
+        assert rescan.status_code == 202, rescan.text
+        assert rescan.json()["id"] != identity
+        assert rescan.json()["legal_source"] == current["legal_source"]
+        assert client.get("/api/reviews/" + identity).json()["status"] == "complete"
 
     with TestClient(create_app(settings=settings)) as restarted:
         signed_in = restarted.post("/api/auth/login", json={"email": email,

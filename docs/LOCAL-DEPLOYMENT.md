@@ -49,3 +49,75 @@ local timings or the synthetic demo cases.
 
 For setup and the screens, start at the [main README](../README.md). For tenant
 and API behavior, see [local workspaces](LOCAL-WORKSPACES.md).
+
+## Native development
+
+Requirements: Python **3.12**, [uv](https://docs.astral.sh/uv/) and Node **24**.
+Intel Mac local embeddings require Python 3.12; the engine lockfile selects a
+compatible ONNX Runtime. The ordinary CLI supports Python 3.11+.
+
+First setup, with an explicit embedding download:
+
+```sh
+uv sync --project engine --python 3.12 --extra workbench --extra rag
+AIACT_DOWNLOAD_MODEL=true uv run --project engine --extra workbench --extra rag python -m aiact.workbench.bootstrap
+```
+
+Start the API:
+
+```sh
+uv run --project engine --extra workbench --extra rag python -m uvicorn aiact.workbench.api:create_app --factory --host 127.0.0.1 --port 8001
+```
+
+In a second terminal:
+
+```sh
+npm ci --prefix dashboard
+npm run dev --prefix dashboard
+```
+
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173). Vite proxies `/api` to the
+Python service on port 8001. Set `AIACT_API_TARGET` for a different local API
+address. No API URL or secret is compiled into the browser bundle. Restart Python
+after backend or `.env` changes. Native data is stored under `.aiact-workbench/`,
+gitignored.
+
+## Commands and verification
+
+```sh
+# Inspect the active source/RAG identity.
+uv run --project engine --extra rag aiact rag status
+
+# Evaluate local cases; results distinguish drafts and approved gold.
+uv run --project engine --extra rag aiact rag eval --output .aiact-results/evaluation.json
+
+# Explicit network operations, without changing the active corpus.
+uv run --project engine --extra rag aiact corpus check
+uv run --project engine --extra rag aiact corpus sync --staging
+
+# Full automated engine tests and frontend builds.
+uv run --project engine --extra dev --extra bot --extra workbench --extra workbench-test --extra rag --extra postgres python -m pytest engine/tests
+npm run build --prefix dashboard
+npm test --prefix extensions/vscode
+```
+
+`docker compose run --rm rag-eval` evaluates through the running API, so it never
+opens Qdrant concurrently. For final acceptance, `aiact rag eval --require-quality
+--include-holdout` fails unless the expert-gold policy passes. It is expected to
+fail with the initial draft-only legal data. Reports include misses and sample
+size uncertainty, rather than implying certified compliance.
+
+[CI and release gates](CI.md) describe PR checks, PostgreSQL parity,
+container restart tests and protected live-model evaluation. Actual observed
+checks and remaining acceptance are in [M1 status](M1-STATUS.md).
+
+## Run the built frontend without Docker
+
+After native setup and `npm run build --prefix dashboard`, run from the repository root:
+
+```sh
+AIACT_STATIC_DIR="$PWD/dashboard/dist" uv run --project engine --extra workbench --extra rag python -m uvicorn aiact.workbench.api:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Open **[http://localhost:8000](http://localhost:8000)**. This serves the dashboard
+and API together, without a separate Vite process.

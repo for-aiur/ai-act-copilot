@@ -31,6 +31,8 @@ class Settings(BaseModel):
     langfuse_public_key: SecretStr = SecretStr("")
     langfuse_secret_key: SecretStr = SecretStr("")
     langfuse_project_id: str = Field(default="", pattern=r"^[a-zA-Z0-9_-]*$", max_length=100)
+    review_unit_price: float | None = Field(default=None, ge=0)
+    billing_currency: str = Field(default="EUR", pattern=r"^[A-Z]{3}$")
     demo_mode: bool = False
     demo_tenant_name: str = "AI Act Demo"
     demo_user_email: str = "demo@example.test"
@@ -112,6 +114,7 @@ ENV_KEYS = {
     "LANGFUSE_ENABLED": "langfuse_enabled", "LANGFUSE_HOST": "langfuse_host",
     "LANGFUSE_PUBLIC_KEY": "langfuse_public_key", "LANGFUSE_SECRET_KEY": "langfuse_secret_key",
     "LANGFUSE_PROJECT_ID": "langfuse_project_id", "AIACT_DEMO_MODE": "demo_mode",
+    "AIACT_REVIEW_UNIT_PRICE": "review_unit_price", "AIACT_BILLING_CURRENCY": "billing_currency",
     "AIACT_DEMO_TENANT_NAME": "demo_tenant_name", "AIACT_DEMO_USER_EMAIL": "demo_user_email",
     "GEMINI_API_KEY": "gemini_api_key", "AIACT_CLOUD_CONSENT": "cloud_consent",
     "AIACT_REQUEST_SECONDS": "request_seconds", "AIACT_DEADLINE_SECONDS": "deadline_seconds",
@@ -140,4 +143,6 @@ def load_settings(overrides: dict | None = None, env: Mapping[str, str] | None =
     values.update(overrides or {})
     if values.get("provider") == "ollama" and "model" not in values:
         values["model"] = "qwen2.5:3b"
+    if values.get("review_unit_price") == "":
+        values["review_unit_price"] = None
     return Settings.model_validate(values)

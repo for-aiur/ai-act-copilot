@@ -44,6 +44,14 @@ def generation_schema(schema):
     definitions = result.get("$defs", {})
     if "findings" in result.get("properties", {}) and "DraftFinding" in definitions:
         citation = definitions.get("DraftCitation", {})
+        quote = citation.get("properties", {}).get("quote")
+        if isinstance(quote, dict):
+            # Exact quotes are checked against the pinned source after generation.
+            # Sending every possible quote as an enum makes the API request fail
+            # once the retrieved passages produce a large choice list.
+            quote.pop("enum", None)
+            quote.pop("const", None)
+            quote["type"] = "string"
         branches = citation.get("anyOf", [])
         ids = [b.get("properties", {}).get("section_id", {}).get("enum", [None])[0] for b in branches]
         if ids and all(isinstance(sid, str) for sid in ids):

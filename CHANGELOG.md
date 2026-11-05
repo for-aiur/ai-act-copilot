@@ -1,9 +1,22 @@
 # Changelog
 
-Published POC snapshots are listed here. Extension and engine versions are
+Published repository snapshots are listed here. Extension and engine versions are
 independent; Git tags identify the complete repository snapshot.
 
-## Unreleased
+## M3 local demo
+
+- Add a customer dashboard with project-scoped findings and charts, repository
+  and policy filters, legal review, and workspace false-positive handling.
+- Show PR-to-dashboard and dashboard-to-PR decisions in the local GitHub demo.
+  Keep Langfuse diagnostics in the internal workbench and combine customer key
+  management and usage on one API page.
+- Add the local AI Systems proof of concept with intended-use records, directed
+  relationships, and immutable release evidence packages with JSON export.
+- Ship the public sample review, guided demo, and simulated repository scan.
+  Hosted identity, live GitHub delivery, and formal RAG quality acceptance are
+  outside this snapshot.
+
+### Foundations
 
 - EVR-57: collect a bounded Python file selected for review without requiring
   Git in the API container. Workspace scans continue to check `.gitignore`.
@@ -16,7 +29,7 @@ independent; Git tags identify the complete repository snapshot.
 
 - EVR-31: separate the public project page from the signed-in local workspace.
   Add sample-guided reviews, tenant-owned review history and detail, measured
-  step timings, Langfuse trace links, API key management and actual API usage.
+  step timings, API key management and actual API usage.
   Save source relevance feedback as version-pinned drafts without changing
   retrieval behavior.
 
