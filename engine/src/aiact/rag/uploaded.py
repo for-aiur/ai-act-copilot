@@ -29,7 +29,10 @@ def collect_upload(path, explicit_context='', budgets=Budgets()):
     except (ValueError,UnicodeDecodeError) as exc:
         raise ReviewFailure('unsupported_input',str(exc)) from None
     if path.suffix.lower()=='.py':
-        return collect(path,explicit_context,budgets)
+        # The caller selected this bounded file explicitly. It is staged in a
+        # temporary directory, so workspace .gitignore checks do not apply.
+        # This also lets the packaged worker collect uploads without Git.
+        return collect(path,explicit_context,budgets,respect_gitignore=False)
     result=Context(root=path.parent)
     lines=code.splitlines()
     size=max(1,math.ceil(len(lines)/20))

@@ -17,6 +17,8 @@ from aiact.rag.releases import build_release
 from aiact.rag.retriever import HybridRetriever
 from aiact.rag.store import Store
 from aiact.settings import Settings, load_settings
+from .identity import IdentityStore
+from .reviews import ReviewJobRepository, ReviewJobWorker
 
 
 class BuildInput(BaseModel):
@@ -38,12 +40,26 @@ class ReviewInput(BaseModel):
     cloud_consent: bool = False
 
 
+class PreviewInput(ReviewInput):
+    question: str = Field(default="", max_length=500)
+
+
 class Runtime:
     def __init__(self, settings):
         self.settings = settings
         self.store = Store(settings.database_url.get_secret_value())
+        self.identity = IdentityStore(settings.database_url.get_secret_value())
+        self.review_jobs = ReviewJobRepository(settings.database_url.get_secret_value())
         self.lock = threading.RLock()
         self.retriever = None
+        self.review_worker = None
+
+    def start(self):
+        if self.settings.demo_mode:
+            self.identity.ensure_demo_user(self.settings.demo_tenant_name, self.settings.demo_user_email)
+        if self.review_worker is None:
+            self.review_worker = ReviewJobWorker(self, self.review_jobs, self.identity)
+        self.review_worker.start()
 
     def get_retriever(self, domain, identity=None):
         identity = identity or self.store.pointer(domain)
@@ -57,8 +73,12 @@ class Runtime:
         return self.retriever
 
     def close(self):
+        if self.review_worker:
+            self.review_worker.stop()
         if self.retriever:
             self.retriever.close()
+        self.review_jobs.close()
+        self.identity.close()
         self.store.close()
 
     def update_settings(self, updated):
@@ -73,9 +93,12 @@ def router(settings=None):
     init_lock = threading.RLock()
     @asynccontextmanager
     async def lifespan(app):
-        yield
-        if "runtime" in state:
-            state["runtime"].close()
+        rt = runtime()
+        rt.start()
+        try:
+            yield
+        finally:
+            rt.close()
     routes = APIRouter(prefix="/api/rag", lifespan=lifespan)
 
     def runtime():
@@ -83,6 +106,9 @@ def router(settings=None):
             if "runtime" not in state:
                 state["runtime"] = Runtime(settings or load_settings())
         return state["runtime"]
+
+    from .reviews import router as review_router
+    routes.product_router = review_router(runtime)
 
     @routes.get("/settings")
     def get_settings():
@@ -124,6 +150,21 @@ def router(settings=None):
         manifest, snapshot, _ = verify_bundle(rt.settings.data_dir / "releases" / identity)
         return {"status": "ready", "rag_release_id": identity, "source_complete": snapshot.complete,
                 "quality_status": manifest["quality_status"], "inference_provider": rt.settings.provider}
+
+    @routes.get("/source-changes")
+    def compare_sources(previous: str | None = Query(default=None, max_length=64)):
+        from .source_updates import source_changes, source_info
+        rt = runtime()
+        active = rt.store.pointer("ai-act")
+        current = rt.store.snapshot(rt.store.release(active)["snapshot_id"]) if active else load_snapshot("ai-act")
+        ids = {item["snapshot_id"] for item in rt.store.list_releases("ai-act")}
+        ids.discard(current.snapshot_id)
+        if previous and previous not in ids:
+            raise HTTPException(404, "Previous AI Act snapshot not found.")
+        snapshots = [rt.store.snapshot(identity) for identity in sorted(ids)]
+        baseline = next((item for item in snapshots if item.snapshot_id == previous), None)
+        return {"active": source_info(current), "previous": [source_info(item) for item in snapshots],
+            "changes": source_changes(baseline, current) if baseline else []}
 
     @routes.get("/library")
     def library(domain: str = "ai-act", q: str = Query(default="", max_length=200), kind: str = ""):
@@ -206,8 +247,21 @@ def router(settings=None):
     def runs(domain="ai-act"):
         return runtime().store.list_records("retrieval", domain, limit=30)
 
+    @routes.post("/preview")
+    def preview(body: PreviewInput):
+        from hashlib import sha256
+        samples = {'bias_audit.py': '6bfd0b0667c601e7119095f01cb4a7ba23e765a915fa4a2bab7e8c403d5be71b', 'identify.py': '123694925fe36d341ba5fd1722c33f9ee62a915a7047e34f36e3296a98e5544b', 'assistant.py': 'e3c75579d36b5a806668ea298f7fc8b273ac5b35d602156f4d73a2fa99b24421'}
+        if (body.context or samples.get(body.filename) != sha256(body.code.encode()).hexdigest()):
+            raise HTTPException(422, "Choose a bundled sample.")
+        question = body.question.strip()
+        context = f"Visitor question to focus the review (unverified): {question}" if question else ""
+        return run_review(body.model_copy(update={"context": context}), preview_only=True)
+
     @routes.post("/review")
     def review(body: ReviewInput):
+        return run_review(body, preview_only=False)
+
+    def run_review(body: ReviewInput, preview_only: bool):
         import tempfile
         from pathlib import Path
         from aiact.gemini import Gemini
@@ -232,6 +286,9 @@ def router(settings=None):
                 legal_bytes=rt.settings.max_legal_bytes, request_seconds=rt.settings.request_seconds,
                 total_seconds=rt.settings.deadline_seconds)
             payload = review_python(source, provider, rt.get_retriever("ai-act"), body.context, budgets=budgets, uploaded=True)
+            if preview_only:
+                result = payload["scan_result"]
+                return {key: result[key] for key in ("status", "findings", "errors")}
             payload["configuration"] = {"fingerprint": rt.settings.config_fingerprint(),
                 "values": rt.settings.editable_config()}
             from aiact.telemetry import Trace

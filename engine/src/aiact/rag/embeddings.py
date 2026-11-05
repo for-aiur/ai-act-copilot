@@ -1,5 +1,6 @@
 """Explicit setup downloads; query-time embedding is local and cache-only."""
 import importlib.metadata
+import math
 from pathlib import Path
 from typing import Protocol
 
@@ -29,6 +30,14 @@ class LocalEmbedder:
 
     def passages(self, texts):
         return [vector.tolist() for vector in self.model.passage_embed(texts, batch_size=32)]
+
+    def passages_with_progress(self, texts, progress):
+        total = max(1, math.ceil(len(texts) / 32))
+        vectors = []
+        for batch, vector in enumerate(self.model.passage_embed(texts, batch_size=32), 1):
+            vectors.append(vector.tolist())
+            progress(batch, total)
+        return vectors
 
     def query(self, text):
         return list(self.model.query_embed([text]))[0].tolist()

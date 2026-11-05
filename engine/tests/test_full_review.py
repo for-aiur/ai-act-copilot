@@ -34,12 +34,12 @@ def test_full_corpus_review_uses_arbitrary_retrieved_provisions_and_rejects_fake
     retriever = HybridRetriever(settings, manifest["rag_release_id"])
     source = tmp_path / "chat.py"
     source.write_text("def reply(model, text):\n    return model.generate(text)\n")
-    result = review_python(source, FixtureProvider(), retriever)
+    result = review_python(source, FixtureProvider(), retriever, uploaded=True)
     assert result["scan_result"]["status"] == "complete"
     citation = result["scan_result"]["findings"][0]["citations"][0]
     assert citation["url"].startswith("https://eur-lex.europa.eu/")
     assert citation["section_id"].startswith("article-50-")
-    failed = review_python(source, FixtureProvider(invented=True), retriever)
+    failed = review_python(source, FixtureProvider(invented=True), retriever, uploaded=True)
     assert failed["scan_result"]["status"] == "failed"
     assert failed["scan_result"]["errors"][0]["code"] == "citation_invalid"
     retriever.close()

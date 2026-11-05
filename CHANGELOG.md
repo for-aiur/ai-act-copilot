@@ -1,9 +1,42 @@
 # Changelog
 
-Published POC snapshots are listed here. Extension and engine versions are
+Published repository snapshots are listed here. Extension and engine versions are
 independent; Git tags identify the complete repository snapshot.
 
-## Unreleased
+## M3 local demo
+
+- Add a customer dashboard with project-scoped findings and charts, repository
+  and policy filters, legal review, and workspace false-positive handling.
+- Show PR-to-dashboard and dashboard-to-PR decisions in the local GitHub demo.
+  Keep Langfuse diagnostics in the internal workbench and combine customer key
+  management and usage on one API page.
+- Add the local AI Systems proof of concept with intended-use records, directed
+  relationships, and immutable release evidence packages with JSON export.
+- Ship the public sample review, guided demo, and simulated repository scan.
+  Hosted identity, live GitHub delivery, and formal RAG quality acceptance are
+  outside this snapshot.
+
+### Foundations
+
+- EVR-57: collect a bounded Python file selected for review without requiring
+  Git in the API container. Workspace scans continue to check `.gitignore`.
+
+- EVR-34/32: package the customer dashboard and FastAPI worker as one local
+  Compose stack, with persistent SQLite and an optional private PostgreSQL
+  profile. Add CI startup and retrieval-persistence checks for both profiles,
+  and document the local boundary and possible future hosting map. Seed one
+  fictional demo tenant and leave account creation disabled in demo mode.
+
+- EVR-31: separate the public project page from the signed-in local workspace.
+  Add sample-guided reviews, tenant-owned review history and detail, measured
+  step timings, API key management and actual API usage.
+  Save source relevance feedback as version-pinned drafts without changing
+  retrieval behavior.
+
+- EVR-30: add local workspace accounts, tenant-scoped API keys and measured API
+  usage, plus durable tenant-scoped review jobs with retries, idempotent starts,
+  saved context answers and restart recovery. Keep provider failures explicit and
+  do not put source, prompts or credentials into trace metadata.
 
 - EVR-29: preserve question, answer, finding revision and reviewer decision history
   for resumable RAG reviews. Keep decisions separate from scan findings, require

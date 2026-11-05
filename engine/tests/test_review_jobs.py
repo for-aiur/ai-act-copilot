@@ -1,0 +1,253 @@
+import os
+import time
+
+import pytest
+
+pytest.importorskip("fastapi")
+pytest.importorskip("sqlalchemy")
+from fastapi.testclient import TestClient
+from pydantic import SecretStr
+
+from aiact.contracts import Coverage, Metadata, ReviewSession, ScanResult
+from aiact.settings import Settings
+from aiact.workbench.api import create_app
+from aiact.workbench.reviews import IdempotencyConflict, ReviewJobRepository
+
+
+def _settings(tmp_path):
+    return Settings(data_dir=tmp_path, database_url=SecretStr(f"sqlite:///{tmp_path / 'local.sqlite'}"))
+
+
+def _register(client, email, workspace):
+    response = client.post("/api/auth/register", json={"workspace": workspace, "email": email,
+        "password": "a-local-password-long-enough"})
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def test_local_workspaces_isolate_reviews_and_api_keys(tmp_path):
+    settings = _settings(tmp_path)
+    with TestClient(create_app(settings=settings)) as client_a, TestClient(create_app(settings=settings)) as client_b:
+        user_a = _register(client_a, "a@example.test", "Workspace A")
+        _register(client_b, "b@example.test", "Workspace B")
+        assert client_a.get("/api/auth/me").json()["tenant_id"] == user_a["tenant_id"]
+
+        session = ReviewSession(id="review-one", status="complete", scan_result=ScanResult(
+            status="complete", coverage=Coverage(), metadata=Metadata()))
+        repo = ReviewJobRepository(settings.database_url.get_secret_value())
+        job, created = repo.create(user_a["tenant_id"], user_a["id"],
+            {"filename": "review.py", "code": "model.generate()"}, "a" * 64, "first-review-key")
+        assert created and job["status"] == "queued"
+        repo.set_result(job["id"], "complete", session=session, trace_id="private-trace",
+            trace_url="https://langfuse.example/private", timings=[{"stage":"legal_review","elapsed_ms":9}],
+            retrieval_request={"query":"private request"}, sources=[{"id":"source-1","text":"legal text"}])
+        repo.close()
+
+        public_job = client_a.get("/api/reviews/" + job["id"]).json()
+        assert public_job["status"] == "complete"
+        assert not {"trace_id", "trace_url", "timings", "retrieval_request"} & public_job.keys()
+        assert public_job["session"]["rag_release_id"] is None
+        assert public_job["session"]["scan_result"]["metadata"]["provider"] is None
+        assert public_job["sources"][0]["text"] == "legal text"
+        assert all("trace_url" not in event["details"] for event in public_job["events"])
+        assert client_a.get("/api/reviews/summary").json()["total"] == 1
+        assert client_b.get("/api/reviews/" + job["id"]).status_code == 404
+        assert client_b.get("/api/reviews").json() == []
+        assert client_b.get("/api/reviews/summary").json()["total"] == 0
+
+        created_key = client_a.post("/api/api-keys", json={"name": "local script"})
+        assert created_key.status_code == 201
+        secret = created_key.json()["key"]
+        assert secret.startswith("actk_")
+        assert "key" not in client_a.get("/api/api-keys").json()[0]
+        client_a.cookies.clear()
+        assert client_a.get("/api/reviews", headers={"Authorization": f"Bearer {secret}"}).status_code == 200
+        assert client_a.get("/api/reviews/missing", headers={"Authorization": f"Bearer {secret}"}).status_code == 404
+        client_a.post("/api/auth/login", json={"email": "a@example.test", "password": "a-local-password-long-enough"})
+        usage = client_a.get("/api/api-usage").json()
+        assert any(entry["route"] == "/api/reviews" for entry in usage)
+        assert any(entry["route"] == "/api/reviews/missing" and entry["status_code"] == 404 for entry in usage)
+
+        key_id = created_key.json()["id"]
+        assert client_a.delete("/api/api-keys/" + key_id).status_code == 200
+        client_a.cookies.clear()
+        assert client_a.get("/api/reviews", headers={"Authorization": f"Bearer {secret}"}).status_code == 401
+
+
+def test_review_job_idempotency_and_restart_state(tmp_path):
+    url = _settings(tmp_path).database_url.get_secret_value()
+    first = ReviewJobRepository(url)
+    payload = {"filename": "review.py", "code": "model.generate()"}
+    job, created = first.create("tenant-a", "user-a", payload, "b" * 64, "same-key-123")
+    same, created_again = first.create("tenant-a", "user-a", payload, "b" * 64, "same-key-123")
+    assert created and not created_again and job["id"] == same["id"]
+    with pytest.raises(IdempotencyConflict):
+        first.create("tenant-a", "user-a", payload | {"code": "different"}, "c" * 64, "same-key-123")
+    first.close()
+
+    reopened = ReviewJobRepository(url)
+    restored = reopened.get(job["id"], "tenant-a")
+    assert restored["status"] == "queued"
+    assert restored["request"]["code"] == "model.generate()"
+    assert [event["type"] for event in restored["events"]] == ["queued"]
+    assert reopened.get(job["id"], "tenant-b") is None
+    reopened.close()
+
+
+def test_review_job_retry_is_bounded(tmp_path):
+    url = _settings(tmp_path).database_url.get_secret_value()
+    repo = ReviewJobRepository(url)
+    job, _ = repo.create("tenant-a", "user-a", {"filename": "review.py", "code": "pass"},
+        "c" * 64, "bounded-retry-123")
+
+    first_attempt = repo.claim(job["id"])
+    assert first_attempt["attempts"] == 1
+    assert repo.retry_or_fail(job["id"], "temporary failure")["status"] == "queued"
+    second_attempt = repo.claim(job["id"])
+    assert second_attempt["attempts"] == 2
+    failed = repo.retry_or_fail(job["id"], "temporary failure")
+    assert failed["status"] == "failed"
+    assert failed["attempts"] == 2
+    assert [event["type"] for event in failed["events"]].count("started") == 2
+    repo.close()
+
+
+def test_login_requires_valid_password_and_logout_revokes_session(tmp_path):
+    with TestClient(create_app(settings=_settings(tmp_path))) as client:
+        assert client.post("/api/auth/register", json={"workspace": "Test", "email": "bad@example.test",
+            "password": "short"}).status_code == 422
+        _register(client, "user@example.test", "Test")
+        client.post("/api/auth/logout")
+        assert client.get("/api/auth/me").status_code == 401
+        assert client.post("/api/auth/login", json={"email": "user@example.test",
+            "password": "a-local-password-long-enough"}).status_code == 200
+        assert client.post("/api/auth/login", json={"email": "user@example.test", "password": "wrong"}).status_code == 401
+
+
+def test_demo_mode_seeds_one_demo_tenant_and_disables_account_creation(tmp_path):
+    settings = Settings(data_dir=tmp_path,
+        database_url=SecretStr(f"sqlite:///{tmp_path / 'demo.sqlite'}"), demo_mode=True)
+    with TestClient(create_app(settings=settings)) as client:
+        entered = client.post("/api/auth/demo")
+        assert entered.status_code == 200, entered.text
+        assert entered.json()["workspace"] == "AI Act Demo"
+        assert entered.json()["email"] == "demo@example.test"
+        assert client.get("/api/auth/me").json()["tenant_id"] == entered.json()["tenant_id"]
+        assert client.post("/api/auth/register", json={"workspace": "Another tenant",
+            "email": "other@example.test", "password": "a-local-password-long-enough"}).status_code == 404
+
+
+@pytest.mark.parametrize("database", [
+    "sqlite",
+    pytest.param("postgres", marks=pytest.mark.skipif(
+        not os.environ.get("AIACT_TEST_POSTGRES_URL"),
+        reason="Requires the isolated PostgreSQL CI service")),
+])
+def test_review_job_runs_resumes_and_survives_app_restart(tmp_path, monkeypatch, database):
+    from aiact.rag.releases import build_release
+    from aiact.rag.store import Store
+    from test_full_review import FixtureProvider
+
+    database_url = (f"sqlite:///{tmp_path / 'e2e.sqlite'}" if database == "sqlite"
+        else os.environ["AIACT_TEST_POSTGRES_URL"])
+    settings = Settings(data_dir=tmp_path, database_url=SecretStr(database_url), provider="ollama")
+    release = build_release(settings, lexical_only=True)
+    store = Store(settings.database_url.get_secret_value())
+    store.activate("ai-act", release["rag_release_id"])
+    store.close()
+    fixture = FixtureProvider()
+
+    class FakeOllama:
+        name = "ollama"
+        model = "test-ollama-model"
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def ensure_local_model(self):
+            pass
+
+        def generate_json(self, prompt, schema, timeout):
+            return fixture.generate_json(prompt, schema, timeout)
+
+    monkeypatch.setattr("aiact.providers.Ollama", FakeOllama)
+    source = "def reply(model, text):\n    return model.generate(text)\n"
+    email = f"reviewer-{time.time_ns()}@example.test"
+    with TestClient(create_app(settings=settings)) as client:
+        _register(client, email, "Review workspace")
+        started = client.post("/api/reviews", json={"code": source, "filename": "chat.py"},
+            headers={"Idempotency-Key": "demo-review-0001"})
+        assert started.status_code == 202, started.text
+        identity = started.json()["id"]
+        duplicate = client.post("/api/reviews", json={"code": source, "filename": "chat.py"},
+            headers={"Idempotency-Key": "demo-review-0001"})
+        assert duplicate.json()["id"] == identity
+
+        deadline = time.monotonic() + 10
+        current = client.get("/api/reviews/" + identity).json()
+        while current["status"] in {"queued", "running"} and time.monotonic() < deadline:
+            time.sleep(0.05)
+            current = client.get("/api/reviews/" + identity).json()
+        assert current["status"] == "context_needed", current.get("error") or current.get("session", {}).get("scan_result")
+        assert current["filename"] == "chat.py" and "code" not in current
+        assert current["legal_source"]["version"] == "02024R1689-20260727"
+        assert current["legal_source"]["retrieved_at"] == "2026-11-03"
+        updates = client.get("/api/customer/source-updates").json()
+        assert updates["active"]["snapshot_id"] == current["legal_source"]["snapshot_id"]
+        assert updates["comparisons"] == []
+        assert not {"trace_id", "trace_url", "timings", "retrieval_request"} & current.keys()
+        internal = ReviewJobRepository(database_url)
+        stored = internal.get(identity)
+        assert {step["stage"] for step in stored["timings"]} >= {"code_collection", "purpose_extraction", "legal_retrieval"}
+        assert stored["trace_id"]
+        assert stored["sources"] and stored["retrieval_request"]
+        internal.close()
+        assert current["sources"]
+        metadata = current["session"]["scan_result"]["metadata"]
+        assert metadata["provider"] is None and metadata["model_id"] is None
+        assert metadata["corpus_version"] is None and metadata["corpus_checksum"] is None
+        assert current["session"]["rag_release_id"] is None
+        question = current["session"]["context_question"]
+        assert question and question.endswith("?")
+
+        accepted = client.post("/api/reviews/" + identity + "/answer", json={
+            "answer": "Every user sees a clear notice before the first generated reply."})
+        assert accepted.status_code == 202
+        deadline = time.monotonic() + 10
+        current = client.get("/api/reviews/" + identity).json()
+        while current["status"] in {"answer_queued", "running", "queued"} and time.monotonic() < deadline:
+            time.sleep(0.05)
+            current = client.get("/api/reviews/" + identity).json()
+        assert current["status"] == "complete", current
+        assert any(event["type"] == "answer_queued" for event in current["events"])
+        assert any(event["type"] == "context_answered" for event in current["session"]["history"])
+        finding_rows = client.get("/api/findings").json()
+        assert len(finding_rows) == 1
+        assert finding_rows[0]["payload"]["source_type"] == "local_review"
+        assert finding_rows[0]["payload"]["source_review_id"] == identity
+        overview = client.get("/api/customer/overview").json()
+        assert all(repo["name"] != "Local code reviews" for repo in overview["repositories"])
+        assert overview["open_high"] == 0
+        assert overview["awaiting_context"] == 0
+        feedback = client.post(f"/api/reviews/{identity}/retrieval-feedback", json={
+            "source_id": current["sources"][0]["id"], "label": "relevant", "reason": "Supports this scenario."})
+        assert feedback.status_code == 201, feedback.text
+        saved = client.get("/api/reviews/" + identity).json()
+        assert any(event["type"] == "feedback_saved" for event in saved["events"])
+        rescan = client.post(f"/api/reviews/{identity}/rescan", json={},
+            headers={"Idempotency-Key": "source-rescan-0001"})
+        assert rescan.status_code == 202, rescan.text
+        assert rescan.json()["id"] != identity
+        assert rescan.json()["legal_source"] == current["legal_source"]
+        assert client.get("/api/reviews/" + identity).json()["status"] == "complete"
+
+    with TestClient(create_app(settings=settings)) as restarted:
+        signed_in = restarted.post("/api/auth/login", json={"email": email,
+            "password": "a-local-password-long-enough"})
+        assert signed_in.status_code == 200
+        restored = restarted.get("/api/reviews/" + identity)
+        assert restored.status_code == 200
+        assert restored.json()["status"] == "complete"
+        restarted.post("/api/auth/logout")
+        _register(restarted, f"other-{time.time_ns()}@example.test", "Other workspace")
+        assert restarted.get("/api/reviews/" + identity).status_code == 404

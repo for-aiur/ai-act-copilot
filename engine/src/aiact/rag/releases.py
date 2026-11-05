@@ -60,7 +60,7 @@ def verify_bundle(directory: Path, allow_staging=False) -> tuple[dict, Snapshot,
     return manifest, snapshot, vectors
 
 
-def build_release(settings, domain_id="ai-act", download=False, lexical_only=False, embedder=None):
+def build_release(settings, domain_id="ai-act", download=False, lexical_only=False, embedder=None, progress=None):
     snapshot = load_snapshot(domain_id)
     if not snapshot.complete:
         raise ValueError("Incomplete source snapshot cannot be built")
@@ -83,7 +83,11 @@ def build_release(settings, domain_id="ai-act", download=False, lexical_only=Fal
                     vectors = previous_vectors
                     break
             if not vectors:
-                vectors = embedder.passages([c.title + "\n" + c.text for c in snapshot.chunks])
+                passages = [c.title + "\n" + c.text for c in snapshot.chunks]
+                if progress and hasattr(embedder, "passages_with_progress"):
+                    vectors = embedder.passages_with_progress(passages, progress)
+                else:
+                    vectors = embedder.passages(passages)
             cache.parent.mkdir(parents=True, exist_ok=True)
             cache.write_bytes(gzip.compress(json.dumps(vectors).encode(), mtime=0))
     source_files = ["contracts.py", "domains.py", "embeddings.py", "releases.py", "retriever.py", "store.py", "official.py", "evaluation.py"]

@@ -1,3 +1,5 @@
+import { FalsePositiveMetrics } from "./FalsePositives";
+import { SourceComparison } from "./LegalSourceUpdates";
 import { createPortal } from "react-dom";
 import ReviewPanel from "./ReviewPanel";
 import SettingsPanel from "./SettingsPanel";
@@ -663,6 +665,8 @@ export default function Workbench() {
             </span>
           </div>
           )}
+          {view === "cases" && domain === "ai-act" && <FalsePositiveMetrics internal/>}
+          {view === "corpus" && domain === "ai-act" && <SourceComparison key={library?.snapshot_id}/>}
           {(view === "corpus" || view === "source-picker") && (
             <section className="explorer">
               <div className="section-header">

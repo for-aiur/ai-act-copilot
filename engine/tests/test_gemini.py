@@ -143,6 +143,47 @@ def test_review_transport_schema_avoids_long_enum_cross_product():
     assert schema['$defs']['DraftFinding']['properties']['context_question']['enum']
 
 
+def test_review_transport_schema_drops_dynamic_quote_enum_but_keeps_source_ids():
+    from aiact.gemini import generation_schema
+    from aiact.validation import DraftReview
+    schema=DraftReview.model_json_schema()
+    citation=schema['$defs']['DraftCitation']['properties']
+    citation['section_id']={'type':'string','enum':[f'article-{i}' for i in range(6)]}
+    citation['quote']['enum']=[f'Exact legal text option {i}' for i in range(48)]
+    output=generation_schema(schema)
+    generated=output['$defs']['DraftCitation']['properties']
+    assert generated['section_id']['enum']==[f'article-{i}' for i in range(6)]
+    assert generated['quote']['type']=='string'
+    assert 'enum' not in generated['quote']
+    assert len(schema['$defs']['DraftCitation']['properties']['quote']['enum'])==48
+
+
+def test_exact_passage_quote_does_not_need_to_match_compact_quote_choices():
+    from aiact.contracts import Evidence
+    from aiact.validation import (DraftReview, bind_exact_citations,
+        citation_quote_sources, validate_review)
+    from aiact.providers import ReviewFailure
+    import pytest
+
+    passage={"id":"article-10-2","text":"".join(chr(65+(index%26)) for index in range(450)),"url":"https://eur-lex.europa.eu/"}
+    quote=passage['text'][180:280]
+    choices=citation_quote_sources([passage])
+    assert quote not in choices
+    draft=DraftReview.model_validate({"findings":[{"title":"Check safeguards",
+        "explanation":"The wider process needs review.","kind":"context_question","priority":"medium",
+        "evidence_id":"E1","citations":[{"section_id":passage['id'],"quote":quote}],
+        "suggested_next_action":"Inspect the process.","context_question":"Who can access the data?"}]})
+    bound=bind_exact_citations(draft,choices,{passage['id']})
+    evidence={"E1":Evidence(path="review.py",start_line=1,end_line=1,quote="model.generate()")}
+    findings=validate_review(bound,evidence,{"review.py":"model.generate()"},[passage])
+    assert findings[0].citations[0].quote==quote
+
+    invented=draft.model_copy(update={"findings":[draft.findings[0].model_copy(update={
+        "citations":[draft.findings[0].citations[0].model_copy(update={"quote":"Invented source words here."})]})]})
+    with pytest.raises(ReviewFailure,match="not in the retrieved passages"):
+        validate_review(invented,evidence,{"review.py":"model.generate()"},[passage])
+
+
 def test_transient_service_error_retries_once_with_shared_budget(monkeypatch):
     import aiact.gemini as module
     provider=Gemini(api_key=KEY);calls=[]

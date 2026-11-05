@@ -61,7 +61,8 @@ def repository_root(path: Path) -> Path:
     return directory.resolve()
 
 
-def collect(path: Path, explicit_context: str = "", budgets: Budgets = Budgets()) -> Context:
+def collect(path: Path, explicit_context: str = "", budgets: Budgets = Budgets(), *,
+            respect_gitignore: bool = True) -> Context:
     path = path.absolute()
     root = repository_root(path)
     context = Context(root=root)
@@ -120,14 +121,15 @@ def collect(path: Path, explicit_context: str = "", budgets: Budgets = Budgets()
         if not item.resolve().is_relative_to(base):
             skip(item, "path escapes scan root")
             continue
-        try:
-            ignored = subprocess.run(["git", "-C", str(root), "check-ignore", "--", rel], capture_output=True, timeout=2)
-            if ignored.returncode == 0:
-                skip(item, "gitignored")
+        if respect_gitignore:
+            try:
+                ignored = subprocess.run(["git", "-C", str(root), "check-ignore", "--", rel], capture_output=True, timeout=2)
+                if ignored.returncode == 0:
+                    skip(item, "gitignored")
+                    continue
+            except (OSError, subprocess.TimeoutExpired):
+                skip(item, "could not verify gitignore")
                 continue
-        except (OSError, subprocess.TimeoutExpired):
-            skip(item, "could not verify gitignore")
-            continue
         if len(context.sources) >= budgets.files:
             skip(item, "file count budget", True)
             continue
