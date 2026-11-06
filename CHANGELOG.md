@@ -3,6 +3,11 @@
 Published repository snapshots are listed here. Extension and engine versions are
 independent; Git tags identify the complete repository snapshot.
 
+## M3.5 local demo
+
+- EVR-69: report how many passages the first Docker startup has embedded out
+  of the actual total. Print progress every 50 passages and at completion.
+
 ## M3 local demo
 
 - Add a customer dashboard with project-scoped findings and charts, repository
