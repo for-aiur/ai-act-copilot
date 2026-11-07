@@ -17,6 +17,16 @@ The first start downloads a CPU embedding model and builds the source index.
 Allow a few minutes. The app creates a demo workspace with password-free
 entry. No API key is required to explore the dashboard or browse legal sources.
 
+| Open | Link |
+| --- | --- |
+| Website and sample review | [http://127.0.0.1:8000/](http://127.0.0.1:8000/) |
+| Customer dashboard | [http://127.0.0.1:8000/app](http://127.0.0.1:8000/app) |
+| Internal retrieval dashboard | [http://127.0.0.1:8000/workbench](http://127.0.0.1:8000/workbench) |
+| Langfuse | [https://cloud.langfuse.com](https://cloud.langfuse.com) |
+
+Langfuse opens separately and needs its keys configured in the private `.env`
+file. Review traces link directly to the selected Langfuse project when enabled.
+
 Stop with Ctrl+C. To remove the containers, run `docker compose down`. Projects,
 review history and the local index persist in the Compose volume.
 
